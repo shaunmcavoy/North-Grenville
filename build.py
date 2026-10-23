@@ -30,6 +30,18 @@ def fill(s, base):
     return re.sub(r"\{\{IMG:([\w-]+)\}\}", lambda m: f"{base}assets/img/{m.group(1)}.webp", s)
 
 
+def ver(url):
+    """Adds a content fingerprint to our own CSS/JS so browsers always load the latest copy."""
+    import hashlib
+    if url.startswith("http"):
+        return url
+    rel = url.split("assets/", 1)[-1]
+    f = ROOT / "assets" / rel
+    if not f.exists():
+        return url
+    return f"{url}?v={hashlib.sha1(f.read_bytes()).hexdigest()[:10]}"
+
+
 def page(path, title, desc, body, base, extra_head="", scripts=()):
     canonical = SITE["url"] + "/" + path
     head = f"""<!doctype html>
@@ -52,13 +64,13 @@ def page(path, title, desc, body, base, extra_head="", scripts=()):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="{base}assets/css/site.css">
+<link rel="stylesheet" href="{ver(base + "assets/css/site.css")}">
 {extra_head}</head>
 <body>
 """
     header = fill((SRC / "header.html").read_text(), base)
     footer = fill((SRC / "footer.html").read_text(), base)
-    tail = f'\n<script src="{base}assets/js/site.js" defer></script>\n' + "".join(f'<script src="{x}"></script>\n' for x in scripts)
+    tail = f'\n<script src="{ver(base + "assets/js/site.js")}" defer></script>\n' + "".join(f'<script src="{ver(x)}"></script>\n' for x in scripts)
     out = head + header + '\n<main id="top">\n' + body + "\n</main>\n" + footer + tail + '</body>\n</html>\n'
     target = ROOT / path / "index.html" if path and not path.endswith(".html") else ROOT / (path or "index.html")
     target.parent.mkdir(parents=True, exist_ok=True)
