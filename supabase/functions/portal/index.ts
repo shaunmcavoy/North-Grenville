@@ -199,6 +199,15 @@ async function route_signing(req: Request): Promise<Response> {
   }).eq("id", sale.id);
   await logEvent(sale.id, "customer_signed", userId, { ip, sha256: hash });
 
+  await afterSigned(sale, c, pdfBytes, "online");
+
+  return json(req, { ok: true, number: sale.number });
+}
+
+// Everything that happens once an agreement is signed, online or on paper:
+// QuickBooks deposit invoice, welcome email with the guides and portal, and a notice to the salesperson and admins.
+async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "online" | "paper") {
+  const db = admin();
   // Deposit invoice in QuickBooks (if connected), so the welcome email can carry a Pay now button.
   let payLink: string | null = null;
   try {
@@ -222,7 +231,7 @@ async function route_signing(req: Request): Promise<Response> {
       html: emailShell({
         preheader: "Your signed agreement, pre-delivery guide and owner's manual are attached.",
         body: `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p>
-<p>Welcome to the family, and thank you for trusting us with your ${escapeHtml(what)}. Your signed agreement (#${sale.number}) is attached for your records.</p>
+<p>Welcome to the family, and thank you for trusting us with your ${escapeHtml(what)}. ${method === "paper" ? `You have your signed paper copy, and a digital copy of agreement #${sale.number} is attached so it's always easy to find.` : `Your signed agreement (#${sale.number}) is attached for your records.`}</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">What to read first</p>
 <p><b>Your pre-delivery guide (attached).</b> Please read this before we book your delivery. A solid, level base, the right power from a licensed electrician and a clear path to the backyard are what make delivery day smooth, and they protect your warranty. Ten minutes now saves a rescheduled delivery later.</p>
 <p><b>Your owner's manual (attached).</b> Keep it handy. It walks you through start-up, water care and the simple weekly routine that keeps your water clean and your tub lasting for years, without a cupboard full of chemicals.</p>
@@ -257,13 +266,116 @@ ${payLink
     if (to.length) await sendEmail({
       from: FROM, to, subject: `Signed: agreement #${sale.number}, ${c.name}`,
       html: emailShell({ preheader: `${c.name} signed agreement #${sale.number}.`, body:
-        `<p>${escapeHtml(c.name)} just signed agreement #${sale.number} for the ${escapeHtml(what)}. Total ${money(sale.total)}, deposit ${money(sale.deposit)}.</p>
+        `<p>${escapeHtml(c.name)} ${method === "paper" ? "signed on paper:" : "just signed"} agreement #${sale.number} for the ${escapeHtml(what)}. Total ${money(sale.total)}, deposit ${money(sale.deposit)}.</p>
 <p>They've been sent their signed copy, pre-delivery guide, owner's manual and a link to their portal.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }),
       attachments: [{ filename: `Agreement #${sale.number}.pdf`, content: toBase64(pdfBytes) }],
     });
   } catch (e) { console.error("staff notice failed", e); }
 
-  return json(req, { ok: true, number: sale.number });
+}
+
+// What a sale still needs before it can be signed (online or on paper).
+function missingForSigning(sale: any) {
+  const c = sale.customers, missing: string[] = [];
+  if (!c?.name) missing.push("customer name");
+  if (!c?.email) missing.push("customer email");
+  if (!sale.tub_model && !sale.sauna_model) missing.push("a hot tub or sauna model");
+  if (Number(sale.total) <= 0) missing.push("pricing");
+  if (Number(sale.deposit) > Number(sale.total)) missing.push("a deposit no bigger than the total");
+  return missing;
+}
+
+async function staffSale(req: Request, saleId: string) {
+  const me = await caller(req);
+  if (!me || !["admin", "staff"].includes(me.profile.role)) return { err: jsonAuth(req, { error: "Please sign in as staff." }, 401) };
+  const { data: sale } = await admin().from("sales").select("*, customers(*)").eq("id", saleId).maybeSingle();
+  if (!sale) return { err: jsonAuth(req, { error: "Sale not found." }, 404) };
+  if (me.profile.role !== "admin" && sale.salesperson_id !== me.user.id) return { err: jsonAuth(req, { error: "This isn't your sale." }, 403) };
+  return { me, sale };
+}
+
+// ---- agreement-print ----
+// POST {sale_id}  Staff. Signed sale: returns the signed copy. Unsigned sale: returns a printable copy with blank
+// signature and date lines, for signing in person on paper. Response: {pdf: base64}.
+async function route_agreement_print(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const b = await req.json().catch(() => ({}));
+  const r = await staffSale(req, String(b.sale_id ?? ""));
+  if (r.err) return r.err;
+  const { me, sale } = r;
+  const db = admin();
+  if (sale.agreement_pdf_path) {
+    const f = await db.storage.from("agreements").download(sale.agreement_pdf_path);
+    if (f.error || !f.data) return jsonAuth(req, { error: "Couldn't load the signed agreement." }, 500);
+    return jsonAuth(req, { pdf: toBase64(new Uint8Array(await f.data.arrayBuffer())), signed: true });
+  }
+  const missing = missingForSigning(sale);
+  if (missing.length) return jsonAuth(req, { error: `Before printing, please add ${missing.join(", ")}.` }, 400);
+  const { data: tv } = await db.rpc("current_terms_version");
+  const version = sale.terms_version ?? tv;
+  const { data: terms } = await db.from("agreement_terms").select("*").eq("version", version).single();
+  const repName = sale.rep_name ?? (me!.profile.full_name || me!.profile.email);
+  const pdfBytes = await buildAgreementPdf({ sale: { ...sale, rep_name: repName, terms_version: version }, customer: sale.customers, terms, mode: "paper-blank" });
+  await logEvent(sale.id, "printed_for_paper", me!.user.id);
+  return jsonAuth(req, { pdf: toBase64(pdfBytes), signed: false });
+}
+
+// ---- paper-signed ----
+// POST {sale_id, photos?: [dataUrl jpeg/png]}  Staff. Records that the agreement was signed in person on paper,
+// stores a record PDF (with photos of the signed pages), then runs the same welcome steps as an online signing.
+async function route_paper_signed(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const b = await req.json().catch(() => ({}));
+  const r = await staffSale(req, String(b.sale_id ?? ""));
+  if (r.err) return r.err;
+  const { me, sale } = r;
+  if (!["draft", "awaiting_customer"].includes(sale.status)) return jsonAuth(req, { error: "This agreement is already signed." }, 409);
+  const missing = missingForSigning(sale);
+  if (missing.length) return jsonAuth(req, { error: `Before marking it signed, please add ${missing.join(", ")}.` }, 400);
+  if (b.confirm !== true) return jsonAuth(req, { error: "Please confirm both of you signed the paper copies." }, 400);
+
+  const db = admin();
+  const photos: { bytes: Uint8Array; type: string }[] = [];
+  const rawPhotos = Array.isArray(b.photos) ? b.photos.slice(0, 6) : [];
+  for (const d of rawPhotos) {
+    const m = /^data:(image\/(?:jpeg|png));base64,([A-Za-z0-9+/=]+)$/.exec(String(d));
+    if (!m) return jsonAuth(req, { error: "Photos must be JPG or PNG images." }, 400);
+    const bin = atob(m[2]);
+    if (bin.length > 4_000_000) return jsonAuth(req, { error: "One of the photos is too large. Try again." }, 400);
+    photos.push({ bytes: Uint8Array.from(bin, (ch) => ch.charCodeAt(0)), type: m[1] });
+  }
+  const photoPaths: string[] = [];
+  for (let i = 0; i < photos.length; i++) {
+    const path = `${sale.id}/paper-page-${i + 1}.${photos[i].type === "image/png" ? "png" : "jpg"}`;
+    await db.storage.from("agreements").upload(path, photos[i].bytes, { contentType: photos[i].type, upsert: true });
+    photoPaths.push(path);
+  }
+
+  const now = new Date().toISOString();
+  const c = sale.customers;
+  const { data: tv } = await db.rpc("current_terms_version");
+  const version = sale.terms_version ?? tv;
+  const { data: terms } = await db.from("agreement_terms").select("*").eq("version", version).single();
+  const repName = sale.rep_name ?? (me!.profile.full_name || me!.profile.email);
+  const signed = { ...sale, rep_name: repName, rep_signed_at: sale.rep_signed_at ?? now, customer_signed_at: now, customer_typed_name: c.name, terms_version: version };
+  const pdfBytes = await buildAgreementPdf({ sale: signed, customer: c, terms, mode: "paper-signed", photos });
+  const pdfPath = `${sale.id}/agreement-${sale.number}.pdf`;
+  await db.storage.from("agreements").upload(pdfPath, pdfBytes, { contentType: "application/pdf", upsert: true });
+  const hash = await sha256Hex(pdfBytes);
+
+  const userId = await ensureUser(c.email, c.name, "customer");
+  if (!c.user_id) await db.from("customers").update({ user_id: userId }).eq("id", c.id);
+
+  const { error } = await db.from("sales").update({
+    status: "signed", signing_method: "paper", rep_name: repName, rep_signed_at: signed.rep_signed_at, terms_version: version,
+    customer_signed_at: now, customer_typed_name: c.name, agreement_pdf_path: pdfPath, agreement_sha256: hash,
+    paper_photo_paths: photoPaths, sign_token: null,
+  }).eq("id", sale.id);
+  if (error) return jsonAuth(req, { error: "Couldn't update the sale." }, 500);
+  await logEvent(sale.id, "paper_signed", me!.user.id, { photos: photoPaths.length, sha256: hash });
+
+  await afterSigned({ ...signed, status: "signed" }, c, pdfBytes, "paper");
+  return jsonAuth(req, { ok: true, number: sale.number });
 }
 
 // ---- agreement-pdf ----
@@ -403,6 +515,7 @@ ${button(portal, "Open my portal")}
 const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
+  "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

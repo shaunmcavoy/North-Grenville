@@ -159,6 +159,27 @@
         </div>
       </div>
 
+      <div id="paperPanel" class="card signpanel" hidden>
+        <h3>Or sign on paper</h3>
+        <p class="muted">Print two copies, and you and the customer sign both. They keep one, you keep the other. Then mark it signed here so they still get their welcome email, guides, portal and deposit link. Save any changes first: it prints what's saved.</p>
+        <div class="formactions">
+          <button class="btn btn-ink" type="button" id="printPaper">Print for paper signing</button>
+          <p class="formmsg" id="printMsg" role="status" aria-live="polite"></p>
+        </div>
+        <details class="paperdone">
+          <summary>We've both signed the paper copies</summary>
+          <label class="photos">Photos of the signed pages <span class="opt">(optional, but recommended)</span>
+            <input type="file" id="paperPhotos" accept="image/*" multiple>
+          </label>
+          <p class="muted small" id="photoCount">A photo of each signed page keeps a backup with the sale, in case the paper copy goes missing.</p>
+          <label class="check"><input type="checkbox" id="paperConfirm"> The customer and I have both signed the printed agreement.</label>
+          <div class="formactions">
+            <button class="btn btn-gold" type="button" id="markPaper">Mark as signed on paper</button>
+            <p class="formmsg" id="paperMsg" role="status" aria-live="polite"></p>
+          </div>
+        </details>
+      </div>
+
       <div id="waitPanel" class="card" hidden>
         <h3>Waiting for the customer to sign</h3>
         <p class="muted">The signing link works for 14 days. When they sign, they get their copy, the pre-delivery guide, the owner's manual and their portal by email, and you'll get a copy too.</p>
@@ -173,7 +194,7 @@
       <div id="donePanel" class="card" hidden>
         <h3>Signed</h3>
         <p class="muted" id="doneText"></p>
-        <div class="formactions"><button class="btn btn-gold" type="button" id="downloadPdf">Download signed agreement</button></div>
+        <div class="formactions"><button class="btn btn-gold" type="button" id="printPdf">Print agreement for the customer</button><button class="btn btn-line" type="button" id="downloadPdf">Download PDF</button><p class="formmsg" id="pdfMsg" role="status" aria-live="polite"></p></div>
         <div id="depositBox"></div>
       </div>
 

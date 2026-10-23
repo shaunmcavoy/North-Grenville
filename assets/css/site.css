@@ -443,3 +443,13 @@ section[id],.line[id]{scroll-margin-top:84px}
 .steps-v li span{color:var(--muted);font-size:.92rem}
 .steps-v li:not(.done):not(.next) b{color:var(--muted);font-weight:600}
 .namebox{border-color:var(--gold)}
+/* Paper signing */
+.paperdone{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.paperdone summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+.paperdone summary::-webkit-details-marker{display:none}
+.paperdone summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);font-weight:600}
+.paperdone[open] summary::before{content:"\2212"}
+.paperdone .photos{display:grid;gap:6px;margin:14px 0 4px;font-weight:600}
+.paperdone .photos .opt{font-weight:400;color:var(--muted)}
+.paperdone label.check{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-weight:500}
+.paperdone label.check input{margin-top:4px;width:18px;height:18px;flex:none}

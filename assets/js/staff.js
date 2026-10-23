@@ -96,7 +96,7 @@
   }
   function openSale(id) {
     current = null; form.querySelector('.formmsg').textContent = '';
-    ['#signPanel', '#waitPanel', '#donePanel', '#eventsPanel'].forEach(function (p) { $(p).hidden = true; });
+    ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel'].forEach(function (p) { $(p).hidden = true; });
     if (!id) {
       fill(null, null); lock(false); $('#saleHeading').textContent = 'New sale'; $('#saleStatus').innerHTML = ''; show('sale'); return;
     }
@@ -107,6 +107,10 @@
       $('#saleStatus').innerHTML = NG.pill(current.status);
       lock(current.status !== 'draft');
       if (current.status === 'draft') { $('#signPanel').hidden = false; $('#repName').textContent = me.profile.full_name || me.profile.email; if (!pad) pad = NG.signaturePad($('#repSig')); else pad.clear(); }
+      if (current.status === 'draft' || current.status === 'awaiting_customer') {
+        $('#paperPanel').hidden = false; $('#paperConfirm').checked = false; $('#paperPhotos').value = '';
+        $('#printMsg').textContent = ''; $('#paperMsg').textContent = ''; photoCount();
+      }
       if (current.status === 'awaiting_customer') {
         $('#waitPanel').hidden = false;
         var link = current.sign_token ? location.origin + '/sign/?t=' + current.sign_token : '';
@@ -115,7 +119,10 @@
       if (current.agreement_pdf_path) {
         $('#donePanel').hidden = false;
         renderDeposit();
-        $('#doneText').textContent = (current.customer_typed_name || 'The customer') + ' signed on ' + NG.dateTime(current.customer_signed_at) + '. They were emailed their copy, the pre-delivery guide, the owner\'s manual and a link to their portal.';
+        $('#doneText').textContent = (current.signing_method === 'paper'
+          ? 'Signed on paper, recorded ' + NG.dateTime(current.customer_signed_at) + '. '
+          : (current.customer_typed_name || 'The customer') + ' signed on ' + NG.dateTime(current.customer_signed_at) + '. ') +
+          'They were emailed their copy, the pre-delivery guide, the owner\'s manual and a link to their portal.';
       }
       loadEvents(current.id);
       show('sale');
@@ -197,6 +204,63 @@
   });
   $('#downloadPdf').addEventListener('click', function () {
     NG.api('agreement-pdf', { sale_id: current.id }).then(function (r) { location.href = r.url; }).catch(function (err) { NG.toast(err.message); });
+  });
+  // ---------- Printing ----------
+  // Computers get the print dialog right away; phones and tablets open the PDF, to print from the share menu.
+  function printAgreement(msg) {
+    msg.textContent = 'Getting the agreement ready...';
+    var touch = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+    var win = touch ? window.open('', '_blank') : null; // opened now so the browser doesn't block it
+    NG.api('agreement-print', { sale_id: current.id }).then(function (r) {
+      var bin = atob(r.pdf), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      if (win) { win.location.href = url; msg.textContent = 'Opened in a new tab. Tap the share button there, then Print.'; return; }
+      var old = document.getElementById('printFrame'); if (old) old.remove();
+      var f = document.createElement('iframe');
+      f.id = 'printFrame'; f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+      f.onload = function () {
+        setTimeout(function () {
+          try { f.contentWindow.focus(); f.contentWindow.print(); msg.textContent = ''; }
+          catch (e) { window.open(url, '_blank'); msg.textContent = 'Opened in a new tab. Print it from there.'; }
+        }, 300);
+      };
+      f.src = url; document.body.appendChild(f);
+    }).catch(function (err) { if (win) win.close(); msg.textContent = err.message; });
+  }
+  $('#printPdf').addEventListener('click', function () { printAgreement($('#pdfMsg')); });
+  $('#printPaper').addEventListener('click', function () { printAgreement($('#printMsg')); });
+
+  // Photos of signed paper pages are shrunk on the device first so they upload quickly.
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var s = Math.min(1, 1800 / Math.max(img.width, img.height));
+        var c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function () { reject(new Error("One of the photos couldn't be read. Try a JPG or PNG.")); };
+      img.src = url;
+    });
+  }
+  function photoCount() {
+    var n = $('#paperPhotos').files.length;
+    $('#photoCount').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') + ' ready' + (n > 6 ? ' (only the first 6 are kept)' : '') + '.' :
+      'A photo of each signed page keeps a backup with the sale, in case the paper copy goes missing.';
+  }
+  $('#paperPhotos').addEventListener('change', photoCount);
+  $('#markPaper').addEventListener('click', function () {
+    var m = $('#paperMsg');
+    if (!$('#paperConfirm').checked) { m.textContent = 'Please tick the box to confirm you both signed.'; return; }
+    var btn = this; btn.disabled = true; m.textContent = 'Saving...';
+    var files = Array.prototype.slice.call($('#paperPhotos').files, 0, 6);
+    Promise.all(files.map(shrink))
+      .then(function (photos) { m.textContent = 'Saving and sending the welcome email...'; return NG.api('paper-signed', { sale_id: current.id, photos: photos, confirm: true }); })
+      .then(function () { NG.toast('Marked as signed. The customer has been emailed.'); openSale(current.id); })
+      .catch(function (err) { m.textContent = err.message; })
+      .finally(function () { btn.disabled = false; });
   });
 
   // ---------- Deposit (QuickBooks) ----------

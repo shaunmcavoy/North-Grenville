@@ -9,10 +9,15 @@ const clean = (s: unknown) =>
 
 type Any = Record<string, any>;
 
+// mode "online": e-signed copy with an electronic signing record.
+// mode "paper-blank": printable copy with empty signature and date lines, for signing in person on paper.
+// mode "paper-signed": the record kept after a paper signing, with photos of the signed pages appended.
 export async function buildAgreementPdf(opts: {
   sale: Any; customer: Any; terms: Any; repSig?: Uint8Array | null; custSig?: Uint8Array | null;
+  mode?: "online" | "paper-blank" | "paper-signed"; photos?: { bytes: Uint8Array; type: string }[];
 }) {
   const { sale, customer, terms } = opts;
+  const mode = opts.mode ?? "online";
   const pdf = await PDFDocument.create();
   pdf.setTitle(`North Grenville Hot Tubs Sales Agreement #${sale.number}`);
   pdf.setAuthor("North Grenville Hot Tubs & Saunas");
@@ -101,11 +106,21 @@ export async function buildAgreementPdf(opts: {
   }
   y = Math.min(y - 124, sy - 8);
 
+  // Terms flow onto extra pages when they're long.
+  const newPage = () => {
+    page = pdf.addPage([612, 792]); y = 792 - M;
+    page.drawText(`Sales agreement #${sale.number} (continued)`, { x: M, y, size: 9, font: bold, color: muted }); y -= 20;
+  };
   for (const t of [terms.delivery_terms, terms.purchase_terms]) {
-    for (const ln of wrap(clean(t), font, 8, W - 2 * M)) { page.drawText(ln, { x: M, y, size: 8, font, color: ink }); y -= 10.5; }
+    for (const ln of wrap(clean(t), font, 8, W - 2 * M)) {
+      if (y < M + 10) newPage();
+      page.drawText(ln, { x: M, y, size: 8, font, color: ink }); y -= 10.5;
+    }
     y -= 6;
   }
   y -= 6;
+  // Keep the signature block together on one page.
+  if (y < M + (mode === "online" ? 90 : 130)) newPage();
 
   const sigBox = async (label: string, img: Uint8Array | null | undefined, name: string, when: string, x: number) => {
     if (img) {
@@ -117,28 +132,56 @@ export async function buildAgreementPdf(opts: {
     }
     page.drawLine({ start: { x, y: y - 56 }, end: { x: x + 230, y: y - 56 }, thickness: 0.75, color: ink });
     page.drawText(label, { x, y: y - 67, size: 8, font, color: muted });
-    page.drawText(clean(`${name}  ${when}`), { x, y: y - 78, size: 8, font, color: ink });
+    if (mode === "online") {
+      page.drawText(clean(`${name}  ${when}`), { x, y: y - 78, size: 8, font, color: ink });
+    } else {
+      page.drawText(clean(`Name: ${name}`), { x, y: y - 80, size: 9, font, color: ink });
+      page.drawText("Date:", { x, y: y - 98, size: 9, font, color: ink });
+      page.drawLine({ start: { x: x + 28, y: y - 100 }, end: { x: x + 150, y: y - 100 }, thickness: 0.5, color: ink });
+    }
   };
   const fmt = (d?: string) => d ? new Date(d).toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" }) : "";
-  await sigBox("Accepted by customer", opts.custSig, sale.customer_typed_name ?? customer.name, fmt(sale.customer_signed_at), M);
-  await sigBox("Accepted by company representative", opts.repSig, sale.rep_name ?? "", fmt(sale.rep_signed_at), W / 2 + 6);
+  await sigBox("Accepted by customer", mode === "online" ? opts.custSig : null, sale.customer_typed_name ?? customer.name, fmt(sale.customer_signed_at), M);
+  await sigBox("Accepted by company representative", mode === "online" ? opts.repSig : null, sale.rep_name ?? "", fmt(sale.rep_signed_at), W / 2 + 6);
+
+  if (mode === "paper-blank") {
+    page.drawText("Please sign both copies: one for you, one for North Grenville Hot Tubs.", { x: M, y: y - 122, size: 8, font, color: muted });
+    return await pdf.save();
+  }
 
   // Signing record page
   page = pdf.addPage([612, 792]);
   y = 792 - M;
-  page.drawText("Electronic signing record", { x: M, y, size: 14, font: bold, color: ink });
+  page.drawText(mode === "online" ? "Electronic signing record" : "Paper signing record", { x: M, y, size: 14, font: bold, color: ink });
   y -= 24;
-  const rec = [
+  const nPhotos = opts.photos?.length ?? 0;
+  const rec = mode === "online" ? [
     ["Agreement", `#${sale.number}, terms version ${sale.terms_version}`],
     ["Company representative", `${sale.rep_name} signed ${fmt(sale.rep_signed_at)}`],
     ["Customer", `${sale.customer_typed_name} (${customer.email}) signed ${fmt(sale.customer_signed_at)}`],
     ["Customer device", `${sale.customer_sign_ip ?? "unknown IP"} / ${sale.customer_sign_ua ?? ""}`],
     ["Method", "The customer reviewed the agreement online, ticked a box confirming they agree to its terms, typed their full name and drew their signature."],
+  ] : [
+    ["Agreement", `#${sale.number}, terms version ${sale.terms_version}`],
+    ["Signed", `In person, on paper. Recorded ${fmt(sale.customer_signed_at)}`],
+    ["Customer", `${customer.name} (${customer.email})`],
+    ["Recorded by", `${sale.rep_name}`],
+    ["Original", "The customer and the company representative each signed two printed copies. The customer kept one; North Grenville Hot Tubs keeps the other."],
+    ["Photos", nPhotos ? `${nPhotos} photo${nPhotos > 1 ? "s" : ""} of the signed pages follow${nPhotos > 1 ? "" : "s"}.` : "No photos of the signed pages were added."],
   ];
   for (const [k, v] of rec) {
     page.drawText(k, { x: M, y, size: 9, font: bold, color: ink });
     for (const ln of wrap(clean(v), font, 9, W - 2 * M - 150)) { page.drawText(ln, { x: M + 150, y, size: 9, font, color: ink }); y -= 12; }
     y -= 6;
+  }
+  // Photos of the signed paper pages, one per page, scaled to fit.
+  for (const p of opts.photos ?? []) {
+    try {
+      const img = p.type === "image/png" ? await pdf.embedPng(p.bytes) : await pdf.embedJpg(p.bytes);
+      const pg = pdf.addPage([612, 792]);
+      const s = Math.min((612 - 2 * M) / img.width, (792 - 2 * M) / img.height);
+      pg.drawImage(img, { x: (612 - img.width * s) / 2, y: (792 - img.height * s) / 2, width: img.width * s, height: img.height * s });
+    } catch (e) { console.error("photo embed", e); }
   }
   return await pdf.save();
 }
