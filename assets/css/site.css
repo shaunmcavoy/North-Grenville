@@ -457,3 +457,7 @@ section[id],.line[id]{scroll-margin-top:84px}
 .paynow{background:var(--sand-soft, #efe5d6);border-radius:14px;padding:20px 22px;margin:18px 0 22px;text-align:left}
 .paynow .eyebrow{margin:0 0 6px}
 .paynow .btn{margin:8px 0 10px}
+/* Sign-in alternatives */
+.altsign{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.altsign .formactions{align-items:center}
+.textbtn{background:none;border:0;padding:6px 2px;color:var(--water-deep);font:inherit;font-size:.9rem;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}

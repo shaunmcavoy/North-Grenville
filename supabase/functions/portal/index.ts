@@ -30,13 +30,16 @@ async function route_login_link(req: Request): Promise<Response> {
   const why = isStaff
     ? "This keeps every deal, agreement and delivery in one place, so nothing falls through the cracks and every customer gets the same great experience."
     : "Your portal keeps everything about your hot tub in one place: your agreement, your tub's details, delivery and, later, your warranty and care reminders. No digging through emails, and you can always reach me directly.";
+  const setPw = next.startsWith("/login/?setpw=1");
   await sendEmail({
     from: FROM, to: email, reply_to: REPLY_TO,
-    subject: "Your sign-in link for North Grenville Hot Tubs",
+    subject: setPw ? "Set your password for North Grenville Hot Tubs" : "Your sign-in link for North Grenville Hot Tubs",
     html: emailShell({
-      preheader: "Tap to sign in. The link works once and expires in an hour.",
-      body: `<p>Hi ${firstNameOf(prof.full_name)},</p><p>Here's your link to sign in. It works once and expires in an hour.</p>
-${button(link, "Sign in")}<p style="color:#6e5d4f">${why}</p>
+      preheader: setPw ? "Tap to choose your password. The link works once and expires in an hour." : "Tap to sign in. The link works once and expires in an hour.",
+      body: `<p>Hi ${firstNameOf(prof.full_name)},</p><p>${setPw
+        ? "Here's your link to choose a password. Once it's set, you can sign in any time with your email and password, with no waiting for an email. The link works once and expires in an hour."
+        : "Here's your link to sign in. It works once and expires in an hour."}</p>
+${button(link, setPw ? "Choose my password" : "Sign in")}<p style="color:#6e5d4f">${why}</p>
 <p style="color:#6e5d4f;font-size:14px">If you didn't ask for this, ignore this email. Nobody can sign in without this link.</p><p>Blaine</p>`,
     }),
     text: `Sign in to North Grenville Hot Tubs: ${link}\n\nThe link works once and expires in an hour. If you didn't ask for this, ignore this email.`,

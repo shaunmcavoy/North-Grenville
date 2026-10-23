@@ -1,18 +1,39 @@
 <section class="lhero apphero">
   <div class="wrap narrow">
     <p class="eyebrow">Customers and staff</p>
-    <h1>Sign in</h1>
-    <p class="lead">Your portal keeps everything in one place: your agreement, your tub's details, delivery and, later, warranty and care reminders. Enter your email and we'll send you a one-tap sign-in link. No password to remember.</p>
+    <h1 id="loginTitle">Sign in</h1>
+    <p class="lead" id="loginLead">Your portal keeps everything in one place: your agreement, your tub's details, delivery and, later, warranty and care reminders.</p>
   </div>
 </section>
 <section class="appmain">
   <div class="wrap narrow">
     <form id="loginForm" class="card form" novalidate>
       <label for="loginEmail">Email</label>
-      <input id="loginEmail" type="email" autocomplete="email" required>
-      <button class="btn btn-gold" type="submit">Email me a sign-in link</button>
+      <input id="loginEmail" type="email" autocomplete="username" required>
+      <label for="loginPass">Password</label>
+      <input id="loginPass" type="password" autocomplete="current-password">
+      <button class="btn btn-gold" type="submit">Sign in</button>
+      <p class="formmsg" role="status" aria-live="polite"></p>
+      <div class="altsign">
+        <p class="muted small"><b>First time, or forgot your password?</b> We'll email you a link. Tap it and you can choose a password.</p>
+        <div class="formactions">
+          <button class="btn btn-line btn-sm" type="button" id="setPassLink">Email me a link to set my password</button>
+          <button class="textbtn" type="button" id="magicLink">Just sign me in by email this time</button>
+        </div>
+      </div>
+    </form>
+
+    <form id="setPassForm" class="card form" novalidate hidden>
+      <p>Choose a password you'll remember. At least 8 characters.</p>
+      <input type="email" id="setPassUser" autocomplete="username" hidden>
+      <label for="newPass">New password</label>
+      <input id="newPass" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="newPass2">Type it again</label>
+      <input id="newPass2" type="password" autocomplete="new-password" minlength="8" required>
+      <button class="btn btn-gold" type="submit">Save password</button>
       <p class="formmsg" role="status" aria-live="polite"></p>
     </form>
+
     <div id="loginWorking" class="card" hidden><p>Signing you in...</p></div>
     <p class="fineprint">Bought a tub from us? Use the email on your sales agreement. Questions? Call or text Blaine at (613) 292-1786.</p>
   </div>
