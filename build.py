@@ -375,6 +375,14 @@ def build():
     (ROOT / "blog" / "feed.json").write_text(json.dumps({"posts": [
         {"slug": p["slug"], "title": p["title"], "description": p["description"], "date": p["date"],
          "url": f"{SITE['url']}/blog/{p['slug']}/", "image": p["email_image"]} for p in posts]}, indent=1))
+    # Legal pages
+    for slug, title, lead in [("privacy", "Privacy policy", "How we collect, use and protect your personal information."),
+                              ("terms", "Terms of use", "The terms for using our website, customer portal and staff portal.")]:
+        body = md_to_html((SRC / "legal" / f"{slug}.md").read_text())
+        page(f"{slug}/", f"{title} | North Grenville Hot Tubs", lead,
+             f'''<section class="phero"><div class="wrap"><p class="eyebrow">North Grenville Hot Tubs &amp; Saunas</p><h1>{title}</h1>
+<p style="color:var(--sand);margin-top:12px">{lead} Last updated October 23, 2026.</p></div></section>
+<div class="wrap"><div class="prose">{body}</div></div>''', "../")
     # Portal pages (not indexed by search engines)
     tubs_js = json.dumps([{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "seats": t["seats"],
                            "jets": t["jets"], "power": t["power"]} for t in TUBS])
@@ -384,7 +392,7 @@ def build():
         body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
              app_scripts + [f"/assets/js/{js}.js"])
-    urls = [""] + [f"{l}/" for l in LINES] + ["blog/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
     print(f"Built: home, {len(LINES)} line pages, blog index, {len(posts)} posts, 404, sitemap")
