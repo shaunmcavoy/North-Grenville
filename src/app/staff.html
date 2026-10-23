@@ -1,0 +1,155 @@
+<section class="appbar">
+  <div class="wrap">
+    <div><p class="eyebrow">Staff portal</p><h1 id="staffTitle">Sales</h1></div>
+    <div class="appbar-right"><span id="whoami" class="who"></span><button class="btn btn-ghost btn-sm" type="button" id="signOut">Sign out</button></div>
+  </div>
+  <div class="wrap">
+    <nav class="tabs" aria-label="Staff sections">
+      <a href="#sales" data-tab="sales" aria-current="page">Sales</a>
+      <a href="#new" data-tab="new">New sale</a>
+      <a href="#team" data-tab="team" class="admin-only" hidden>Team</a>
+    </nav>
+  </div>
+</section>
+
+<section class="appmain">
+  <div class="wrap">
+
+    <!-- Sales list -->
+    <div id="view-sales" class="view">
+      <div class="listhead">
+        <div class="filters" role="group" aria-label="Filter by status">
+          <button class="chip" type="button" data-st="open" aria-pressed="true">In progress</button>
+          <button class="chip" type="button" data-st="all" aria-pressed="false">All</button>
+          <button class="chip" type="button" data-st="draft" aria-pressed="false">Drafts</button>
+          <button class="chip" type="button" data-st="awaiting_customer" aria-pressed="false">Waiting to sign</button>
+          <button class="chip" type="button" data-st="signed" aria-pressed="false">Signed</button>
+        </div>
+        <a class="btn btn-gold" href="#new">New sale</a>
+      </div>
+      <div class="tablewrap"><table class="saletable">
+        <thead><tr><th>#</th><th>Customer</th><th>What</th><th class="num">Total</th><th>Status</th><th class="admin-only" hidden>Salesperson</th><th>Updated</th></tr></thead>
+        <tbody id="saleRows"><tr><td colspan="7" class="empty">Loading sales...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- Sale editor -->
+    <div id="view-sale" class="view" hidden>
+      <a class="back dark" href="#sales">&larr; All sales</a>
+      <div class="salehead"><h2 id="saleHeading">New sale</h2><span id="saleStatus"></span></div>
+      <p id="lockNote" class="note" hidden>This agreement has been sent for signature, so it can't be edited. If something needs to change, cancel it and write up a new one.</p>
+
+      <form id="saleForm" class="saleform" novalidate>
+        <fieldset class="card"><legend>Customer</legend>
+          <div class="grid2">
+            <label>Name<input name="c_name" required autocomplete="off"></label>
+            <label>Email<input name="c_email" type="email" required autocomplete="off"></label>
+            <label>Cell<input name="c_cell" type="tel" autocomplete="off"></label>
+            <label>How did you hear about us?<input name="c_heard_about" autocomplete="off"></label>
+            <label class="span2">Address<input name="c_address" autocomplete="off"></label>
+            <label>City / postal code<input name="c_city_pc" autocomplete="off"></label>
+            <label>Sale date<input name="sale_date" type="date"></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="card"><legend>Hot tub</legend>
+          <div class="grid3">
+            <label>Make<input name="tub_make" value="Platinum Spas"></label>
+            <label>Model<select name="tub_model" id="tubModel"></select></label>
+            <label>Estimated delivery time<input name="est_delivery" placeholder="e.g. 4 to 6 weeks"></label>
+            <label>Shell colour<input name="shell_colour"></label>
+            <label>Siding<input name="siding"></label>
+            <label>Water care<input name="water_care" placeholder="e.g. O-Care"></label>
+            <label>Stereo<input name="stereo"></label>
+            <label>Starter kit<input name="starter_kit"></label>
+            <label>Steps<input name="steps"></label>
+            <label>Lifter<input name="lifter"></label>
+            <label>Spa cover<input name="spa_cover"></label>
+            <label>Other<input name="other"></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="card"><legend>Sauna <span class="opt">(optional)</span></legend>
+          <div class="grid3">
+            <label>Make<input name="sauna_make"></label>
+            <label>Model<input name="sauna_model"></label>
+            <label>Electrical<input name="sauna_electrical"></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="card"><legend>Notes</legend>
+          <label>Notes (if it's an in-stock unit, note the SKU)<textarea name="notes" rows="3"></textarea></label>
+        </fieldset>
+
+        <fieldset class="card pricing"><legend>Pricing</legend>
+          <div class="grid2">
+            <div class="grid2 inner">
+              <label>Hot tub value<input name="hot_tub_value" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Sauna total<input name="sauna_total" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Delivery<input name="delivery_fee" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Deposit<input name="deposit" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            </div>
+            <dl class="sums" id="sums"></dl>
+          </div>
+        </fieldset>
+
+        <div class="formactions">
+          <button class="btn btn-ink" type="submit" id="saveBtn">Save draft</button>
+          <button class="btn btn-line" type="button" id="deleteBtn" hidden>Delete draft</button>
+          <p class="formmsg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <!-- Sign and send -->
+      <div id="signPanel" class="card signpanel" hidden>
+        <h3>Sign and send to the customer</h3>
+        <p class="muted">Sign below as the company representative. This locks the agreement so the customer signs exactly what you agreed together.</p>
+        <div class="sigwrap"><canvas id="repSig" aria-label="Signature pad"></canvas><button type="button" class="linkbtn" id="repSigClear">Clear</button></div>
+        <p class="sigline">Signed by <b id="repName"></b></p>
+        <div class="formactions">
+          <button class="btn btn-gold" type="button" id="signEmail">Sign and email the customer</button>
+          <button class="btn btn-ink" type="button" id="signHere">Sign, then customer signs on this device</button>
+          <p class="formmsg" id="signMsg" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div id="waitPanel" class="card" hidden>
+        <h3>Waiting for the customer to sign</h3>
+        <p class="muted">The signing link works for 14 days. When they sign, they get their copy, the pre-delivery guide, the owner's manual and their portal by email, and you'll get a copy too.</p>
+        <div class="linkrow"><input id="signLink" readonly aria-label="Signing link"><button class="btn btn-line btn-sm" type="button" id="copyLink">Copy link</button></div>
+        <div class="formactions">
+          <a class="btn btn-ink" id="openSign" href="#" target="_blank" rel="noopener">Open signing page on this device</a>
+          <button class="btn btn-line" type="button" id="resendLink">Email a fresh link</button>
+          <p class="formmsg" id="waitMsg" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div id="donePanel" class="card" hidden>
+        <h3>Signed</h3>
+        <p class="muted" id="doneText"></p>
+        <div class="formactions"><button class="btn btn-gold" type="button" id="downloadPdf">Download signed agreement</button></div>
+      </div>
+
+      <div id="eventsPanel" class="card" hidden><h3>History</h3><ol class="events" id="events"></ol></div>
+    </div>
+
+    <!-- Team (admins) -->
+    <div id="view-team" class="view" hidden>
+      <div class="grid2 team">
+        <div class="card">
+          <h3>Add a salesperson</h3>
+          <p class="muted">They'll get an email with a link to the staff portal. Salespeople see only their own sales.</p>
+          <form id="inviteForm" class="form" novalidate>
+            <label>Full name<input name="full_name" required></label>
+            <label>Email<input name="email" type="email" required></label>
+            <label>Phone<input name="phone" type="tel"></label>
+            <button class="btn btn-gold" type="submit">Send invite</button>
+            <p class="formmsg" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+        <div class="card"><h3>Team</h3><ul class="teamlist" id="teamList"><li>Loading...</li></ul></div>
+      </div>
+    </div>
+
+  </div>
+</section>

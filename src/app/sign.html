@@ -1,0 +1,37 @@
+<section class="lhero apphero">
+  <div class="wrap narrow">
+    <p class="eyebrow">Your sales agreement</p>
+    <h1 id="signTitle">Review and sign</h1>
+    <p class="lead">Please read everything over. If anything doesn't look right, don't sign. Call or text Blaine at (613) 292-1786 and we'll fix it.</p>
+  </div>
+</section>
+<section class="appmain">
+  <div class="wrap narrow">
+    <div id="signLoading" class="card"><p>Loading your agreement...</p></div>
+    <div id="signError" class="card" hidden></div>
+    <div id="agreement" hidden></div>
+    <form id="signForm" class="card form" hidden novalidate>
+      <h2>Sign</h2>
+      <label class="consent" for="agree"><input id="agree" type="checkbox"> I've read this agreement, including the delivery and purchase terms, and I agree to it.</label>
+      <label for="typedName">Type your full name</label>
+      <input id="typedName" autocomplete="name" required>
+      <label>Draw your signature</label>
+      <div class="sigwrap"><canvas id="custSig" aria-label="Signature pad"></canvas><button type="button" class="linkbtn" id="custSigClear">Clear</button></div>
+      <p class="muted small">Use your finger on a phone or tablet, or your mouse on a computer. Signing online is the same as signing on paper.</p>
+      <button class="btn btn-gold" type="submit">Sign agreement</button>
+      <p class="formmsg" role="status" aria-live="polite"></p>
+    </form>
+    <div id="signDone" class="card done" hidden>
+      <img src="/assets/img/logo.webp" alt="" width="96" height="96">
+      <h2>Welcome to the North Grenville Hot Tubs family.</h2>
+      <p>Thank you. Your agreement is signed. Check your email in the next few minutes for:</p>
+      <ul>
+        <li><b>Your signed agreement</b>, for your records.</li>
+        <li><b>Your pre-delivery guide.</b> Please read it before we book delivery. A solid base, the right power and a clear path make delivery day smooth and protect your warranty.</li>
+        <li><b>Your owner's manual</b>, with the simple routine that keeps your water clean and your tub lasting.</li>
+        <li><b>A link to your customer portal</b>, where you'll see your tub's details and, soon, schedule delivery.</li>
+      </ul>
+      <p>Questions any time? Call or text Blaine at (613) 292-1786.</p>
+    </div>
+  </div>
+</section>

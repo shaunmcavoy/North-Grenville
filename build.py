@@ -30,7 +30,7 @@ def fill(s, base):
     return re.sub(r"\{\{IMG:([\w-]+)\}\}", lambda m: f"{base}assets/img/{m.group(1)}.webp", s)
 
 
-def page(path, title, desc, body, base, extra_head=""):
+def page(path, title, desc, body, base, extra_head="", scripts=()):
     canonical = SITE["url"] + "/" + path
     head = f"""<!doctype html>
 <html lang="en-CA">
@@ -58,7 +58,8 @@ def page(path, title, desc, body, base, extra_head=""):
 """
     header = fill((SRC / "header.html").read_text(), base)
     footer = fill((SRC / "footer.html").read_text(), base)
-    out = head + header + '\n<main id="top">\n' + body + "\n</main>\n" + footer + f'\n<script src="{base}assets/js/site.js" defer></script>\n</body>\n</html>\n'
+    tail = f'\n<script src="{base}assets/js/site.js" defer></script>\n' + "".join(f'<script src="{x}"></script>\n' for x in scripts)
+    out = head + header + '\n<main id="top">\n' + body + "\n</main>\n" + footer + tail + '</body>\n</html>\n'
     target = ROOT / path / "index.html" if path and not path.endswith(".html") else ROOT / (path or "index.html")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(out)
@@ -374,6 +375,15 @@ def build():
     (ROOT / "blog" / "feed.json").write_text(json.dumps({"posts": [
         {"slug": p["slug"], "title": p["title"], "description": p["description"], "date": p["date"],
          "url": f"{SITE['url']}/blog/{p['slug']}/", "image": p["email_image"]} for p in posts]}, indent=1))
+    # Portal pages (not indexed by search engines)
+    tubs_js = json.dumps([{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "seats": t["seats"],
+                           "jets": t["jets"], "power": t["power"]} for t in TUBS])
+    app_head = '<meta name="robots" content="noindex">\n'
+    app_scripts = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js", "/assets/js/app.js"]
+    for slug, title, js in [("login", "Sign in", "login"), ("staff", "Staff portal", "staff"), ("sign", "Sign your agreement", "sign"), ("portal", "Your portal", "portal")]:
+        body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
+        page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
+             app_scripts + [f"/assets/js/{js}.js"])
     urls = [""] + [f"{l}/" for l in LINES] + ["blog/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")

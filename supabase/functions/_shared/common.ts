@@ -65,3 +65,64 @@ ${unsub}
 
 export const button = (href: string, label: string) =>
   `<p style="margin:24px 0"><a href="${href}" style="background:#c8a35b;color:#1d1611;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px;display:inline-block">${escapeHtml(label)}</a></p>`;
+
+// ---------- Portal helpers ----------
+export const LOGIN_URL = `${SITE_URL}/login/`;
+
+// The signed-in caller, using their own token (so database rules apply), plus their profile.
+export async function caller(req: Request) {
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+  const db = admin();
+  const { data } = await db.auth.getUser(token);
+  if (!data?.user) return null;
+  const { data: profile } = await db.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
+  if (!profile || !profile.active) return null;
+  const userDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  return { user: data.user, profile, userDb };
+}
+
+export const corsAuth = (req: Request) => ({ ...cors(req), "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info" });
+export const jsonAuth = (req: Request, body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...corsAuth(req) } });
+
+export const money = (n: number | string | null | undefined) =>
+  "$" + Number(n ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const firstNameOf = (name?: string | null) => (name ?? "").trim().split(/\s+/)[0] || "there";
+
+// Magic sign-in link that lands on our own /login/ page (no redirect allow-list needed).
+export async function loginLink(email: string, next = "") {
+  const { data, error } = await admin().auth.admin.generateLink({ type: "magiclink", email });
+  if (error || !data?.properties?.hashed_token) throw error ?? new Error("Could not create login link");
+  const q = new URLSearchParams({ token_hash: data.properties.hashed_token, type: "magiclink" });
+  if (next) q.set("next", next);
+  return `${LOGIN_URL}?${q}`;
+}
+
+// Find or create a login for an email. New users get the role given (customer by default).
+export async function ensureUser(email: string, fullName: string | null, role = "customer") {
+  const db = admin();
+  const { data: prof } = await db.from("profiles").select("id").eq("email", email.toLowerCase()).maybeSingle();
+  if (prof) return prof.id as string;
+  const { data, error } = await db.auth.admin.createUser({
+    email, email_confirm: true, user_metadata: { full_name: fullName, role },
+  });
+  if (error || !data.user) throw error ?? new Error("Could not create user");
+  if (role !== "customer") await db.from("profiles").update({ role, full_name: fullName }).eq("id", data.user.id);
+  return data.user.id;
+}
+
+export async function logEvent(saleId: string, kind: string, actor: string | null, detail: unknown = null) {
+  await admin().from("sale_events").insert({ sale_id: saleId, kind, actor, detail });
+}
+
+export function dataUrlToBytes(d: string) {
+  const m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(d ?? "");
+  if (!m) return null;
+  const bin = atob(m[1]);
+  if (bin.length > 400_000) return null;
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
