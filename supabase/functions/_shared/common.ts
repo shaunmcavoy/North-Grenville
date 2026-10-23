@@ -6,10 +6,15 @@ export const FUNCTIONS_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
 export const FROM = Deno.env.get("EMAIL_FROM") ?? "Blaine at North Grenville Hot Tubs <info@northgrenvillehottubs.ca>";
 export const REPLY_TO = "info@northgrenvillehottubs.ca";
 
+// Uses the legacy keys while they work (until the end of 2026), then falls back to the new secret/publishable keys.
+const keyFrom = (json: string, legacy: string) => {
+  const l = Deno.env.get(legacy); if (l) return l;
+  try { return JSON.parse(Deno.env.get(json) ?? "{}").default as string; } catch { return ""; }
+};
+export const SECRET_KEY = keyFrom("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY");
+export const PUBLISHABLE_KEY = keyFrom("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_ANON_KEY");
 export const admin = () =>
-  createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
-    auth: { persistSession: false },
-  });
+  createClient(Deno.env.get("SUPABASE_URL")!, SECRET_KEY, { auth: { persistSession: false } });
 
 const ALLOWED = [SITE_URL, "https://www.northgrenvillehottubs.ca", "https://shaunmcavoy.github.io"];
 export function cors(req: Request) {
@@ -79,7 +84,7 @@ export async function caller(req: Request) {
   if (!data?.user) return null;
   const { data: profile } = await db.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
   if (!profile || !profile.active) return null;
-  const userDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const userDb = createClient(Deno.env.get("SUPABASE_URL")!, PUBLISHABLE_KEY, {
     auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } },
   });
   return { user: data.user, profile, userDb };

@@ -1,6 +1,7 @@
 // One edge function for the customer and staff portals. Route = last path segment, e.g. /functions/v1/portal/signing
 import { admin, button, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL } from "../_shared/common.ts";
 import { buildAgreementPdf, sha256Hex, toBase64 } from "../_shared/pdf.ts";
+import { createDepositInvoice, invoiceBalance, qbAuthUrl, qbConfigured, qbExchange, qbLists, qbStatus } from "../_shared/qb.ts";
 
 // ---- login-link ----
 // POST {email, next?}  Emails a one-tap sign-in link. Always answers "ok" so it never reveals who has an account.
@@ -198,6 +199,20 @@ async function route_signing(req: Request): Promise<Response> {
   }).eq("id", sale.id);
   await logEvent(sale.id, "customer_signed", userId, { ip, sha256: hash });
 
+  // Deposit invoice in QuickBooks (if connected), so the welcome email can carry a Pay now button.
+  let payLink: string | null = null;
+  try {
+    const st = await qbStatus();
+    if (st.connected) {
+      const r = await createDepositInvoice({ ...sale, status: "signed" }, c);
+      payLink = r?.link ?? null;
+      if (r) await logEvent(sale.id, "qb_invoice_created", null, { invoice: r.invoiceId });
+    }
+  } catch (e) {
+    console.error("qb invoice", e);
+    await logEvent(sale.id, "qb_invoice_failed", null, { error: String(e) });
+  }
+
   // Welcome to the family
   const portal = await loginLink(c.email, "/portal/");
   const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
@@ -216,7 +231,9 @@ async function route_signing(req: Request): Promise<Response> {
 ${button(portal, "Open my portal")}
 <p style="color:#6e5d4f;font-size:14px">That button signs you in once. Next time, go to northgrenvillehottubs.ca/login and enter this email.</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your deposit</p>
-<p>Your deposit is ${money(sale.deposit)} and your remaining balance is ${money(sale.balance)}, due before delivery. I'll be in touch about payment.</p>
+${payLink
+  ? `<p>Your deposit is ${money(sale.deposit)}. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us. You can pay securely online by card or bank transfer through QuickBooks:</p>${button(payLink, "Pay my deposit")}<p style="color:#6e5d4f;font-size:14px">Your remaining balance of ${money(sale.balance)} is due before delivery.</p>`
+  : `<p>Your deposit is ${money(sale.deposit)} and your remaining balance is ${money(sale.balance)}, due before delivery. Paying the deposit confirms your order with Platinum Spas so your tub can be built and shipped to us. I'll be in touch about payment.</p>`}
 <p style="color:#6e5d4f">We're a small family business, and we don't think of this as a one-time sale. You'll see us for filters, advice and service for years, so our job is to make sure you love this tub. Call or text me any time at (613) 292-1786.</p>
 <p>Blaine</p>`,
       }),
@@ -264,9 +281,130 @@ async function route_agreement_pdf(req: Request): Promise<Response> {
   return jsonAuth(req, { url: data?.signedUrl });
 }
 
+
+// ---- QuickBooks (admins) ----
+async function adminOnly(req: Request) {
+  const me = await caller(req);
+  return me && me.profile.role === "admin" ? me : null;
+}
+
+async function route_qb_status(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await adminOnly(req);
+  if (!me) return jsonAuth(req, { error: "Admins only." }, 403);
+  if (!qbConfigured()) return jsonAuth(req, { configured: false, connected: false });
+  const st = await qbStatus();
+  const db = admin();
+  const item = (await db.rpc("setting_get", { k: "qb_deposit_item_id" })).data;
+  const tax = (await db.rpc("setting_get", { k: "qb_deposit_tax_code_id" })).data;
+  let lists = null, listError = null;
+  if (st.connected) { try { lists = await qbLists(); } catch (e) { listError = String((e as Error).message); } }
+  return jsonAuth(req, { configured: true, ...st, item_id: item, tax_code_id: tax, lists, list_error: listError });
+}
+
+async function route_qb_connect(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await adminOnly(req);
+  if (!me) return jsonAuth(req, { error: "Admins only." }, 403);
+  if (!qbConfigured()) return jsonAuth(req, { error: "Add QB_CLIENT_ID and QB_CLIENT_SECRET in Supabase first." }, 400);
+  const { data: state } = await admin().rpc("qb_state_new", { uid: me.user.id });
+  return jsonAuth(req, { url: qbAuthUrl(state) });
+}
+
+async function route_qb_callback(req: Request): Promise<Response> {
+  const q = new URL(req.url).searchParams;
+  const back = (s: string) => new Response(null, { status: 302, headers: { Location: `${SITE_URL}/staff/?qb=${s}#team` } });
+  if (q.get("error")) return back("cancelled");
+  const { data: uid } = await admin().rpc("qb_state_take", { s: q.get("state") ?? "" });
+  if (!uid || !q.get("code") || !q.get("realmId")) return back("failed");
+  try { await qbExchange(q.get("code")!, q.get("realmId")!, uid); return back("connected"); }
+  catch (e) { console.error(e); return back("failed"); }
+}
+
+async function route_qb_settings(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await adminOnly(req);
+  if (!me) return jsonAuth(req, { error: "Admins only." }, 403);
+  const b = await req.json().catch(() => ({}));
+  const db = admin();
+  if (b.disconnect) { await db.rpc("qb_clear"); return jsonAuth(req, { ok: true }); }
+  if (b.item_id !== undefined) await db.rpc("setting_put", { k: "qb_deposit_item_id", v: String(b.item_id ?? "") });
+  if (b.tax_code_id !== undefined) await db.rpc("setting_put", { k: "qb_deposit_tax_code_id", v: String(b.tax_code_id ?? "") });
+  return jsonAuth(req, { ok: true });
+}
+
+// Staff: create (or re-create) the deposit invoice for a signed sale and email the pay link.
+async function route_qb_invoice(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || !["admin", "staff"].includes(me.profile.role)) return jsonAuth(req, { error: "Please sign in as staff." }, 401);
+  const b = await req.json().catch(() => ({}));
+  const { data: visible } = await me.userDb.from("sales").select("id").eq("id", String(b.sale_id ?? "")).maybeSingle();
+  if (!visible) return jsonAuth(req, { error: "Sale not found." }, 404);
+  const db = admin();
+  const { data: sale } = await db.from("sales").select("*, customers(*)").eq("id", visible.id).single();
+  if (sale.status !== "signed") return jsonAuth(req, { error: "A deposit invoice is only created after the customer signs." }, 409);
+  let r = sale.qb_deposit_invoice_id ? { invoiceId: sale.qb_deposit_invoice_id, link: sale.qb_invoice_link } : null;
+  if (!r) r = await createDepositInvoice(sale, sale.customers);
+  if (!r) return jsonAuth(req, { error: "This sale has no deposit." }, 400);
+  await logEvent(sale.id, "qb_invoice_created", me.user.id, { invoice: r.invoiceId });
+  if (b.email_customer && r.link) {
+    const c = sale.customers;
+    await sendEmail({
+      from: FROM, to: c.email, reply_to: REPLY_TO, subject: `Your deposit for agreement #${sale.number}`,
+      html: emailShell({ preheader: "Pay your deposit securely online.", body:
+        `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Here's the link to pay your ${money(sale.deposit)} deposit. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us.</p>
+${button(r.link, "Pay my deposit")}<p style="color:#6e5d4f">You can pay by card or bank transfer through QuickBooks. Your remaining balance of ${money(sale.balance)} is due before delivery. Questions? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
+    });
+    await logEvent(sale.id, "pay_link_emailed", me.user.id, { to: c.email });
+  }
+  return jsonAuth(req, { ok: true, link: r.link });
+}
+
+// Scheduled: checks open deposit invoices and marks paid ones.
+async function route_qb_sync(req: Request): Promise<Response> {
+  const db = admin();
+  const { data: ok } = await db.rpc("check_cron_secret", { s: req.headers.get("x-cron-secret") ?? "" });
+  if (ok !== true) return new Response("Forbidden", { status: 403 });
+  const st = await qbStatus();
+  if (!st.connected) return new Response(JSON.stringify({ skipped: "not connected" }));
+  const { data: open } = await db.from("sales").select("*, customers(*)").eq("status", "signed").not("qb_deposit_invoice_id", "is", null).limit(100);
+  const paid = [];
+  for (const sale of open ?? []) {
+    try {
+      const { balance } = await invoiceBalance(sale.qb_deposit_invoice_id);
+      if (balance > 0) continue;
+      const now = new Date().toISOString();
+      await db.from("sales").update({ status: "deposit_paid", deposit_paid_at: now }).eq("id", sale.id).eq("status", "signed");
+      await logEvent(sale.id, "deposit_paid", null, { invoice: sale.qb_deposit_invoice_id });
+      paid.push(sale.number);
+      const c = sale.customers;
+      const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
+      const portal = await loginLink(c.email, "/portal/");
+      await sendEmail({
+        from: FROM, to: c.email, reply_to: REPLY_TO, subject: "Deposit received. Your tub is on order.",
+        html: emailShell({ preheader: "Thank you. Here's what happens next.", body:
+          `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Thank you, we've received your ${money(sale.deposit)} deposit. Your ${escapeHtml(what)} is now on order with Platinum Spas.</p>
+<p style="font-family:Georgia,serif;font-size:20px;margin:24px 0 6px">What to do while you wait</p>
+<p>This is the perfect time to get your spot ready using your pre-delivery guide: a solid, level base, power run by a licensed electrician, and a clear path to the backyard. Having these done before the tub arrives is what makes delivery day quick and stress-free, and it protects your warranty.</p>
+${button(portal, "Open my portal")}
+<p style="color:#6e5d4f">I'll be in touch to book your delivery as your tub gets closer. Your remaining balance of ${money(sale.balance)} is due before delivery. Questions any time? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
+      });
+      const { data: rep } = await db.from("profiles").select("email").eq("id", sale.salesperson_id).single();
+      const { data: admins } = await db.from("profiles").select("email").eq("role", "admin").eq("active", true);
+      const to = [...new Set([rep?.email, ...(admins ?? []).map((a) => a.email)].filter(Boolean))] as string[];
+      if (to.length) await sendEmail({ from: FROM, to, subject: `Deposit paid: agreement #${sale.number}, ${c.name}`,
+        html: emailShell({ preheader: "Deposit received in QuickBooks.", body: `<p>${escapeHtml(c.name)} paid the ${money(sale.deposit)} deposit on agreement #${sale.number}. Time to place the order with Platinum Spas.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }) });
+    } catch (e) { console.error("sync", sale.number, e); }
+  }
+  return new Response(JSON.stringify({ checked: (open ?? []).length, paid }), { headers: { "Content-Type": "application/json" } });
+}
+
 const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
+  "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
+  "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };
 Deno.serve(async (req) => {
   const name = new URL(req.url).pathname.split("/").filter(Boolean).pop() ?? "";
