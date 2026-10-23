@@ -188,6 +188,133 @@ def business_jsonld():
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
 
+# ---------- Blog ----------
+POSTS_DIR = SRC / "posts"
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+
+def nice_date(d):
+    y, m, dd = (int(x) for x in d.split("-"))
+    return f"{MONTHS[m - 1]} {dd}, {y}"
+
+
+def inline_md(s):
+    s = esc(s, quote=False)
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", r"<em>\1</em>", s)
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', s)
+
+
+def md_to_html(text):
+    """Small Markdown subset: ## / ### headings, paragraphs, - and 1. lists, > quotes, **bold**, *italic*, [links](url)."""
+    out, para, lst, kind = [], [], [], None
+
+    def flush():
+        nonlocal para, lst, kind
+        if para:
+            out.append(f"<p>{inline_md(' '.join(para))}</p>")
+            para = []
+        if lst:
+            out.append(f"<{kind}>" + "".join(f"<li>{inline_md(i)}</li>" for i in lst) + f"</{kind}>")
+            lst, kind = [], None
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            flush(); continue
+        m = re.match(r"^(#{2,3})\s+(.*)", line)
+        if m:
+            flush(); n = len(m.group(1)); out.append(f"<h{n}>{inline_md(m.group(2))}</h{n}>"); continue
+        if line.startswith("> "):
+            flush(); out.append(f"<blockquote><p>{inline_md(line[2:])}</p></blockquote>"); continue
+        m = re.match(r"^(-|\d+\.)\s+(.*)", line)
+        if m:
+            k = "ul" if m.group(1) == "-" else "ol"
+            if para: flush()
+            if kind and kind != k: flush()
+            kind = k; lst.append(m.group(2)); continue
+        if lst: flush()
+        para.append(line)
+    flush()
+    return "\n".join(out)
+
+
+def load_posts():
+    posts = []
+    for f in sorted(POSTS_DIR.glob("*.md")):
+        raw = f.read_text()
+        m = re.match(r"^---\n(.*?)\n---\n(.*)$", raw, re.S)
+        if not m:
+            raise SystemExit(f"{f.name}: missing front matter")
+        meta = {}
+        for line in m.group(1).splitlines():
+            if ":" in line:
+                k, v = line.split(":", 1)
+                meta[k.strip()] = v.strip().strip('"')
+        for k in ("title", "description", "date", "image"):
+            if not meta.get(k):
+                raise SystemExit(f"{f.name}: front matter needs '{k}'")
+        if not (ROOT / "assets/img" / f"{meta['image']}.webp").exists():
+            raise SystemExit(f"{f.name}: image '{meta['image']}' not found in assets/img")
+        meta["slug"] = meta.get("slug") or re.sub(r"^\d{4}-\d{2}-\d{2}-", "", f.stem)
+        meta["body"] = m.group(2)
+        posts.append(meta)
+    return sorted(posts, key=lambda p: p["date"], reverse=True)
+
+
+def post_body(p, base):
+    body = md_to_html(p["body"]).replace('href="/', f'href="{base}')
+    return f"""<article class="post">
+<section class="phero">
+  <div class="wrap">
+    <a class="back" href="{base}blog/">&larr; All posts</a>
+    <p class="eyebrow">From Blaine &middot; {nice_date(p['date'])}</p>
+    <h1>{esc(p['title'])}</h1>
+    <div class="byline"><img src="{base}assets/img/logo.webp" alt="" width="44" height="44"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></div>
+  </div>
+</section>
+<div class="wrap">
+  <div class="prose">
+{body}
+    <aside class="postcta">
+      <p class="eyebrow">Questions? Ask me directly.</p>
+      <h2>Call or text Blaine.</h2>
+      <p>I answer my own phone. Tell me how you'd use a hot tub and I'll give you an honest recommendation and a real price.</p>
+      <div class="ctas">
+        <a class="btn btn-gold" href="{TEL}">{PHONE}Call Blaine</a>
+        <a class="btn btn-line" href="{sms("Hi Blaine, I just read your post: " + p['title'])}">{CHAT}Text Blaine</a>
+      </div>
+      <p class="num">{SITE['phone_display']}</p>
+    </aside>
+  </div>
+</div>
+</article>"""
+
+
+def post_jsonld(p):
+    data = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["description"],
+            "datePublished": p["date"], "dateModified": p["date"], "image": f"{SITE['url']}/assets/img/{p['image']}.webp",
+            "author": {"@type": "Person", "name": SITE["owner"], "jobTitle": "Owner"},
+            "publisher": {"@type": "Organization", "name": SITE["name"], "logo": {"@type": "ImageObject", "url": SITE["url"] + "/assets/img/logo.png"}},
+            "mainEntityOfPage": f"{SITE['url']}/blog/{p['slug']}/"}
+    return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
+
+
+def blog_index(posts, base):
+    cards = "".join(f"""<a class="postcard" href="{base}blog/{p['slug']}/">
+      <div class="ph"><img src="{base}assets/img/{p['image']}.webp" alt="" loading="lazy" width="560" height="560"></div>
+      <div class="bd"><p class="date">{nice_date(p['date'])}</p><h2>{esc(p['title'])}</h2><p>{esc(p['description'])}</p><span class="go">Read it <span aria-hidden="true">&rarr;</span></span></div>
+    </a>""" for p in posts) or '<p class="intro">The first post is on its way.</p>'
+    return f"""<section class="lhero">
+  <div class="wrap" style="padding-block:56px 64px">
+    <p class="eyebrow">From the owner</p>
+    <h1>Straight talk about hot tubs.</h1>
+    <p style="color:var(--sand);margin-top:16px;max-width:56ch">Honest answers to the questions people ask me every week: water care in our hard water, what to look for in a tub, and how to get the most out of yours. New posts every Monday. <b style="color:var(--cream)">Blaine</b></p>
+  </div>
+</section>
+<section class="pick"><div class="wrap"><div class="postgrid">{cards}</div></div></section>"""
+
+
 def build():
     home = fill((SRC / "home.html").read_text(), "")
     page("", "North Grenville Hot Tubs & Saunas | Kemptville, Ontario",
@@ -201,10 +328,17 @@ def build():
   <p style="color:var(--sand);margin-top:18px;max-width:46ch">The page you're looking for isn't here. Head back home, or just text Blaine and ask.</p>
   <div class="ctas" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:28px"><a class="btn btn-gold" href="/">Back to home</a><a class="btn btn-ghost" href="tel:+16132921786">Call Blaine</a></div>
 </div></section>""", "/")
-    urls = [""] + [f"{l}/" for l in LINES]
+    posts = load_posts()
+    page("blog/", "Blog: Straight talk about hot tubs | North Grenville Hot Tubs",
+         "Hot tub advice from Blaine McAvoy, owner of North Grenville Hot Tubs in Kemptville: water care, buying tips and ownership.",
+         blog_index(posts, "../"), "../")
+    for p in posts:
+        page(f"blog/{p['slug']}/", f"{p['title']} | North Grenville Hot Tubs", p["description"],
+             post_body(p, "../../"), "../../", post_jsonld(p))
+    urls = [""] + [f"{l}/" for l in LINES] + ["blog/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
-    print("Built:", ", ".join(["index.html"] + [f"{l}/index.html" for l in LINES] + ["404.html", "sitemap.xml"]))
+    print(f"Built: home, {len(LINES)} line pages, blog index, {len(posts)} posts, 404, sitemap")
 
 
 if __name__ == "__main__":

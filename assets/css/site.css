@@ -279,3 +279,36 @@ section[id],.line[id]{scroll-margin-top:84px}
 .ogrid em{font-style:normal;font-weight:700;color:var(--water-deep)}
 @media (max-width:600px){.ogrid{grid-template-columns:1fr}}
 .tub .tubname{font-family:var(--display);font-weight:500;font-size:1.4rem;margin:0}
+
+/* Blog */
+.postgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+@media (max-width:480px){.postgrid{grid-template-columns:1fr}}
+.postcard{display:grid;grid-template-rows:auto 1fr;background:var(--cream);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink)}
+.postcard:hover{border-color:var(--ink)}
+.postcard .ph{aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--bark)}
+.postcard .ph img{width:100%;height:100%;object-fit:cover}
+.postcard .bd{padding:20px;display:grid;gap:8px;align-content:start}
+.postcard .date{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.postcard h2{font-size:1.45rem}
+.postcard p{color:var(--muted);font-size:.95rem}
+.postcard .go{font-weight:700;color:var(--water-deep)}
+.phero{background:var(--night);color:var(--cream)}
+.phero .wrap{padding-block:28px 56px;max-width:860px}
+.phero h1{font-size:clamp(2.2rem,5vw,3.6rem);margin-top:10px}
+.byline{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:.88rem;color:var(--sand);line-height:1.35}
+.byline img{width:44px;height:44px}
+.byline b{color:var(--cream);font-weight:600}
+.prose{max-width:68ch;margin:0 auto;padding-block:56px 72px;font-size:1.08rem;line-height:1.75}
+.prose > * + *{margin-top:1.1em}
+.prose h2{font-size:clamp(1.6rem,3vw,2.1rem);margin-top:1.8em}
+.prose h3{font-size:1.35rem;margin-top:1.5em}
+.prose ul,.prose ol{padding-left:1.3em}
+.prose li + li{margin-top:.4em}
+.prose a{color:var(--water-deep);font-weight:600}
+.prose blockquote{margin-left:0;border-left:2px solid var(--gold);padding-left:20px;font-family:var(--display);font-style:italic;font-size:1.25rem}
+.postcta{margin-top:3em !important;background:var(--night);color:var(--cream);border-radius:18px;padding:28px}
+.postcta h2{margin-top:6px !important;font-size:1.9rem}
+.postcta p{color:var(--sand)}
+.postcta .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.postcta .btn-line{border-color:rgba(244,236,223,.45);color:var(--cream)}
+.postcta .num{font-family:var(--display);font-size:1.4rem;color:var(--gold-soft);margin-top:12px}
