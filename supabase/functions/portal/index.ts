@@ -220,16 +220,19 @@ function payWhy(sale: any, link: string | null) {
 async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "online" | "paper") {
   const db = admin();
   // Deposit invoice in QuickBooks (if connected), so the welcome email can carry a Pay now button.
-  let payLink: string | null = null;
+  let payLink: string | null = null, invoiceProblem = "";
   try {
     const st = await qbStatus();
-    if (st.connected) {
+    if (!st.connected) invoiceProblem = "QuickBooks isn't connected, so no invoice was created.";
+    else {
       const r = await createDepositInvoice({ ...sale, status: "signed" }, c);
       payLink = r?.link ?? null;
       if (r) await logEvent(sale.id, "qb_invoice_created", null, { invoice: r.invoiceId });
+      if (r && !payLink) invoiceProblem = "The invoice was created in QuickBooks, but QuickBooks didn't return a pay link. Check that online payments are turned on for the account.";
     }
   } catch (e) {
     console.error("qb invoice", e);
+    invoiceProblem = String((e as Error).message ?? e);
     await logEvent(sale.id, "qb_invoice_failed", null, { error: String(e) });
   }
 
@@ -277,7 +280,8 @@ ${payWhy(sale, payLink)}
       from: FROM, to, subject: `Signed: agreement #${sale.number}, ${c.name}`,
       html: emailShell({ preheader: `${c.name} signed agreement #${sale.number}.`, body:
         `<p>${escapeHtml(c.name)} ${method === "paper" ? "signed on paper:" : "just signed"} agreement #${sale.number} for the ${escapeHtml(what)}. Total ${money(sale.total)}, ${pt.full ? "paid in full" : `deposit ${money(sale.deposit)}`}, ${pt.how}.</p>
-<p>They've been sent their signed copy, pre-delivery guide, owner's manual and a link to their portal.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }),
+<p>They've been sent their signed copy, pre-delivery guide, owner's manual and a link to their portal.</p>
+${Number(sale.deposit) > 0 && !payLink ? `<p style="background:#fbe9d0;border-radius:8px;padding:12px 14px"><b>No pay link went to the customer.</b> ${escapeHtml(invoiceProblem || "The invoice couldn't be created.")} Once that's sorted, open the sale and tap "Create invoice and email pay link".</p>` : ""}${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }),
       attachments: [{ filename: `Agreement #${sale.number}.pdf`, content: toBase64(pdfBytes) }],
     });
   } catch (e) { console.error("staff notice failed", e); }
