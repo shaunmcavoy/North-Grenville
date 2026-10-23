@@ -1,5 +1,5 @@
 // One edge function for the customer and staff portals. Route = last path segment, e.g. /functions/v1/portal/signing
-import { admin, button, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL } from "../_shared/common.ts";
+import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL } from "../_shared/common.ts";
 import { buildAgreementPdf, sha256Hex, toBase64 } from "../_shared/pdf.ts";
 import { createDepositInvoice, invoiceBalance, qbAuthUrl, qbConfigured, qbDisconnect, qbExchange, qbLists, qbStatus } from "../_shared/qb.ts";
 
@@ -137,7 +137,7 @@ ${button(signUrl, "Review and sign")}
 // GET ?t=token  -> agreement details for the customer to review.
 // POST {t, signature, typed_name, agree:true} -> customer signs; PDF is created, account made, welcome email sent.
 
-const PUBLIC_FIELDS = ["number","status","sale_date","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","rep_name","rep_signed_at","terms_version"];
+const PUBLIC_FIELDS = ["number","status","sale_date","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","rep_name","rep_signed_at","terms_version"];
 
 async function load(token: string) {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
@@ -204,6 +204,17 @@ async function route_signing(req: Request): Promise<Response> {
   return json(req, { ok: true, number: sale.number });
 }
 
+// The payment paragraph used in customer emails: what they owe now, why it matters, and the pay button if there is one.
+function payWhy(sale: any, link: string | null) {
+  const p = payTerms(sale);
+  const why = p.full
+    ? `Your total is ${money(sale.deposit)}, paid in full as we agreed. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us, and there's nothing left to pay on delivery day.`
+    : `Your deposit is ${money(sale.deposit)}, as we agreed. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us. Your remaining balance of ${money(sale.balance)} is due before delivery.`;
+  return link
+    ? `<p>${why} You can pay securely online ${p.how} through QuickBooks:</p>${button(link, p.button)}`
+    : `<p>${why} I'll be in touch about payment.</p>`;
+}
+
 // Everything that happens once an agreement is signed, online or on paper:
 // QuickBooks deposit invoice, welcome email with the guides and portal, and a notice to the salesperson and admins.
 async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "online" | "paper") {
@@ -225,6 +236,7 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
   // Welcome to the family
   const portal = await loginLink(c.email, "/portal/");
   const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
+  const pt = payTerms(sale);
   try {
     await sendEmail({
       from: FROM, to: c.email, reply_to: REPLY_TO, subject: "Welcome to the North Grenville Hot Tubs family",
@@ -239,10 +251,8 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
 <p>We've set up your own portal with your tub's details and your agreement. As we go, it's where you'll schedule delivery, register your serial number for warranty, and send me questions directly.</p>
 ${button(portal, "Open my portal")}
 <p style="color:#6e5d4f;font-size:14px">That button signs you in once. Next time, go to northgrenvillehottubs.ca/login and enter this email.</p>
-<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your deposit</p>
-${payLink
-  ? `<p>Your deposit is ${money(sale.deposit)}. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us. You can pay securely online by card or bank transfer through QuickBooks:</p>${button(payLink, "Pay my deposit")}<p style="color:#6e5d4f;font-size:14px">Your remaining balance of ${money(sale.balance)} is due before delivery.</p>`
-  : `<p>Your deposit is ${money(sale.deposit)} and your remaining balance is ${money(sale.balance)}, due before delivery. Paying the deposit confirms your order with Platinum Spas so your tub can be built and shipped to us. I'll be in touch about payment.</p>`}
+<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">${pt.full ? "Your payment" : "Your deposit"}</p>
+${payWhy(sale, payLink)}
 <p style="color:#6e5d4f">We're a small family business, and we don't think of this as a one-time sale. You'll see us for filters, advice and service for years, so our job is to make sure you love this tub. Call or text me any time at (613) 292-1786.</p>
 <p>Blaine</p>`,
       }),
@@ -266,7 +276,7 @@ ${payLink
     if (to.length) await sendEmail({
       from: FROM, to, subject: `Signed: agreement #${sale.number}, ${c.name}`,
       html: emailShell({ preheader: `${c.name} signed agreement #${sale.number}.`, body:
-        `<p>${escapeHtml(c.name)} ${method === "paper" ? "signed on paper:" : "just signed"} agreement #${sale.number} for the ${escapeHtml(what)}. Total ${money(sale.total)}, deposit ${money(sale.deposit)}.</p>
+        `<p>${escapeHtml(c.name)} ${method === "paper" ? "signed on paper:" : "just signed"} agreement #${sale.number} for the ${escapeHtml(what)}. Total ${money(sale.total)}, ${pt.full ? "paid in full" : `deposit ${money(sale.deposit)}`}, ${pt.how}.</p>
 <p>They've been sent their signed copy, pre-delivery guide, owner's manual and a link to their portal.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }),
       attachments: [{ filename: `Agreement #${sale.number}.pdf`, content: toBase64(pdfBytes) }],
     });
@@ -455,7 +465,7 @@ async function route_qb_invoice(req: Request): Promise<Response> {
   if (!visible) return jsonAuth(req, { error: "Sale not found." }, 404);
   const db = admin();
   const { data: sale } = await db.from("sales").select("*, customers(*)").eq("id", visible.id).single();
-  if (sale.status !== "signed") return jsonAuth(req, { error: "A deposit invoice is only created after the customer signs." }, 409);
+  if (sale.status !== "signed") return jsonAuth(req, { error: "The invoice is only created after the customer signs." }, 409);
   let r = sale.qb_deposit_invoice_id ? { invoiceId: sale.qb_deposit_invoice_id, link: sale.qb_invoice_link } : null;
   if (!r) r = await createDepositInvoice(sale, sale.customers);
   if (!r) return jsonAuth(req, { error: "This sale has no deposit." }, 400);
@@ -463,10 +473,9 @@ async function route_qb_invoice(req: Request): Promise<Response> {
   if (b.email_customer && r.link) {
     const c = sale.customers;
     await sendEmail({
-      from: FROM, to: c.email, reply_to: REPLY_TO, subject: `Your deposit for agreement #${sale.number}`,
-      html: emailShell({ preheader: "Pay your deposit securely online.", body:
-        `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Here's the link to pay your ${money(sale.deposit)} deposit. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us.</p>
-${button(r.link, "Pay my deposit")}<p style="color:#6e5d4f">You can pay by card or bank transfer through QuickBooks. Your remaining balance of ${money(sale.balance)} is due before delivery. Questions? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
+      from: FROM, to: c.email, reply_to: REPLY_TO, subject: `Your ${payTerms(sale).noun} for agreement #${sale.number}`,
+      html: emailShell({ preheader: `Pay your ${payTerms(sale).noun} securely online.`, body:
+        `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p>${payWhy(sale, r.link)}<p style="color:#6e5d4f">Questions? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
     });
     await logEvent(sale.id, "pay_link_emailed", me.user.id, { to: c.email });
   }
@@ -493,20 +502,21 @@ async function route_qb_sync(req: Request): Promise<Response> {
       const c = sale.customers;
       const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
       const portal = await loginLink(c.email, "/portal/");
+      const pt = payTerms(sale);
       await sendEmail({
-        from: FROM, to: c.email, reply_to: REPLY_TO, subject: "Deposit received. Your tub is on order.",
+        from: FROM, to: c.email, reply_to: REPLY_TO, subject: `${pt.received}. Your tub is on order.`,
         html: emailShell({ preheader: "Thank you. Here's what happens next.", body:
-          `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Thank you, we've received your ${money(sale.deposit)} deposit. Your ${escapeHtml(what)} is now on order with Platinum Spas.</p>
+          `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Thank you, we've received your ${money(sale.deposit)} ${pt.full ? "payment. You're paid in full, and your" : "deposit. Your"} ${escapeHtml(what)} is now on order with Platinum Spas.</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:24px 0 6px">What to do while you wait</p>
 <p>This is the perfect time to get your spot ready using your pre-delivery guide: a solid, level base, power run by a licensed electrician, and a clear path to the backyard. Having these done before the tub arrives is what makes delivery day quick and stress-free, and it protects your warranty.</p>
 ${button(portal, "Open my portal")}
-<p style="color:#6e5d4f">I'll be in touch to book your delivery as your tub gets closer. Your remaining balance of ${money(sale.balance)} is due before delivery. Questions any time? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
+<p style="color:#6e5d4f">I'll be in touch to book your delivery as your tub gets closer.${pt.full ? "" : ` Your remaining balance of ${money(sale.balance)} is due before delivery.`} Questions any time? Call or text me at (613) 292-1786.</p><p>Blaine</p>` }),
       });
       const { data: rep } = await db.from("profiles").select("email").eq("id", sale.salesperson_id).single();
       const { data: admins } = await db.from("profiles").select("email").eq("role", "admin").eq("active", true);
       const to = [...new Set([rep?.email, ...(admins ?? []).map((a) => a.email)].filter(Boolean))] as string[];
-      if (to.length) await sendEmail({ from: FROM, to, subject: `Deposit paid: agreement #${sale.number}, ${c.name}`,
-        html: emailShell({ preheader: "Deposit received in QuickBooks.", body: `<p>${escapeHtml(c.name)} paid the ${money(sale.deposit)} deposit on agreement #${sale.number}. Time to place the order with Platinum Spas.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }) });
+      if (to.length) await sendEmail({ from: FROM, to, subject: `${pt.full ? "Paid in full" : "Deposit paid"}: agreement #${sale.number}, ${c.name}`,
+        html: emailShell({ preheader: `${pt.received} in QuickBooks.`, body: `<p>${escapeHtml(c.name)} paid ${pt.full ? "in full" : "the deposit"} (${money(sale.deposit)}) on agreement #${sale.number}. Time to place the order with Platinum Spas.</p>${button(`${SITE_URL}/staff/#sale-${sale.id}`, "Open in staff portal")}` }) });
     } catch (e) { console.error("sync", sale.number, e); }
   }
   return new Response(JSON.stringify({ checked: (open ?? []).length, paid }), { headers: { "Content-Type": "application/json" } });

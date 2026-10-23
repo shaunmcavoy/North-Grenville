@@ -4,7 +4,7 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var form = $('#saleForm');
   var CUST = ['name', 'email', 'cell', 'heard_about', 'address', 'city_pc'];
-  var SALE = ['sale_date', 'tub_make', 'tub_model', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'sauna_make', 'sauna_model', 'sauna_electrical', 'notes'];
+  var SALE = ['sale_date', 'tub_make', 'tub_model', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'sauna_make', 'sauna_model', 'sauna_electrical', 'notes', 'payment_type', 'pay_methods'];
   var MONEY = ['hot_tub_value', 'sauna_total', 'delivery_fee', 'deposit'];
   var TAX = 0.13;
 
@@ -27,12 +27,19 @@
 
   function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
   function sums() {
-    var tub = num(form.hot_tub_value.value), sauna = num(form.sauna_total.value), del = num(form.delivery_fee.value), dep = num(form.deposit.value);
-    var sub = tub + sauna + del, tax = Math.round(sub * TAX * 100) / 100, tot = sub + tax;
-    $('#sums').innerHTML = [['Products', tub + sauna], ['Delivery', del], ['Subtotal', sub], ['HST (13%)', tax], ['Total', tot, 1], ['Deposit', dep], ['Balance', tot - dep, 1]]
+    var tub = num(form.hot_tub_value.value), sauna = num(form.sauna_total.value), del = num(form.delivery_fee.value);
+    var sub = tub + sauna + del, tax = Math.round(sub * TAX * 100) / 100, tot = Math.round((sub + tax) * 100) / 100;
+    var full = form.payment_type.value === 'full';
+    // Paid in full: the amount due on signing is the whole total, so the deposit box follows it.
+    if (full) form.deposit.value = tot ? tot.toFixed(2) : '';
+    form.deposit.readOnly = full;
+    form.deposit.closest('label').firstChild.textContent = full ? 'Amount due on signing' : 'Deposit';
+    var dep = num(form.deposit.value);
+    $('#sums').innerHTML = [['Products', tub + sauna], ['Delivery', del], ['Subtotal', sub], ['HST (13%)', tax], ['Total', tot, 1], [full ? 'Paid in full' : 'Deposit', dep], ['Balance', tot - dep, 1]]
       .map(function (r) { return '<div' + (r[2] ? ' class="strong"' : '') + '><dt>' + r[0] + '</dt><dd>' + NG.money(r[1]) + '</dd></div>'; }).join('');
   }
   MONEY.forEach(function (k) { form[k].addEventListener('input', sums); });
+  form.payment_type.addEventListener('change', sums);
 
   function show(view) {
     $$('.view').forEach(function (v) { v.hidden = v.id !== 'view-' + view; });
@@ -85,7 +92,7 @@
   function fill(s, c) {
     CUST.forEach(function (k) { form['c_' + k].value = (c && c[k]) || ''; });
     SALE.forEach(function (k) { if (k === 'tub_model') setModel(s && s.tub_model); else if (form[k]) form[k].value = (s && s[k] != null) ? s[k] : ''; });
-    if (!s) { form.tub_make.value = 'Platinum Spas'; form.sale_date.value = new Date().toISOString().slice(0, 10); }
+    if (!s) { form.tub_make.value = 'Platinum Spas'; form.sale_date.value = new Date().toISOString().slice(0, 10); form.payment_type.value = 'full'; form.pay_methods.value = 'both'; }
     MONEY.forEach(function (k) { form[k].value = s && Number(s[k]) ? s[k] : ''; });
     sums();
   }
@@ -266,13 +273,14 @@
   // ---------- Deposit (QuickBooks) ----------
   function renderDeposit() {
     var box = $('#depositBox'), s = current;
-    if (s.status === 'deposit_paid' || s.deposit_paid_at) { box.innerHTML = '<h3>Deposit</h3><p>' + NG.pill('deposit_paid') + ' ' + NG.money(s.deposit) + ' received ' + NG.dateTime(s.deposit_paid_at) + '. Time to place the order with Platinum Spas.</p>'; return; }
+    var full = s.payment_type === 'full', H = full ? '<h3>Payment</h3>' : '<h3>Deposit</h3>';
+    if (s.status === 'deposit_paid' || s.deposit_paid_at) { box.innerHTML = H + '<p>' + NG.pill('deposit_paid').replace('Deposit received', full ? 'Paid in full' : 'Deposit received') + ' ' + NG.money(s.deposit) + ' received ' + NG.dateTime(s.deposit_paid_at) + '. Time to place the order with Platinum Spas.</p>'; return; }
     if (!(Number(s.deposit) > 0)) { box.innerHTML = ''; return; }
     if (s.qb_deposit_invoice_id) {
-      box.innerHTML = '<h3>Deposit</h3><p>QuickBooks invoice created for ' + NG.money(s.deposit) + '. It switches to "Deposit received" on its own within 15 minutes of the customer paying.</p>' +
+      box.innerHTML = H + '<p>QuickBooks invoice created for ' + NG.money(s.deposit) + (full ? ' (paid in full)' : ' (deposit)') + '. It updates on its own within 15 minutes of the customer paying.</p>' +
         '<div class="formactions">' + (s.qb_invoice_link ? '<button class="btn btn-line btn-sm" type="button" id="copyPay">Copy pay link</button><button class="btn btn-ink btn-sm" type="button" id="emailPay">Email pay link to customer</button>' : '') + '<p class="formmsg" id="payMsg"></p></div>';
     } else {
-      box.innerHTML = '<h3>Deposit</h3><p class="muted">No QuickBooks invoice yet for the ' + NG.money(s.deposit) + ' deposit.</p><div class="formactions"><button class="btn btn-gold btn-sm" type="button" id="makeInvoice">Create deposit invoice and email pay link</button><p class="formmsg" id="payMsg"></p></div>';
+      box.innerHTML = H + '<p class="muted">No QuickBooks invoice yet for the ' + NG.money(s.deposit) + (full ? ' payment' : ' deposit') + '.</p><div class="formactions"><button class="btn btn-gold btn-sm" type="button" id="makeInvoice">Create invoice and email pay link</button><p class="formmsg" id="payMsg"></p></div>';
     }
     var cp = $('#copyPay'); if (cp) cp.onclick = function () { NG.copy(s.qb_invoice_link); };
     var send = function () {
@@ -296,10 +304,10 @@
       var opt = function (arr, sel) { return '<option value="">Choose...</option>' + arr.map(function (x) { return '<option value="' + NG.esc(x.id) + '"' + (x.id === sel ? ' selected' : '') + '>' + NG.esc(x.name) + (x.type ? ' (' + NG.esc(x.type) + ')' : '') + '</option>'; }).join(''); };
       body.innerHTML = banner + '<p>' + NG.pill('signed').replace('Signed', 'Connected') + ' ' + NG.esc(st.company || 'QuickBooks company') + '</p>' +
         (st.list_error ? '<p class="note">' + NG.esc(st.list_error) + '</p>' : '') +
-        '<form id="qbForm" class="form grid2"><label>Product or service for deposits<select name="item">' + opt(L.items, st.item_id) + '</select></label>' +
-        '<label>Tax code for deposits<select name="tax">' + opt(L.taxCodes, st.tax_code_id) + '</select></label>' +
+        '<form id="qbForm" class="form grid2"><label>Product or service for website invoices<select name="item">' + opt(L.items, st.item_id) + '</select></label>' +
+        '<label>Tax code<select name="tax">' + opt(L.taxCodes, st.tax_code_id) + '</select></label>' +
         '<div class="span2 formactions"><button class="btn btn-ink" type="submit">Save</button><button class="btn btn-line btn-sm" type="button" id="qbDisconnect">Disconnect</button><p class="formmsg"></p></div></form>' +
-        '<p class="muted small">Ask Blaine\'s bookkeeper which item and tax code deposits should use. If there isn\'t one yet, create a "Hot Tub Deposit" service in QuickBooks, then refresh this page.</p>';
+        '<p class="muted small">Used for both deposits and paid-in-full invoices. Ask Blaine\'s bookkeeper which item and tax code to use. If there isn\'t one yet, create a "Hot Tub Sale" service in QuickBooks, then refresh this page.</p>';
       $('#qbForm').onsubmit = function (e) {
         e.preventDefault(); var f = e.target, m = f.querySelector('.formmsg'); m.textContent = 'Saving...';
         NG.api('qb-settings', { item_id: f.item.value, tax_code_id: f.tax.value }).then(function () { m.textContent = 'Saved.'; }).catch(function (er) { m.textContent = er.message; });

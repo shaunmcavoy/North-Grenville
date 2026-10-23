@@ -1,5 +1,5 @@
 // QuickBooks Online: connection, customers and deposit invoices.
-import { admin } from "./common.ts";
+import { admin, payTerms } from "./common.ts";
 
 const ENV = Deno.env.get("QB_ENV") === "sandbox" ? "sandbox" : "production";
 const API = ENV === "sandbox" ? "https://sandbox-quickbooks.api.intuit.com" : "https://quickbooks.api.intuit.com";
@@ -138,16 +138,23 @@ export async function createDepositInvoice(sale: any, customer: any) {
   if (!itemId) throw new Error("Choose the QuickBooks item for deposits in the staff portal (Team tab) first.");
   const custId = sale.qb_customer_id || await findOrCreateCustomer(customer);
   const what = sale.tub_model ? `${sale.tub_make ?? ""} ${sale.tub_model} hot tub`.trim() : `${sale.sauna_model} sauna`;
+  const p = payTerms(sale);
   const line: any = {
     DetailType: "SalesItemLineDetail", Amount: Number(sale.deposit),
-    Description: `Deposit for ${what}, sales agreement #${sale.number}. Non-refundable per agreement. Remaining balance due before delivery.`,
+    Description: p.full
+      ? `Payment in full for ${what}, sales agreement #${sale.number}.`
+      : `Deposit for ${what}, sales agreement #${sale.number}. Non-refundable per agreement. Remaining balance due before delivery.`,
     SalesItemLineDetail: { ItemRef: { value: itemId }, Qty: 1, UnitPrice: Number(sale.deposit), ...(taxId ? { TaxCodeRef: { value: taxId } } : {}) },
   };
+  // Only the payment methods Blaine agreed with the customer are offered on the pay page.
+  const card = sale.pay_methods !== "bank", bank = sale.pay_methods !== "card";
   const inv = (await qb("POST", "/invoice", {
-    CustomerRef: { value: custId }, Line: [line], DocNumber: `NG${sale.number}-D`,
-    BillEmail: { Address: customer.email }, AllowOnlineCreditCardPayment: true, AllowOnlineACHPayment: true,
-    CustomerMemo: { value: `Thank you for choosing North Grenville Hot Tubs. This deposit confirms your order for your ${what}. Questions? Call or text Blaine at (613) 292-1786.` },
-    PrivateNote: `Website sale #${sale.number}`,
+    CustomerRef: { value: custId }, Line: [line], DocNumber: `NG${sale.number}-${p.full ? "F" : "D"}`,
+    BillEmail: { Address: customer.email }, AllowOnlineCreditCardPayment: card, AllowOnlineACHPayment: bank,
+    CustomerMemo: { value: p.full
+      ? `Thank you for choosing North Grenville Hot Tubs. This payment completes your order for your ${what}. Questions? Call or text Blaine at (613) 292-1786.`
+      : `Thank you for choosing North Grenville Hot Tubs. This deposit confirms your order for your ${what}. Questions? Call or text Blaine at (613) 292-1786.` },
+    PrivateNote: `Website sale #${sale.number} (${p.full ? "paid in full" : "deposit"}, ${sale.pay_methods ?? "both"})`,
   })).Invoice;
   let link: string | null = null;
   try { link = (await qbGet(`/invoice/${inv.Id}?include=invoiceLink`)).Invoice?.InvoiceLink ?? null; } catch (e) { console.error("invoice link", e); }

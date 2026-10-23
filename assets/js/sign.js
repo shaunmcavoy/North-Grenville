@@ -21,9 +21,10 @@
       (a.sauna_model ? '<h3>Sauna</h3><dl class="kv">' + row('Make', a.sauna_make) + row('Model', a.sauna_model) + row('Electrical', a.sauna_electrical) + '</dl>' : '') +
       (a.notes ? '<h3>Notes</h3><p>' + NG.esc(a.notes) + '</p>' : '') +
       '<h3>Price</h3><dl class="sums">' +
-      [['Hot tub', a.hot_tub_value], ['Sauna', a.sauna_total], ['Delivery', a.delivery_fee], ['Subtotal', sub], ['HST (' + Math.round(a.tax_rate * 100) + '%)', a.tax], ['Total', a.total, 1], ['Deposit', a.deposit], ['Balance due before delivery', a.balance, 1]]
+      [['Hot tub', a.hot_tub_value], ['Sauna', a.sauna_total], ['Delivery', a.delivery_fee], ['Subtotal', sub], ['HST (' + Math.round(a.tax_rate * 100) + '%)', a.tax], ['Total', a.total, 1], [a.payment_type === 'full' ? 'Paid in full on signing' : 'Deposit on signing', a.deposit], ['Balance due before delivery', a.balance, 1]]
         .filter(function (r) { return r[2] || Number(r[1]) > 0 || r[0] === 'Subtotal'; })
         .map(function (r) { return '<div' + (r[2] ? ' class="strong"' : '') + '><dt>' + r[0] + '</dt><dd>' + NG.money(r[1]) + '</dd></div>'; }).join('') + '</dl>' +
+      '<p class="muted small">Payment ' + ({ card: 'by credit card', bank: 'by bank transfer' }[a.pay_methods] || 'by card or bank transfer') + ' through a secure QuickBooks link, sent to you once you sign.</p>' +
       '<h3>Terms</h3><p class="terms">' + NG.esc(a.terms.delivery_terms) + '</p><p class="terms">' + NG.esc(a.terms.purchase_terms) + '</p></div>';
     $('#signLoading').hidden = true; $('#agreement').hidden = false; $('#signForm').hidden = false;
     $('#typedName').value = c.name || '';

@@ -1,6 +1,6 @@
 // Builds the signed sales agreement PDF, laid out like the paper form, with a signing record at the end.
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
-import { money, SITE_URL } from "./common.ts";
+import { money, payTerms, SITE_URL } from "./common.ts";
 
 // Standard PDF fonts only cover basic Latin characters, so tidy up anything fancier.
 const clean = (s: unknown) =>
@@ -93,9 +93,10 @@ export async function buildAgreementPdf(opts: {
     ["Subtotal", money(Number(sale.hot_tub_value) + Number(sale.sauna_total) + Number(sale.delivery_fee)), false],
     [`Tax (HST ${(Number(sale.tax_rate) * 100).toFixed(0)}%)`, money(sale.tax), false],
     ["Total", money(sale.total), true],
-    ["Deposit", money(sale.deposit), false],
+    [payTerms(sale).full ? "Paid in full" : "Deposit", money(sale.deposit), false],
     ["Balance", money(sale.balance), true],
   ];
+  const payNote = `Payment ${payTerms(sale).how}`;
   let sy = notesTop;
   for (const [l, v, b] of sums) {
     page.drawText(l.toUpperCase(), { x: mx, y: sy - 2, size: 8, font: bold, color: ink });
@@ -104,6 +105,8 @@ export async function buildAgreementPdf(opts: {
     page.drawLine({ start: { x: mx, y: sy - 7 }, end: { x: W - M, y: sy - 7 }, thickness: 0.5, color: line });
     sy -= 17;
   }
+  page.drawText(payNote, { x: mx, y: sy - 2, size: 8, font, color: muted });
+  sy -= 14;
   y = Math.min(y - 124, sy - 8);
 
   // Terms flow onto extra pages when they're long.

@@ -20,7 +20,8 @@
       var tub = NG.tubFor(s.tub_model), idx = ORDER.indexOf(s.status);
       var steps = STEPS.map(function (st, i) {
         var state = idx >= i ? 'done' : (idx + 1 === i ? 'next' : '');
-        return '<li class="' + state + '"><b>' + st[1] + '</b><span>' + (idx >= i || idx + 1 === i ? st[2] : '') + '</span></li>';
+        var label = st[0] === 'deposit_paid' && s.payment_type === 'full' ? 'Payment received' : st[1];
+        return '<li class="' + state + '"><b>' + label + '</b><span>' + (idx >= i || idx + 1 === i ? st[2] : '') + '</span></li>';
       }).join('');
       return '<article class="card mytub">' +
         '<div class="mytub-top">' +

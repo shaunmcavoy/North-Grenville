@@ -134,7 +134,10 @@
               <label>Sauna total<input name="sauna_total" type="number" min="0" step="0.01" inputmode="decimal"></label>
               <label>Delivery<input name="delivery_fee" type="number" min="0" step="0.01" inputmode="decimal"></label>
               <label>Deposit<input name="deposit" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Payment on signing<select name="payment_type"><option value="full">Paid in full</option><option value="deposit">Deposit, balance before delivery</option></select></label>
+              <label>Customer can pay by<select name="pay_methods"><option value="both">Card or bank transfer</option><option value="card">Credit card only</option><option value="bank">Bank transfer only</option></select></label>
             </div>
+            <p class="muted small span2">The customer's QuickBooks invoice is for exactly this amount, and the pay page only offers the payment method chosen here.</p>
             <dl class="sums" id="sums"></dl>
           </div>
         </fieldset>
@@ -161,7 +164,7 @@
 
       <div id="paperPanel" class="card signpanel" hidden>
         <h3>Or sign on paper</h3>
-        <p class="muted">Print two copies, and you and the customer sign both. They keep one, you keep the other. Then mark it signed here so they still get their welcome email, guides, portal and deposit link. Save any changes first: it prints what's saved.</p>
+        <p class="muted">Print two copies, and you and the customer sign both. They keep one, you keep the other. Then mark it signed here so they still get their welcome email, guides, portal and payment link. Save any changes first: it prints what's saved.</p>
         <div class="formactions">
           <button class="btn btn-ink" type="button" id="printPaper">Print for paper signing</button>
           <p class="formmsg" id="printMsg" role="status" aria-live="polite"></p>
@@ -218,7 +221,7 @@
         <div class="card"><h3>Team</h3><ul class="teamlist" id="teamList"><li>Loading...</li></ul></div>
         <div class="card span2" id="qbCard">
           <h3>QuickBooks</h3>
-          <p class="muted">When a customer signs, the website creates their deposit invoice in QuickBooks and puts a Pay now button in their welcome email. When they pay, the sale moves to "Deposit received" automatically and everyone is notified.</p>
+          <p class="muted">When a customer signs, the website creates their invoice in QuickBooks, for the deposit or the full amount as agreed, and puts a Pay button in their welcome email. When they pay, the sale updates automatically and everyone is notified.</p>
           <div id="qbBody"><p>Checking QuickBooks...</p></div>
         </div>
       </div>

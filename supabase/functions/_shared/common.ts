@@ -96,7 +96,20 @@ export const jsonAuth = (req: Request, body: unknown, status = 200) =>
 
 export const money = (n: number | string | null | undefined) =>
   "$" + Number(n ?? 0).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-export const firstNameOf = (name?: string | null) => (name ?? "").trim().split(/\s+/)[0] || "there";
+// Wording for what the customer pays when they sign: a deposit, or the whole amount.
+export function payTerms(sale: { payment_type?: string; pay_methods?: string }) {
+  const full = sale.payment_type === "full";
+  const how = sale.pay_methods === "card" ? "by credit card" : sale.pay_methods === "bank" ? "by bank transfer" : "by card or bank transfer";
+  return {
+    full, how,
+    noun: full ? "payment" : "deposit",            // "your deposit" / "your payment"
+    label: full ? "Payment in full" : "Deposit",   // headings and invoice lines
+    button: full ? "Pay my invoice" : "Pay my deposit",
+    received: full ? "Payment received" : "Deposit received",
+  };
+}
+
+export const firstNameOf =(name?: string | null) => (name ?? "").trim().split(/\s+/)[0] || "there";
 
 // Magic sign-in link that lands on our own /login/ page (no redirect allow-list needed).
 export async function loginLink(email: string, next = "") {
