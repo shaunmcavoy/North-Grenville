@@ -461,3 +461,14 @@ section[id],.line[id]{scroll-margin-top:84px}
 .altsign{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 .altsign .formactions{align-items:center}
 .textbtn{background:none;border:0;padding:6px 2px;color:var(--water-deep);font:inherit;font-size:.9rem;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+/* Customers */
+.searchbox{width:100%;margin:0 0 14px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);font:inherit}
+.filters .chip span{opacity:.7;font-weight:500}
+.deallist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.deallist a{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit}
+.deallist a:hover{border-color:var(--ink)}
+.card.danger{border-color:#e4c3b5}
+.progrow{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:10px 0 14px}
+.progrow p{margin:0 auto 8px 0;flex-basis:100%}
+.progrow label{display:grid;gap:4px;font-size:.86rem;font-weight:600}
+.progrow input{padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:var(--paper)}

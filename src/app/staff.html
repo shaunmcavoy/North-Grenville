@@ -6,6 +6,7 @@
   <div class="wrap">
     <nav class="tabs" aria-label="Staff sections">
       <a href="#sales" data-tab="sales" aria-current="page">Sales</a>
+      <a href="#customers" data-tab="customers">Customers</a>
       <a href="#new" data-tab="new">New sale</a>
       <a href="#team" data-tab="team" class="admin-only" hidden>Team</a>
     </nav>
@@ -14,6 +15,54 @@
 
 <section class="appmain">
   <div class="wrap">
+
+    <!-- Customers -->
+    <div id="view-customers" class="view" hidden>
+      <div class="listhead">
+        <div class="filters" role="group" aria-label="Filter customers" id="custFilters">
+          <button class="chip" type="button" data-stage="all" aria-pressed="true">All <span></span></button>
+          <button class="chip" type="button" data-stage="lead" aria-pressed="false">Leads <span></span></button>
+          <button class="chip" type="button" data-stage="payment_due" aria-pressed="false">Payment due <span></span></button>
+          <button class="chip" type="button" data-stage="balance" aria-pressed="false">Paid, balance owing <span></span></button>
+          <button class="chip" type="button" data-stage="waiting" aria-pressed="false">Waiting for delivery <span></span></button>
+          <button class="chip" type="button" data-stage="delivered" aria-pressed="false">Delivered <span></span></button>
+        </div>
+        <a class="btn btn-gold" href="#lead">Add a lead</a>
+      </div>
+      <input type="search" id="custSearch" class="searchbox" placeholder="Search by name, email, phone or town" aria-label="Search customers">
+      <div class="tablewrap"><table class="saletable">
+        <thead><tr><th>Customer</th><th>Contact</th><th>Where they are</th><th>Latest deal</th><th class="num">Balance</th><th class="admin-only" hidden>Salesperson</th><th>Added</th></tr></thead>
+        <tbody id="custRows"><tr><td colspan="7" class="empty">Loading customers...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- One customer (or a new lead) -->
+    <div id="view-customer" class="view" hidden>
+      <a class="back dark" href="#customers">&larr; All customers</a>
+      <div class="salehead"><h2 id="custHeading">New lead</h2><span id="custStage"></span></div>
+      <form id="custForm" class="card form" novalidate>
+        <div class="grid2">
+          <label>Name<input name="name" required autocomplete="off"></label>
+          <label>Email<input name="email" type="email" autocomplete="off"></label>
+          <label>Cell<input name="cell" type="tel" autocomplete="off"></label>
+          <label>How did they hear about us?<input name="heard_about" autocomplete="off"></label>
+          <label class="span2">Address<input name="address" autocomplete="off"></label>
+          <label>City / postal code<input name="city_pc" autocomplete="off"></label>
+          <label class="span2">Notes<textarea name="notes" rows="3" placeholder="What they're looking for, follow-up dates, anything worth remembering"></textarea></label>
+        </div>
+        <div class="formactions">
+          <button class="btn btn-ink" type="submit">Save</button>
+          <a class="btn btn-gold" id="custNewSale" href="#" hidden>Start a sale for this customer</a>
+          <p class="formmsg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <div id="custDeals" class="card" hidden><h3>Deals</h3><div id="custDealList"></div></div>
+      <div id="custDanger" class="card danger" hidden>
+        <h3>Delete this customer</h3>
+        <p class="muted">Removes the customer, all their deals, signed agreements and photos, and their portal login from the website. QuickBooks is not changed: any invoices and payments stay in the books.</p>
+        <div class="formactions"><button class="btn btn-line" type="button" id="custDelete">Delete customer</button><p class="formmsg" id="custDelMsg" role="status" aria-live="polite"></p></div>
+      </div>
+    </div>
 
     <!-- Sales list -->
     <div id="view-sales" class="view">
@@ -153,6 +202,7 @@
         <p class="muted" id="doneText"></p>
         <div class="formactions"><button class="btn btn-gold" type="button" id="printPdf">Print agreement for the customer</button><button class="btn btn-line" type="button" id="downloadPdf">Download PDF</button><p class="formmsg" id="pdfMsg" role="status" aria-live="polite"></p></div>
         <div id="depositBox"></div>
+        <div id="progressBox"></div>
       </div>
 
       <div id="eventsPanel" class="card" hidden><h3>History</h3><ol class="events" id="events"></ol></div>
@@ -162,12 +212,13 @@
     <div id="view-team" class="view" hidden>
       <div class="grid2 team">
         <div class="card">
-          <h3>Add a salesperson</h3>
-          <p class="muted">They'll get an email with a link to the staff portal. Salespeople see only their own sales.</p>
+          <h3>Add a team member</h3>
+          <p class="muted">They'll get an email with a link to the staff portal. Salespeople see only their own customers and deals. Admins see everything.</p>
           <form id="inviteForm" class="form" novalidate>
             <label>Full name<input name="full_name" required></label>
             <label>Email<input name="email" type="email" required></label>
             <label>Phone<input name="phone" type="tel"></label>
+            <label>Access<select name="role"><option value="staff">Salesperson: sees only their own customers and deals</option><option value="admin">Admin: sees every customer and deal (Blaine, Sara)</option></select></label>
             <button class="btn btn-gold" type="submit">Send invite</button>
             <p class="formmsg" role="status" aria-live="polite"></p>
           </form>

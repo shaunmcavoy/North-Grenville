@@ -44,9 +44,9 @@
   function show(view) {
     $$('.view').forEach(function (v) { v.hidden = v.id !== 'view-' + view; });
     $$('.tabs a').forEach(function (a) { a.removeAttribute('aria-current'); });
-    var tab = view === 'sale' ? (current && current.id ? 'sales' : 'new') : view;
+    var tab = view === 'sale' ? (current && current.id ? 'sales' : 'new') : view === 'customer' ? 'customers' : view;
     var t = $('.tabs a[data-tab="' + tab + '"]'); if (t) t.setAttribute('aria-current', 'page');
-    $('#staffTitle').textContent = { sales: 'Sales', sale: current && current.id ? 'Sale #' + current.number : 'New sale', team: 'Team' }[view] || 'Sales';
+    $('#staffTitle').textContent = { sales: 'Sales', sale: current && current.id ? 'Sale #' + current.number : 'New sale', team: 'Team', customers: 'Customers', customer: 'Customer' }[view] || 'Sales';
     window.scrollTo(0, 0);
   }
 
@@ -54,6 +54,10 @@
     var h = location.hash.slice(1) || 'sales';
     if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); loadQb(); }
     else if (h === 'new') { openSale(null); }
+    else if (h.indexOf('new-c-') === 0) { openSale(null, h.slice(6)); }
+    else if (h === 'customers') { show('customers'); loadCustomers(); }
+    else if (h === 'lead') { openCustomer(null); }
+    else if (h.indexOf('cust-') === 0) { openCustomer(h.slice(5)); }
     else if (h.indexOf('sale-') === 0) { openSale(h.slice(5)); }
     else { show('sales'); loadSales(); }
   }
@@ -101,11 +105,19 @@
     $('#saveBtn').hidden = locked; $('#deleteBtn').hidden = locked || !current || !current.id;
     $('#lockNote').hidden = !locked || (current && current.status !== 'awaiting_customer');
   }
-  function openSale(id) {
-    current = null; form.querySelector('.formmsg').textContent = '';
+  var newForCustomer = null; // starting a sale for an existing customer (a lead)
+  function openSale(id, custId) {
+    current = null; newForCustomer = null; form.querySelector('.formmsg').textContent = '';
     ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel'].forEach(function (p) { $(p).hidden = true; });
     if (!id) {
-      fill(null, null); lock(false); $('#saleHeading').textContent = 'New sale'; $('#saleStatus').innerHTML = ''; show('sale'); return;
+      fill(null, null); lock(false); $('#saleHeading').textContent = 'New sale'; $('#saleStatus').innerHTML = ''; show('sale');
+      if (custId) sb.from('customers').select('*').eq('id', custId).maybeSingle().then(function (r) {
+        if (!r.data) return;
+        newForCustomer = r.data;
+        CUST.forEach(function (k) { form['c_' + k].value = r.data[k] || ''; });
+        $('#saleHeading').textContent = 'New sale for ' + r.data.name;
+      });
+      return;
     }
     sb.from('sales').select('*, customers(*)').eq('id', id).maybeSingle().then(function (r) {
       if (!r.data) { NG.toast("That sale wasn't found."); location.hash = 'sales'; return; }
@@ -125,7 +137,7 @@
       }
       if (current.agreement_pdf_path) {
         $('#donePanel').hidden = false;
-        renderDeposit();
+        renderDeposit(); renderProgress();
         $('#doneText').textContent = (current.signing_method === 'paper'
           ? 'Signed on paper, recorded ' + NG.dateTime(current.customer_signed_at) + '. '
           : (current.customer_typed_name || 'The customer') + ' signed on ' + NG.dateTime(current.customer_signed_at) + '. ') +
@@ -137,7 +149,7 @@
   }
   function loadEvents(id) {
     sb.from('sale_events').select('at,kind,detail').eq('sale_id', id).order('at').then(function (r) {
-      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send' };
+      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send', balance_paid: 'Balance recorded as paid', undo_balance: 'Balance payment undone', delivered: 'Marked delivered', undo_delivered: 'Delivery undone', paper_signed: 'Signed on paper', printed_for_paper: 'Printed for paper signing' };
       var ev = r.data || []; if (!ev.length) return;
       $('#events').innerHTML = ev.map(function (e) { return '<li><b>' + NG.esc(L[e.kind] || e.kind) + '</b><span>' + NG.dateTime(e.at) + '</span></li>'; }).join('');
       $('#eventsPanel').hidden = false;
@@ -166,6 +178,13 @@
       sb.from('customers').update(d.c).eq('id', current.customer_id).then(function (r1) {
         if (r1.error) return fail(r1.error);
         sb.from('sales').update(d.s).eq('id', current.id).then(function (r2) { r2.error ? fail(r2.error) : done(current.id); });
+      });
+    } else if (newForCustomer) {
+      var cid = newForCustomer.id;
+      sb.from('customers').update(d.c).eq('id', cid).then(function (r1) {
+        if (r1.error) return fail(r1.error);
+        d.s.customer_id = cid; d.s.salesperson_id = me.user.id; d.s.status = 'draft';
+        sb.from('sales').insert(d.s).select('id').single().then(function (r2) { r2.error ? fail(r2.error) : done(r2.data.id); });
       });
     } else {
       d.c.created_by = me.user.id;
@@ -292,6 +311,139 @@
     var mk = $('#makeInvoice'); if (mk) mk.onclick = send;
   }
 
+  // ---------- After the deposit: balance and delivery ----------
+  function renderProgress() {
+    var box = $('#progressBox'), s = current;
+    if (!s || ['signed', 'deposit_paid', 'delivery_scheduled', 'delivered'].indexOf(s.status) < 0) { box.innerHTML = ''; return; }
+    var owing = Number(s.balance) > 0, today = new Date().toISOString().slice(0, 10), h = '<h3>Balance and delivery</h3>';
+    if (owing) {
+      h += s.balance_paid_at
+        ? '<p>' + NG.pill('deposit_paid').replace('Deposit received', 'Balance paid') + ' ' + NG.money(s.balance) + ' recorded ' + NG.date(s.balance_paid_at) + '. <button class="textbtn" type="button" data-prog="undo_balance">Undo</button></p>'
+        : '<div class="progrow"><p>Balance of <b>' + NG.money(s.balance) + '</b> still owing.</p><label>Paid on<input type="date" id="balDate" value="' + today + '"></label><button class="btn btn-line btn-sm" type="button" data-prog="balance_paid">Record balance paid</button></div>';
+    }
+    h += s.status === 'delivered'
+      ? '<p>' + NG.pill('delivered') + ' ' + NG.date(s.delivered_at) + (s.serial_number ? ' · Serial ' + NG.esc(s.serial_number) : '') + '. <button class="textbtn" type="button" data-prog="undo_delivered">Undo</button></p>'
+      : '<div class="progrow"><label>Delivered on<input type="date" id="delDate" value="' + today + '"></label><label>Serial number<input id="delSerial" value="' + NG.esc(s.serial_number || '') + '" placeholder="From the tub"></label><button class="btn btn-gold btn-sm" type="button" data-prog="delivered">Mark delivered</button></div>';
+    box.innerHTML = h + '<p class="formmsg" id="progMsg" role="status" aria-live="polite"></p>';
+    $$('[data-prog]', box).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var a = b.dataset.prog, body = { sale_id: s.id, action: a };
+        if (a === 'balance_paid') body.date = $('#balDate').value;
+        if (a === 'delivered') { body.date = $('#delDate').value; body.serial_number = $('#delSerial').value.trim(); }
+        b.disabled = true; $('#progMsg').textContent = 'Saving...';
+        NG.api('sale-progress', body).then(function () { NG.toast('Saved'); openSale(s.id); })
+          .catch(function (err) { $('#progMsg').textContent = err.message; b.disabled = false; });
+      });
+    });
+  }
+
+  // ---------- Customers ----------
+  var STAGES = {
+    lead: ['Lead', 'grey'], payment_due: ['Payment due', 'amber'], balance: ['Paid, balance owing', 'teal'],
+    waiting: ['Waiting for delivery', 'gold'], delivered: ['Delivered', 'green']
+  };
+  var SIGNED = ['signed', 'deposit_paid', 'delivery_scheduled', 'delivered'];
+  function stageOf(c) {
+    var deals = (c.sales || []).filter(function (x) { return SIGNED.indexOf(x.status) >= 0; })
+      .sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
+    if (!deals.length) return { key: 'lead', deal: (c.sales || [])[0] || null };
+    var d = deals[0];
+    if (d.status === 'delivered') return { key: 'delivered', deal: d };
+    if (d.status === 'signed') return { key: 'payment_due', deal: d };
+    if (Number(d.balance) > 0 && !d.balance_paid_at) return { key: 'balance', deal: d };
+    return { key: 'waiting', deal: d };
+  }
+  function stagePill(k) { var st = STAGES[k]; return '<span class="pill pill-' + st[1] + '">' + st[0] + '</span>'; }
+  var custCache = [], custStage = 'all';
+  function loadCustomers() {
+    sb.from('customers').select('id,name,email,cell,city_pc,created_at,created_by,sales(id,number,status,total,balance,balance_paid_at,tub_model,sauna_model,created_at,salesperson_id,profiles!sales_salesperson_id_fkey(full_name,email))')
+      .order('created_at', { ascending: false }).limit(1000).then(function (r) {
+        if (r.error) { $('#custRows').innerHTML = '<tr><td colspan="7" class="empty">' + NG.esc(r.error.message) + '</td></tr>'; return; }
+        custCache = (r.data || []).map(function (c) { var st = stageOf(c); c._stage = st.key; c._deal = st.deal; return c; });
+        renderCustomers();
+      });
+  }
+  function renderCustomers() {
+    var counts = { all: custCache.length }; Object.keys(STAGES).forEach(function (k) { counts[k] = 0; });
+    custCache.forEach(function (c) { counts[c._stage]++; });
+    $$('#custFilters .chip').forEach(function (b) { b.querySelector('span').textContent = counts[b.dataset.stage] ? '(' + counts[b.dataset.stage] + ')' : ''; });
+    var q = ($('#custSearch').value || '').toLowerCase().trim(), isAdmin = me.profile.role === 'admin';
+    var rows = custCache.filter(function (c) {
+      if (custStage !== 'all' && c._stage !== custStage) return false;
+      return !q || [c.name, c.email, c.cell, c.city_pc].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    $('#custRows').innerHTML = rows.length ? rows.map(function (c) {
+      var d = c._deal, what = d ? '#' + d.number + ' ' + ([d.tub_model, d.sauna_model && d.sauna_model + ' sauna'].filter(Boolean).join(' + ') || '') : '-';
+      var bal = d && SIGNED.indexOf(d.status) >= 0 ? (d.balance_paid_at ? 0 : Number(d.balance)) : null;
+      var rep = d && d.profiles ? (d.profiles.full_name || d.profiles.email) : '';
+      return '<tr data-cid="' + c.id + '" tabindex="0"><td><b>' + NG.esc(c.name) + '</b></td><td>' + NG.esc([c.cell, c.email].filter(Boolean).join(' · ') || '-') + '</td><td>' + stagePill(c._stage) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + (bal == null ? '-' : NG.money(bal)) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(c.created_at) + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">' + (custCache.length ? 'No customers match.' : 'No customers yet. <a href="#lead">Add a lead</a> or start a <a href="#new">new sale</a>.') + '</td></tr>';
+  }
+  $('#custRows').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-cid]'); if (tr) location.hash = 'cust-' + tr.dataset.cid; });
+  $('#custRows').addEventListener('keydown', function (e) { var tr = e.target.closest('tr[data-cid]'); if (tr && e.key === 'Enter') location.hash = 'cust-' + tr.dataset.cid; });
+  $('#custSearch').addEventListener('input', renderCustomers);
+  $$('#custFilters .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      $$('#custFilters .chip').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); c.setAttribute('aria-pressed', 'true');
+      custStage = c.dataset.stage; renderCustomers();
+    });
+  });
+
+  var currentCust = null, cform = $('#custForm');
+  var CFIELDS = ['name', 'email', 'cell', 'heard_about', 'address', 'city_pc', 'notes'];
+  function openCustomer(id) {
+    currentCust = null; cform.querySelector('.formmsg').textContent = ''; $('#custDelMsg').textContent = '';
+    $('#custDeals').hidden = true; $('#custDanger').hidden = true; $('#custNewSale').hidden = true; $('#custStage').innerHTML = '';
+    var del = $('#custDelete'); del.dataset.confirm = ''; del.textContent = 'Delete customer';
+    if (!id) { CFIELDS.forEach(function (k) { cform[k].value = ''; }); $('#custHeading').textContent = 'New lead'; show('customer'); cform.name.focus(); return; }
+    sb.from('customers').select('*, sales(id,number,status,total,balance,deposit,balance_paid_at,tub_model,sauna_model,created_at,updated_at)').eq('id', id).maybeSingle().then(function (r) {
+      if (!r.data) { NG.toast("That customer wasn't found."); location.hash = 'customers'; return; }
+      var c = currentCust = r.data, st = stageOf(c);
+      CFIELDS.forEach(function (k) { cform[k].value = c[k] || ''; });
+      $('#custHeading').textContent = c.name; $('#custStage').innerHTML = stagePill(st.key);
+      $('#custNewSale').href = '#new-c-' + c.id; $('#custNewSale').hidden = false;
+      var deals = (c.sales || []).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
+      if (deals.length) {
+        $('#custDealList').innerHTML = '<ul class="deallist">' + deals.map(function (d) {
+          var what = [d.tub_model, d.sauna_model && d.sauna_model + ' sauna'].filter(Boolean).join(' + ') || 'Sale';
+          return '<li><a href="#sale-' + d.id + '"><b>#' + d.number + ' ' + NG.esc(what) + '</b><span>' + NG.pill(d.status) + ' ' + NG.money(d.total) + (Number(d.balance) > 0 && !d.balance_paid_at && SIGNED.indexOf(d.status) >= 0 ? ' · ' + NG.money(d.balance) + ' owing' : '') + '</span></a></li>';
+        }).join('') + '</ul>';
+        $('#custDeals').hidden = false;
+      }
+      // Admins can delete anyone; salespeople can delete their own leads that have no deals.
+      $('#custDanger').hidden = !(me.profile.role === 'admin' || (!deals.length && c.created_by === me.user.id));
+      show('customer');
+    });
+  }
+  cform.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var m = cform.querySelector('.formmsg'), d = {};
+    CFIELDS.forEach(function (k) { d[k] = cform[k].value.trim() || null; });
+    if (!d.name) { m.textContent = 'Add a name first.'; return; }
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) { m.textContent = 'That email doesn\'t look right.'; return; }
+    if (!d.email && !d.cell) { m.textContent = 'Add an email or a cell number so you can follow up.'; return; }
+    d.updated_at = new Date().toISOString();
+    m.textContent = 'Saving...';
+    var q = currentCust ? sb.from('customers').update(d).eq('id', currentCust.id).select('id').single()
+      : sb.from('customers').insert(Object.assign(d, { created_by: me.user.id })).select('id').single();
+    q.then(function (r) {
+      if (r.error) { m.textContent = r.error.message; return; }
+      NG.toast('Saved'); if (location.hash !== '#cust-' + r.data.id) location.hash = 'cust-' + r.data.id; else openCustomer(r.data.id);
+    });
+  });
+  $('#custDelete').addEventListener('click', function () {
+    var b = this, m = $('#custDelMsg'), c = currentCust; if (!c) return;
+    if (b.dataset.confirm !== '1') {
+      b.dataset.confirm = '1'; b.textContent = 'Tap again to delete ' + c.name + ' for good';
+      setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Delete customer'; }, 5000); return;
+    }
+    b.disabled = true; m.textContent = 'Deleting...';
+    var hasDeals = (c.sales || []).length > 0;
+    var p = hasDeals || me.profile.role === 'admin' ? NG.api('customer-delete', { customer_id: c.id }) : sb.from('customers').delete().eq('id', c.id).then(function (r) { if (r.error) throw r.error; });
+    p.then(function () { NG.toast(c.name + ' deleted'); location.hash = 'customers'; })
+      .catch(function (err) { m.textContent = err.message; }).finally(function () { b.disabled = false; });
+  });
+
   // ---------- QuickBooks settings (admins) ----------
   function loadQb() {
     var body = $('#qbBody');
@@ -328,7 +480,7 @@
     e.preventDefault();
     var f = e.target, m = f.querySelector('.formmsg');
     m.textContent = 'Sending invite...';
-    NG.api('invite-staff', { full_name: f.full_name.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim() })
+    NG.api('invite-staff', { full_name: f.full_name.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim(), role: f.role.value })
       .then(function () { m.textContent = 'Invite sent.'; f.reset(); loadTeam(); }).catch(function (err) { m.textContent = err.message; });
   });
 

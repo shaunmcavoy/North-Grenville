@@ -58,8 +58,9 @@ async function route_invite_staff(req: Request): Promise<Response> {
   const email = String(b.email ?? "").trim().toLowerCase();
   const name = String(b.full_name ?? "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !name) return jsonAuth(req, { error: "Enter a name and a valid email." }, 400);
-  const id = await ensureUser(email, name, "staff");
-  await admin().from("profiles").update({ role: "staff", full_name: name, phone: String(b.phone ?? "") || null, active: true }).eq("id", id);
+  const role = b.role === "admin" ? "admin" : "staff";
+  const id = await ensureUser(email, name, role);
+  await admin().from("profiles").update({ role, full_name: name, phone: String(b.phone ?? "") || null, active: true }).eq("id", id);
   const link = await loginLink(email, "/staff/");
   await sendEmail({
     from: FROM, to: email, reply_to: REPLY_TO, subject: "Welcome to the North Grenville Hot Tubs team",
@@ -67,8 +68,8 @@ async function route_invite_staff(req: Request): Promise<Response> {
       preheader: "Your staff account is ready.",
       body: `<p>Hi ${firstNameOf(name)},</p><p>You've been added to the North Grenville Hot Tubs team. Your staff portal is where you write up sales, get agreements signed and follow each tub through to delivery.</p>
 ${button(link, "Open the staff portal")}
-<p style="color:#6e5d4f">We run every sale through the portal so every customer gets the same honest, simple experience, and so you can always see where your deals and commission stand.</p>
-<p>Next time, just go to northgrenvillehottubs.ca/login and enter this email.</p><p>Blaine</p>`,
+<p style="color:#6e5d4f">${role === "admin" ? "As an admin you'll see every customer and deal, so nothing slips through the cracks and every customer gets the same honest, simple experience." : "We run every sale through the portal so every customer gets the same honest, simple experience, and so you can always see where your deals and commission stand."}</p>
+<p>Next time, go to northgrenvillehottubs.ca/login. You can set a password there, or just use an email link.</p><p>Blaine</p>`,
     }),
   });
   return jsonAuth(req, { ok: true, id });
@@ -400,6 +401,72 @@ async function route_paper_signed(req: Request): Promise<Response> {
   return jsonAuth(req, { ok: true, number: sale.number });
 }
 
+// ---- sale-progress ----
+// POST {sale_id, action: "balance_paid" | "delivered" | "undo_balance" | "undo_delivered", date?, serial_number?, notes?}
+// Staff record what happens after the deposit, so each customer sits in the right group.
+async function route_sale_progress(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const b = await req.json().catch(() => ({}));
+  const r = await staffSale(req, String(b.sale_id ?? ""));
+  if (r.err) return r.err;
+  const { me, sale } = r;
+  if (["draft", "awaiting_customer", "cancelled"].includes(sale.status)) return jsonAuth(req, { error: "This sale hasn't been signed yet." }, 409);
+  const when = b.date && /^\d{4}-\d{2}-\d{2}/.test(String(b.date)) ? new Date(`${String(b.date).slice(0, 10)}T12:00:00-04:00`).toISOString() : new Date().toISOString();
+  const db = admin();
+  let patch: Record<string, unknown> = {};
+  switch (b.action) {
+    case "balance_paid": patch = { balance_paid_at: when }; break;
+    case "undo_balance": patch = { balance_paid_at: null }; break;
+    case "delivered": {
+      patch = { status: "delivered", delivered_at: when };
+      const serial = String(b.serial_number ?? "").trim().slice(0, 80);
+      if (serial) patch.serial_number = serial;
+      if (b.notes) patch.delivery_notes = String(b.notes).slice(0, 2000);
+      break;
+    }
+    case "undo_delivered": patch = { status: sale.deposit_paid_at ? "deposit_paid" : "signed", delivered_at: null }; break;
+    default: return jsonAuth(req, { error: "Unknown action." }, 400);
+  }
+  const { error } = await db.from("sales").update(patch).eq("id", sale.id);
+  if (error) return jsonAuth(req, { error: "Couldn't update the sale." }, 500);
+  await logEvent(sale.id, String(b.action), me!.user.id, b.serial_number ? { serial: String(b.serial_number) } : null);
+  return jsonAuth(req, { ok: true });
+}
+
+// ---- customer-delete ----
+// POST {customer_id}  Admins. Removes a customer, all their deals, signed files and photos, and their portal login.
+// QuickBooks is left alone: invoices and payments stay in the books.
+async function route_customer_delete(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || me.profile.role !== "admin") return jsonAuth(req, { error: "Only an admin can delete a customer." }, 403);
+  const b = await req.json().catch(() => ({}));
+  const db = admin();
+  const { data: c } = await db.from("customers").select("id, user_id, email, name").eq("id", String(b.customer_id ?? "")).maybeSingle();
+  if (!c) return jsonAuth(req, { error: "Customer not found." }, 404);
+  const { data: sales } = await db.from("sales").select("id").eq("customer_id", c.id);
+  // Signed agreements, signatures and photos live in folders named after each sale.
+  for (const s of sales ?? []) {
+    const { data: files } = await db.storage.from("agreements").list(s.id, { limit: 100 });
+    if (files?.length) await db.storage.from("agreements").remove(files.map((f) => `${s.id}/${f.name}`));
+  }
+  if (sales?.length) {
+    // Signed sales are locked against edits, so this runs with the server's own key.
+    const del = await db.from("sales").delete().in("id", sales.map((s) => s.id));
+    if (del.error) return jsonAuth(req, { error: "Couldn't delete this customer's deals." }, 500);
+  }
+  const dc = await db.from("customers").delete().eq("id", c.id);
+  if (dc.error) return jsonAuth(req, { error: "Couldn't delete the customer." }, 500);
+  // Remove their portal login if it was only ever a customer login and no other customer record uses it.
+  if (c.user_id) {
+    const { data: prof } = await db.from("profiles").select("role").eq("id", c.user_id).maybeSingle();
+    const { count } = await db.from("customers").select("id", { count: "exact", head: true }).eq("user_id", c.user_id);
+    if (prof?.role === "customer" && !count) await db.auth.admin.deleteUser(c.user_id);
+  }
+  console.log("customer deleted", c.id, "by", me.user.id, "sales", (sales ?? []).length);
+  return jsonAuth(req, { ok: true, deleted_sales: (sales ?? []).length });
+}
+
 // ---- agreement-pdf ----
 // POST {sale_id}  Returns a short-lived download link for the signed agreement, if the caller is allowed to see that sale.
 
@@ -538,6 +605,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };
