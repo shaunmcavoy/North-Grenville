@@ -22,7 +22,7 @@ export function cors(req: Request) {
   return {
     "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : SITE_URL,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "content-type",
+    "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
     "Vary": "Origin",
   };
 }
