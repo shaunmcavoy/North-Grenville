@@ -45,6 +45,9 @@ nav.links a:hover{color:var(--cream)}
 .btn-line:hover{border-color:var(--ink)}
 .btn svg{width:17px;height:17px;flex:none}
 .top .btn{padding:11px 18px;font-size:.9rem}
+.top-acts{display:flex;align-items:center;gap:10px;flex:none}
+.top .signin{padding:10px 16px}
+@media (max-width:520px){.top .signin{padding:10px 11px}.top .signin .lbl-signin{display:none}}
 @media (max-width:960px){nav.links{display:none}}
 @media (max-width:520px){.brand small{display:none}.top .btn .lbl-long{display:none}}
 
