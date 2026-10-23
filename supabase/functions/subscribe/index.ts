@@ -51,15 +51,21 @@ Deno.serve(async (req) => {
   try {
     await sendEmail({
       from: FROM, to: email, reply_to: REPLY_TO,
-      subject: "Please confirm: Blaine's hot tub posts",
+      subject: "One click and I'll start sending you my hot tub advice",
       html: emailShell({
-        preheader: "One click to start getting Blaine's weekly posts.",
-        body: `<p>${hi}</p><p>Thanks for signing up for my blog. Click below to confirm and you'll get each new post by email, usually on Mondays.</p>
+        preheader: "Confirm and I'll send you honest, simple hot tub advice, usually on Mondays.",
+        body: `<p>${hi}</p>
+<p>Thanks for signing up. Click below to confirm and I'll send you each new post when it goes up, usually on Mondays.</p>
 ${button(confirmUrl, "Yes, sign me up")}
+<p style="font-family:Georgia,serif;font-size:20px;margin:28px 0 8px">Why I write these</p>
+<p>I've sold hot tubs for more than 15 years, and I've watched too many people end up fighting their water, spending more on chemicals than they need to, or letting a good tub sit unused. Almost every time, it comes down to information nobody gave them.</p>
+<p>So I write down the honest answers I give people at the warehouse: how to keep your water clean and simple in our hard North Grenville water, how to make your tub last for years, and how to get more relaxing nights out of it with your family. A hot tub should be the easiest, healthiest part of your day, not a chore.</p>
+<p style="font-family:Georgia,serif;font-size:20px;margin:28px 0 8px">What you'll get</p>
+<p>One short email when a new post is up. No pushy sales emails. Unsubscribe any time with one click.</p>
 <p style="color:#6e5d4f;font-size:14px">If you didn't sign up, just ignore this email and you won't hear from us.</p>
 <p>Blaine</p>`,
       }),
-      text: `${hi.replace(/<[^>]+>/g, "")}\n\nThanks for signing up for my blog. Confirm here: ${confirmUrl}\n\nIf you didn't sign up, ignore this email.\n\nBlaine\nNorth Grenville Hot Tubs, 5333 County Rd 19, Kemptville, ON`,
+      text: `${hi.replace(/<[^>]+>/g, "")}\n\nThanks for signing up. Confirm here and I'll send you each new post: ${confirmUrl}\n\nWhy I write these: after 15 years selling hot tubs, I've seen too many owners fight their water or let a good tub sit unused because nobody gave them straight answers. My posts are those answers, so your tub stays simple, clean and something your family actually uses.\n\nOne short email per post, no pushy sales emails, unsubscribe any time.\n\nIf you didn't sign up, ignore this email.\n\nBlaine\nNorth Grenville Hot Tubs, 5333 County Rd 19, Kemptville, ON`,
     });
   } catch (e) {
     console.error(e);

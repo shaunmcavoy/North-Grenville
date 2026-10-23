@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 <h1 style="font-family:Georgia,serif;font-weight:normal;font-size:28px;line-height:1.2;margin:22px 0 10px">${escapeHtml(p.title)}</h1>
 <p>${escapeHtml(p.description)}</p>
 ${button(p.url, "Read the post")}
-<p>Questions about your tub? Just hit reply, or call or text me at (613) 292-1786.</p><p>Blaine</p>`,
+<p style="color:#6e5d4f">I send these so your tub stays simple, clean and something your family actually uses, without spending more on chemicals than you need to. Questions about your own tub? Just hit reply, or call or text me at (613) 292-1786.</p><p>Blaine</p>`,
         }),
         text: `${p.title}\n\n${p.description}\n\nRead it: ${p.url}\n\nBlaine, North Grenville Hot Tubs, 5333 County Rd 19, Kemptville, ON\nUnsubscribe: ${unsub}`,
       };

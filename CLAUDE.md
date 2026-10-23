@@ -8,3 +8,4 @@ Static site for North Grenville Hot Tubs & Saunas (Kemptville, ON), live at http
 - Weekly blog posts follow `docs/BLOG_GUIDE.md` exactly.
 - Copy rules: no em dashes, Canadian spelling, Blaine's warm plain voice, no invented prices, statistics, reviews or customer stories.
 - Keep `CNAME` (custom domain). Don't touch DNS.
+- **Every message to customers explains why.** Each email, page or notice we send (sign-up confirmations, blog emails, welcome, delivery, maintenance reminders, warranty updates) says in Blaine's voice why it's good for the customer and why North Grenville does it this way (clean simple water, a tub that lasts, more time with family, honest advice). Never send a bare transactional message.
