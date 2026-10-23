@@ -312,3 +312,22 @@ section[id],.line[id]{scroll-margin-top:84px}
 .postcta .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .postcta .btn-line{border-color:rgba(244,236,223,.45);color:var(--cream)}
 .postcta .num{font-family:var(--display);font-size:1.4rem;color:var(--gold-soft);margin-top:12px}
+
+/* Blog sign-up */
+.subbox{margin-top:48px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start;background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:28px}
+.prose .subbox{grid-template-columns:1fr;margin-top:2em !important}
+.subbox h2{font-size:clamp(1.6rem,3vw,2.1rem);margin-top:8px !important}
+.subbox .subtext p:last-child{color:var(--muted);margin-top:10px}
+.subform{display:grid;gap:8px}
+.subform label{font-size:.88rem;font-weight:600}
+.subform label span{font-weight:400;color:var(--muted)}
+.subform input[type=text],.subform input[type=email]{font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);margin-bottom:6px}
+.subform input:focus{outline:2px solid var(--gold);outline-offset:1px}
+.subform .consent{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:.88rem;color:var(--muted);line-height:1.45;margin:4px 0 8px}
+.subform .consent input{margin-top:3px;width:18px;height:18px;flex:none}
+.subform .btn{justify-self:start}
+.subform .btn[disabled]{opacity:.6;cursor:wait}
+.submsg{font-size:.92rem;color:var(--water-deep);min-height:1.4em}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.subnote{background:var(--water-deep);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:22px;font-weight:600}
+@media (max-width:760px){.subbox{grid-template-columns:1fr;gap:16px;padding:22px}}

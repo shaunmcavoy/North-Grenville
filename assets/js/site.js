@@ -19,3 +19,32 @@ document.addEventListener('click', function (e) {
   var v = b.dataset.copy;
   try { navigator.clipboard.writeText(v).then(function () { say('Number copied'); }, function () { say(v); }); } catch (err) { say(v); }
 });
+// Blog email sign-up
+document.querySelectorAll('.subform').forEach(function (form) {
+  var msg = form.querySelector('.submsg');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = form.email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { msg.textContent = 'Please enter a valid email address.'; form.email.focus(); return; }
+    if (!form.consent.checked) { msg.textContent = 'Please tick the box so we have your permission to email you.'; return; }
+    var btn = form.querySelector('button'); btn.disabled = true; msg.textContent = 'Signing you up...';
+    fetch(form.dataset.endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, first_name: form.first_name.value.trim(), consent: true, website: form.website.value, source: form.dataset.source })
+    }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (res.ok && res.d.already) { msg.textContent = "You're already signed up. Thanks!"; form.reset(); }
+        else if (res.ok) { msg.textContent = 'Almost done. Check your inbox and click the link to confirm.'; form.reset(); }
+        else { msg.textContent = res.d.error || 'Something went wrong. Please try again.'; }
+      })
+      .catch(function () { msg.textContent = "We couldn't reach the server. Please try again in a minute."; })
+      .finally(function () { btn.disabled = false; });
+  });
+});
+// Messages after confirm / unsubscribe links
+(function () {
+  var note = document.querySelector('.subnote'); if (!note) return;
+  var s = new URLSearchParams(location.search).get('subscribe');
+  var text = { confirmed: "You're in. You'll get Blaine's next post by email.", unsubscribed: "You've been unsubscribed. You won't get any more blog emails.", invalid: "That link didn't work. It may be old. Try signing up again below." }[s];
+  if (text) { note.textContent = text; note.hidden = false; }
+})();

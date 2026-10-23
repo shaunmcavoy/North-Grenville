@@ -84,6 +84,23 @@
       </div>
       <p class="num">(613) 292-1786</p>
     </aside>
+    <aside class="subbox" id="subscribe">
+  <div class="subtext">
+    <p class="eyebrow teal">Blaine's posts by email</p>
+    <h2>Get the next post in your inbox.</h2>
+    <p>One email when a new post goes up, usually Mondays. No spam, and you can unsubscribe any time.</p>
+  </div>
+  <form class="subform" data-endpoint="https://vpqbgsgrvapxwvstrpfs.supabase.co/functions/v1/subscribe" data-source="post" novalidate>
+    <label for="sub-name">First name <span>(optional)</span></label>
+    <input id="sub-name" name="first_name" type="text" autocomplete="given-name" maxlength="60">
+    <label for="sub-email">Email</label>
+    <input id="sub-email" name="email" type="email" autocomplete="email" required>
+    <div class="hp" aria-hidden="true"><label for="sub-website">Website</label><input id="sub-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <label class="consent" for="sub-consent"><input id="sub-consent" name="consent" type="checkbox" required> Yes, email me Blaine's new blog posts and occasional news from North Grenville Hot Tubs. I can unsubscribe any time.</label>
+    <button class="btn btn-gold" type="submit">Sign me up</button>
+    <p class="submsg" role="status" aria-live="polite"></p>
+  </form>
+</aside>
   </div>
 </div>
 </article>

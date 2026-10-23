@@ -286,9 +286,33 @@ def post_body(p, base):
       </div>
       <p class="num">{SITE['phone_display']}</p>
     </aside>
+    {subscribe_box("post")}
   </div>
 </div>
 </article>"""
+
+
+FUNCTIONS_URL = "https://vpqbgsgrvapxwvstrpfs.supabase.co/functions/v1"
+
+
+def subscribe_box(source="blog"):
+    return f"""<aside class="subbox" id="subscribe">
+  <div class="subtext">
+    <p class="eyebrow teal">Blaine's posts by email</p>
+    <h2>Get the next post in your inbox.</h2>
+    <p>One email when a new post goes up, usually Mondays. No spam, and you can unsubscribe any time.</p>
+  </div>
+  <form class="subform" data-endpoint="{FUNCTIONS_URL}/subscribe" data-source="{source}" novalidate>
+    <label for="sub-name">First name <span>(optional)</span></label>
+    <input id="sub-name" name="first_name" type="text" autocomplete="given-name" maxlength="60">
+    <label for="sub-email">Email</label>
+    <input id="sub-email" name="email" type="email" autocomplete="email" required>
+    <div class="hp" aria-hidden="true"><label for="sub-website">Website</label><input id="sub-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <label class="consent" for="sub-consent"><input id="sub-consent" name="consent" type="checkbox" required> Yes, email me Blaine's new blog posts and occasional news from North Grenville Hot Tubs. I can unsubscribe any time.</label>
+    <button class="btn btn-gold" type="submit">Sign me up</button>
+    <p class="submsg" role="status" aria-live="polite"></p>
+  </form>
+</aside>"""
 
 
 def post_jsonld(p):
@@ -312,7 +336,7 @@ def blog_index(posts, base):
     <p style="color:var(--sand);margin-top:16px;max-width:56ch">Honest answers to the questions people ask me every week: water care in our hard water, what to look for in a tub, and how to get the most out of yours. New posts every Monday. <b style="color:var(--cream)">Blaine</b></p>
   </div>
 </section>
-<section class="pick"><div class="wrap"><div class="postgrid">{cards}</div></div></section>"""
+<section class="pick"><div class="wrap"><p class="subnote" hidden></p><div class="postgrid">{cards}</div>{subscribe_box("blog")}</div></section>"""
 
 
 def build():
@@ -335,6 +359,20 @@ def build():
     for p in posts:
         page(f"blog/{p['slug']}/", f"{p['title']} | North Grenville Hot Tubs", p["description"],
              post_body(p, "../../"), "../../", post_jsonld(p))
+    # Email clients (Outlook especially) don't show WebP, so post images get a JPG twin for the emails.
+    for p in posts:
+        jpg = ROOT / "assets/img/email" / f"{p['image']}.jpg"
+        if not jpg.exists():
+            try:
+                from PIL import Image
+                jpg.parent.mkdir(parents=True, exist_ok=True)
+                Image.open(ROOT / "assets/img" / f"{p['image']}.webp").convert("RGB").save(jpg, quality=82)
+            except Exception as e:  # Pillow missing: emails fall back to the WebP image
+                print("note: couldn't make email JPG:", e)
+        p["email_image"] = f"{SITE['url']}/assets/img/email/{p['image']}.jpg" if jpg.exists() else f"{SITE['url']}/assets/img/{p['image']}.webp"
+    (ROOT / "blog" / "feed.json").write_text(json.dumps({"posts": [
+        {"slug": p["slug"], "title": p["title"], "description": p["description"], "date": p["date"],
+         "url": f"{SITE['url']}/blog/{p['slug']}/", "image": p["email_image"]} for p in posts]}, indent=1))
     urls = [""] + [f"{l}/" for l in LINES] + ["blog/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
