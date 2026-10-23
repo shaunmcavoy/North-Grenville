@@ -25,7 +25,16 @@ async function tokenRequest(body: Record<string, string>) {
     body: new URLSearchParams(body),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(`QuickBooks sign-in failed: ${d.error_description || d.error || r.status}`);
+  if (!r.ok) {
+    const tid = r.headers.get("intuit_tid") ?? "";
+    console.error("qb token error", r.status, d.error, `intuit_tid=${tid}`);
+    // A dead refresh token can't be fixed by retrying: clear the connection so the Team tab asks Blaine to reconnect.
+    if (body.grant_type === "refresh_token" && (d.error === "invalid_grant" || r.status === 400 || r.status === 401)) {
+      await admin().rpc("qb_clear");
+      throw new Error("The QuickBooks connection has expired. An admin needs to reconnect it in the staff portal (Team tab).");
+    }
+    throw new Error(`QuickBooks sign-in failed: ${d.error_description || d.error || r.status}${tid ? ` (intuit_tid ${tid})` : ""}`);
+  }
   return d as { access_token: string; refresh_token: string; expires_in: number; x_refresh_token_expires_in: number };
 }
 const expiresAt = (s: number) => new Date(Date.now() + (s - 60) * 1000).toISOString();
@@ -43,10 +52,10 @@ export async function qbExchange(code: string, realmId: string, userId: string |
   } catch (e) { console.error("company info", e); }
 }
 
-async function conn() {
+async function conn(forceRefresh = false) {
   const { data } = await admin().rpc("qb_get");
   if (!data) throw new Error("QuickBooks isn't connected yet.");
-  if (new Date(data.access_expires) > new Date()) return data;
+  if (!forceRefresh && new Date(data.access_expires) > new Date()) return data;
   const t = await tokenRequest({ grant_type: "refresh_token", refresh_token: data.refresh_token });
   const next = { ...data, access_token: t.access_token, refresh_token: t.refresh_token,
     access_expires: expiresAt(t.expires_in), refresh_expires: expiresAt(t.x_refresh_token_expires_in) };
@@ -55,22 +64,41 @@ async function conn() {
 }
 
 async function qb(method: string, path: string, body?: unknown) {
-  const c = await conn();
   const sep = path.includes("?") ? "&" : "?";
-  const r = await fetch(`${API}/v3/company/${c.realm_id}${path}${sep}${MINOR}`, {
+  const send = (c: any) => fetch(`${API}/v3/company/${c.realm_id}${path}${sep}${MINOR}`, {
     method, headers: { Authorization: `Bearer ${c.access_token}`, Accept: "application/json", "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
+  let r = await send(await conn());
+  // Access token rejected early (revoked or clock drift): refresh once and retry.
+  if (r.status === 401) r = await send(await conn(true));
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
     const f = d?.Fault?.Error?.[0];
-    throw new Error(`QuickBooks: ${f ? `${f.Message} ${f.Detail ?? ""}` : r.status}`);
+    const tid = r.headers.get("intuit_tid") ?? "";
+    console.error("qb api error", method, path, r.status, JSON.stringify(d?.Fault ?? d).slice(0, 800), `intuit_tid=${tid}`);
+    throw new Error(`QuickBooks: ${f ? `${f.Message} ${f.Detail ?? ""}` : r.status}${tid ? ` (intuit_tid ${tid})` : ""}`);
   }
   return d;
 }
 export const qbGet = (path: string) => qb("GET", path);
 export const qbQuery = (sql: string) => qbGet(`/query?query=${encodeURIComponent(sql)}`).then((d) => d.QueryResponse ?? {});
 const qstr = (s: string) => s.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
+// Disconnect: revoke the tokens at Intuit, then forget them here.
+export async function qbDisconnect() {
+  const { data } = await admin().rpc("qb_get");
+  if (data?.refresh_token) {
+    try {
+      await fetch("https://developer.api.intuit.com/v2/oauth2/tokens/revoke", {
+        method: "POST",
+        headers: { Authorization: basic(), "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ token: data.refresh_token }),
+      });
+    } catch (e) { console.error("qb revoke", e); }
+  }
+  await admin().rpc("qb_clear");
+}
 
 export async function qbStatus() {
   const { data } = await admin().rpc("qb_get");
