@@ -1,0 +1,93 @@
+{
+  "site": {
+    "name": "North Grenville Hot Tubs & Saunas",
+    "url": "https://northgrenvillehottubs.ca",
+    "phone_display": "(613) 292-1786",
+    "phone_tel": "+16132921786",
+    "email": "info@northgrenvillehottubs.ca",
+    "owner": "Blaine McAvoy",
+    "street": "5333 County Rd 19",
+    "city": "Kemptville",
+    "province": "ON",
+    "postal": "K0G 1J0",
+    "facebook": "https://www.facebook.com/profile.php?id=61585969410916"
+  },
+  "lines": {
+    "deluxe": {
+      "name": "Deluxe",
+      "title": "The smart start.",
+      "short": "Real hydrotherapy without overbuying.",
+      "hero": "palma",
+      "card": "reims",
+      "card_believe": "Blaine believes this line is for people who want to start soaking without overthinking it: first-time owners, young families, and anyone who'd rather skip the electrician on day one.",
+      "chips": ["Friendliest price", "4 models plug into 120V", "Seats 3 to 7"],
+      "believe": "The Deluxe line is for people who want to start soaking without overthinking it. First-time owners, young families, and couples who want a real hot tub at a friendly price. And anyone who'd rather not hire an electrician on day one.",
+      "moments": [
+        ["Your first weekend", "Four Deluxe models plug into a regular outdoor outlet. Delivery on Friday, first soak by Saturday night."],
+        ["A Tuesday in February", "Snow on the railing, the kids in their toques, twenty warm minutes together before bed."],
+        ["Years from now", "Premium Shield insulation keeps it cheap to run, and O-Care keeps the jets and heater clean."]
+      ],
+      "features": ["Platinum Premium Shield insulation with a 360° wrap", "120V plug-and-play on Tahiti, St Lucia, Reims and St Tropez", "Rotating and directional massage jets", "Aristech acrylic shell, built for Ontario winters", "Touchscreen controls and LED lighting", "Bluetooth sound system"],
+      "help": "Not sure between a plug-in and a 240V tub? Blaine will tell you straight which one fits your yard and your panel.",
+      "meta": "Platinum Spas Deluxe hot tubs in Kemptville. Friendly prices, 120V plug-and-play models, seats 3 to 7. Text Blaine for your price."
+    },
+    "premium": {
+      "name": "Premium",
+      "title": "The family favourite.",
+      "short": "More massage, more efficiency, more room.",
+      "hero": "barcelona",
+      "card": "maximus",
+      "card_believe": "Blaine believes this line is for families who will use their tub every single day: busy parents, sore backs, and hosts who like a full tub on a Saturday night.",
+      "chips": ["Up to 99 jets", "5 layers of insulation", "Recycled pump heat"],
+      "believe": "The Premium line is for families who will use their tub every single day. People with sore backs and busy weeks, parents who want one place the whole family actually talks, and hosts who like a full tub on a Saturday night.",
+      "moments": [
+        ["Your first soak", "Find the seat that hits your shoulders just right. On the Maximus, that's one of 99 jets."],
+        ["Every evening", "Phones stay in the house. The family stays in the tub a little longer than planned."],
+        ["Your hydro bill", "Five layers of insulation and pump heat recycled into the water keep winter running costs down."]
+      ],
+      "features": ["Five types of insulation in the cabinet", "Waste heat from the pumps recycled into the water", "Up to 99 jets (Maximus)", "Loungers or all-seaters, 3 to 7 people", "Ozone sanitation and LED lighting", "Bluetooth sound system"],
+      "help": "Torn between loungers and an all-seater? Tell Blaine who's soaking and he'll pick the layout with you.",
+      "meta": "Platinum Spas Premium hot tubs in Kemptville. Up to 99 jets, five layers of insulation, seats 3 to 7. Text Blaine for your price."
+    },
+    "luxury": {
+      "name": "Luxury",
+      "title": "The cleanest water we sell.",
+      "short": "The lowest-maintenance tub you can own.",
+      "hero": "florence",
+      "card": "portofino",
+      "card_believe": "Blaine believes this line is for people who want the water to take care of itself: owners done fighting chemicals, sensitive skin, and anyone who wants the softest water possible.",
+      "chips": ["Ozone + UV + Platinum Pure", "Four-stage filtration", "Wi-Fi app control"],
+      "believe": "The Luxury line is for people who want the water to take care of itself. Owners who are done fighting chemicals, people with sensitive skin, and anyone who wants the softest, cleanest water they can get.",
+      "moments": [
+        ["Your first soak", "Soft water and no chlorine smell. Just warm, clean water and quiet."],
+        ["Every week", "Two capfuls of O-Care, a glance at the app, and you're done."],
+        ["On the drive home", "Heat it up from your phone so it's ready the minute you walk in."]
+      ],
+      "features": ["Ozone + UV + Platinum Pure water care", "Four-stage filtration", "Wi-Fi and app control as standard", "7-inch touchscreen control panel", "Premium Shield Plus insulation", "Ergonomic seats and loungers"],
+      "help": "Wondering if the Luxury water care is worth it for you? Blaine will be honest about whether you need it.",
+      "meta": "Platinum Spas Luxury hot tubs in Kemptville. Ozone, UV and Platinum Pure water care with Wi-Fi control. Text Blaine for your price."
+    }
+  },
+  "tubs": [
+    {"k": "tahiti", "n": "Tahiti", "line": "deluxe", "seats": "3-4", "s": 4, "jets": 36, "power": "120V", "note": "A lounger in a compact 7 ft footprint. Plugs into a standard outlet."},
+    {"k": "st-lucia", "n": "St Lucia", "line": "deluxe", "seats": "4", "s": 4, "jets": 23, "power": "120V", "note": "An all-seater sized for couples. Plug-and-play on 120V."},
+    {"k": "reims", "n": "Reims", "line": "deluxe", "seats": "6", "s": 6, "jets": 25, "power": "120V", "note": "Six seats with a lounger on plain 120V power.", "flag": "Best Buy 2025"},
+    {"k": "refresh", "n": "Refresh", "line": "deluxe", "seats": "6", "s": 6, "jets": 49, "power": "50A", "note": "A full-body lounger and full insulation at a value price."},
+    {"k": "palma", "n": "Palma", "line": "deluxe", "seats": "6", "s": 6, "jets": 83, "power": "60A", "note": "83 jets and a full-body lounger. The massage pick of the line."},
+    {"k": "st-tropez", "n": "St Tropez", "line": "deluxe", "seats": "7", "s": 7, "jets": 25, "power": "120V", "note": "Seven seats that still run on 120V plug-and-play."},
+    {"k": "seville", "n": "Seville", "line": "deluxe", "seats": "7", "s": 7, "jets": 48, "power": "50A", "note": "An all-seater for bigger groups and family nights."},
+    {"k": "topaz", "n": "Topaz", "line": "premium", "seats": "3", "s": 3, "jets": 64, "power": "60A", "note": "Two loungers and 64 jets in a 7 ft 3 in footprint."},
+    {"k": "barcelona", "n": "Barcelona", "line": "premium", "seats": "5", "s": 5, "jets": 86, "power": "60A", "note": "Three seats and two full-body loungers. Made for stretching out."},
+    {"k": "maximus", "n": "Maximus", "line": "premium", "seats": "6", "s": 6, "jets": 99, "power": "60A", "note": "99 jets, five seats and a lounger. The most massage we carry."},
+    {"k": "santorini", "n": "Santorini", "line": "premium", "seats": "6", "s": 6, "jets": 52, "power": "60A", "note": "A comfortable family layout with a lounger."},
+    {"k": "tokyo", "n": "Tokyo", "line": "premium", "seats": "6", "s": 6, "jets": 89, "power": "60A", "note": "89 jets and a full-body lounger for serious hydrotherapy."},
+    {"k": "colombo", "n": "Colombo", "line": "premium", "seats": "7", "s": 7, "jets": 48, "power": "50A", "note": "A seven-seat all-seater built for entertaining."},
+    {"k": "oslo", "n": "Oslo", "line": "premium", "seats": "7", "s": 7, "jets": 64, "power": "60A", "note": "Seats seven. Sized for larger families."},
+    {"k": "capri", "n": "Capri", "line": "luxury", "seats": "4", "s": 4, "jets": 49, "power": "60A", "note": "Compact at 6 ft 7 in, with the full Luxury water care."},
+    {"k": "portofino", "n": "Portofino", "line": "luxury", "seats": "5", "s": 5, "jets": 66, "power": "60A", "note": "Four seats and a lounger, with UV and Wi-Fi app control."},
+    {"k": "positano", "n": "Positano", "line": "luxury", "seats": "5", "s": 5, "jets": 62, "power": "60A", "note": "Four seats and a lounger with Luxury water care."},
+    {"k": "florence", "n": "Florence", "line": "luxury", "seats": "6", "s": 6, "jets": 67, "power": "60A", "note": "Five seats and a full-body lounger, with UV water care."},
+    {"k": "palermo", "n": "Palermo", "line": "luxury", "seats": "6", "s": 6, "jets": 61, "power": "60A", "note": "An all-seater made for sitting together and talking."},
+    {"k": "sicily", "n": "Sicily", "line": "luxury", "seats": "6", "s": 6, "jets": 50, "power": "60A", "note": "A six-seat all-seater with built-in audio and UV."}
+  ]
+}

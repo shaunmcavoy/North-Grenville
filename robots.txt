@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://northgrenvillehottubs.ca/sitemap.xml
