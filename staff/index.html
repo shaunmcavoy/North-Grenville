@@ -171,6 +171,7 @@
         <h3>Signed</h3>
         <p class="muted" id="doneText"></p>
         <div class="formactions"><button class="btn btn-gold" type="button" id="downloadPdf">Download signed agreement</button></div>
+        <div id="depositBox"></div>
       </div>
 
       <div id="eventsPanel" class="card" hidden><h3>History</h3><ol class="events" id="events"></ol></div>
@@ -191,6 +192,11 @@
           </form>
         </div>
         <div class="card"><h3>Team</h3><ul class="teamlist" id="teamList"><li>Loading...</li></ul></div>
+        <div class="card span2" id="qbCard">
+          <h3>QuickBooks</h3>
+          <p class="muted">When a customer signs, the website creates their deposit invoice in QuickBooks and puts a Pay now button in their welcome email. When they pay, the sale moves to "Deposit received" automatically and everyone is notified.</p>
+          <div id="qbBody"><p>Checking QuickBooks...</p></div>
+        </div>
       </div>
     </div>
 

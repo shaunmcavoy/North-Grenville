@@ -45,7 +45,7 @@
 
   function route() {
     var h = location.hash.slice(1) || 'sales';
-    if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); }
+    if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); loadQb(); }
     else if (h === 'new') { openSale(null); }
     else if (h.indexOf('sale-') === 0) { openSale(h.slice(5)); }
     else { show('sales'); loadSales(); }
@@ -114,6 +114,7 @@
       }
       if (current.agreement_pdf_path) {
         $('#donePanel').hidden = false;
+        renderDeposit();
         $('#doneText').textContent = (current.customer_typed_name || 'The customer') + ' signed on ' + NG.dateTime(current.customer_signed_at) + '. They were emailed their copy, the pre-delivery guide, the owner\'s manual and a link to their portal.';
       }
       loadEvents(current.id);
@@ -122,7 +123,7 @@
   }
   function loadEvents(id) {
     sb.from('sale_events').select('at,kind,detail').eq('sale_id', id).order('at').then(function (r) {
-      var L = { rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send' };
+      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send' };
       var ev = r.data || []; if (!ev.length) return;
       $('#events').innerHTML = ev.map(function (e) { return '<li><b>' + NG.esc(L[e.kind] || e.kind) + '</b><span>' + NG.dateTime(e.at) + '</span></li>'; }).join('');
       $('#eventsPanel').hidden = false;
@@ -197,6 +198,51 @@
   $('#downloadPdf').addEventListener('click', function () {
     NG.api('agreement-pdf', { sale_id: current.id }).then(function (r) { location.href = r.url; }).catch(function (err) { NG.toast(err.message); });
   });
+
+  // ---------- Deposit (QuickBooks) ----------
+  function renderDeposit() {
+    var box = $('#depositBox'), s = current;
+    if (s.status === 'deposit_paid' || s.deposit_paid_at) { box.innerHTML = '<h3>Deposit</h3><p>' + NG.pill('deposit_paid') + ' ' + NG.money(s.deposit) + ' received ' + NG.dateTime(s.deposit_paid_at) + '. Time to place the order with Platinum Spas.</p>'; return; }
+    if (!(Number(s.deposit) > 0)) { box.innerHTML = ''; return; }
+    if (s.qb_deposit_invoice_id) {
+      box.innerHTML = '<h3>Deposit</h3><p>QuickBooks invoice created for ' + NG.money(s.deposit) + '. It switches to "Deposit received" on its own within 15 minutes of the customer paying.</p>' +
+        '<div class="formactions">' + (s.qb_invoice_link ? '<button class="btn btn-line btn-sm" type="button" id="copyPay">Copy pay link</button><button class="btn btn-ink btn-sm" type="button" id="emailPay">Email pay link to customer</button>' : '') + '<p class="formmsg" id="payMsg"></p></div>';
+    } else {
+      box.innerHTML = '<h3>Deposit</h3><p class="muted">No QuickBooks invoice yet for the ' + NG.money(s.deposit) + ' deposit.</p><div class="formactions"><button class="btn btn-gold btn-sm" type="button" id="makeInvoice">Create deposit invoice and email pay link</button><p class="formmsg" id="payMsg"></p></div>';
+    }
+    var cp = $('#copyPay'); if (cp) cp.onclick = function () { NG.copy(s.qb_invoice_link); };
+    var send = function () {
+      $('#payMsg').textContent = 'Working...';
+      NG.api('qb-invoice', { sale_id: s.id, email_customer: true }).then(function () { $('#payMsg').textContent = 'Pay link emailed to the customer.'; openSale(s.id); })
+        .catch(function (e) { $('#payMsg').textContent = e.message; });
+    };
+    var ep = $('#emailPay'); if (ep) ep.onclick = send;
+    var mk = $('#makeInvoice'); if (mk) mk.onclick = send;
+  }
+
+  // ---------- QuickBooks settings (admins) ----------
+  function loadQb() {
+    var body = $('#qbBody');
+    var flag = new URLSearchParams(location.search).get('qb');
+    var banner = flag ? '<p class="note">' + ({ connected: 'QuickBooks is connected.', cancelled: 'QuickBooks connection was cancelled.', failed: 'QuickBooks connection failed. Please try again.' }[flag] || '') + '</p>' : '';
+    NG.api('qb-status', {}).then(function (st) {
+      if (!st.configured) { body.innerHTML = banner + '<p>Add <b>QB_CLIENT_ID</b> and <b>QB_CLIENT_SECRET</b> on the Supabase secrets page, then refresh.</p>'; return; }
+      if (!st.connected) { body.innerHTML = banner + '<button class="btn btn-gold" type="button" id="qbConnect">Connect QuickBooks</button><p class="muted small">You\'ll sign in to Blaine\'s QuickBooks and approve the connection once.</p>'; $('#qbConnect').onclick = function () { NG.api('qb-connect', {}).then(function (r) { location.href = r.url; }).catch(function (e) { NG.toast(e.message); }); }; return; }
+      var L = st.lists || { items: [], taxCodes: [] };
+      var opt = function (arr, sel) { return '<option value="">Choose...</option>' + arr.map(function (x) { return '<option value="' + NG.esc(x.id) + '"' + (x.id === sel ? ' selected' : '') + '>' + NG.esc(x.name) + (x.type ? ' (' + NG.esc(x.type) + ')' : '') + '</option>'; }).join(''); };
+      body.innerHTML = banner + '<p>' + NG.pill('signed').replace('Signed', 'Connected') + ' ' + NG.esc(st.company || 'QuickBooks company') + '</p>' +
+        (st.list_error ? '<p class="note">' + NG.esc(st.list_error) + '</p>' : '') +
+        '<form id="qbForm" class="form grid2"><label>Product or service for deposits<select name="item">' + opt(L.items, st.item_id) + '</select></label>' +
+        '<label>Tax code for deposits<select name="tax">' + opt(L.taxCodes, st.tax_code_id) + '</select></label>' +
+        '<div class="span2 formactions"><button class="btn btn-ink" type="submit">Save</button><button class="btn btn-line btn-sm" type="button" id="qbDisconnect">Disconnect</button><p class="formmsg"></p></div></form>' +
+        '<p class="muted small">Ask Blaine\'s bookkeeper which item and tax code deposits should use. If there isn\'t one yet, create a "Hot Tub Deposit" service in QuickBooks, then refresh this page.</p>';
+      $('#qbForm').onsubmit = function (e) {
+        e.preventDefault(); var f = e.target, m = f.querySelector('.formmsg'); m.textContent = 'Saving...';
+        NG.api('qb-settings', { item_id: f.item.value, tax_code_id: f.tax.value }).then(function () { m.textContent = 'Saved.'; }).catch(function (er) { m.textContent = er.message; });
+      };
+      $('#qbDisconnect').onclick = function () { NG.api('qb-settings', { disconnect: true }).then(loadQb); };
+    }).catch(function (e) { body.innerHTML = '<p>' + NG.esc(e.message) + '</p>'; });
+  }
 
   // ---------- Team ----------
   function loadTeam() {
