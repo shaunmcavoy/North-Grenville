@@ -124,6 +124,7 @@ async function route_send_for_signature(req: Request): Promise<Response> {
         body: `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p>
 <p>Thank you for choosing us for your ${escapeHtml(what.trim())}. Your sales agreement is ready. Please read it over and sign online. It takes a couple of minutes on your phone or computer.</p>
 ${button(signUrl, "Review and sign")}
+${Number(sale.deposit) > 0 ? `<p>Once you've signed, you can pay your ${payTerms(sale).full ? `${money(sale.deposit)} in full` : `${money(sale.deposit)} deposit`} right there on the same page, ${payTerms(sale).how}, so your order goes in straight away.</p>` : ""}
 <p style="color:#6e5d4f">We do this online so you have a clear copy of everything we agreed, in writing, with nothing left to memory. As soon as you sign, you'll get a copy by email along with your pre-delivery guide and owner's manual, so you can start getting ready for your tub.</p>
 <p>If anything doesn't look right, don't sign. Just reply or call me at (613) 292-1786 and we'll fix it.</p><p>Blaine</p>`,
       }),
@@ -199,9 +200,13 @@ async function route_signing(req: Request): Promise<Response> {
   }).eq("id", sale.id);
   await logEvent(sale.id, "customer_signed", userId, { ip, sha256: hash });
 
-  await afterSigned(sale, c, pdfBytes, "online");
-
-  return json(req, { ok: true, number: sale.number });
+  const after = await afterSigned(sale, c, pdfBytes, "online");
+  const pt = payTerms(sale);
+  // The signing page shows the pay button right away, so the customer can sign and pay in one go.
+  return json(req, {
+    ok: true, number: sale.number, pay_link: after.payLink, amount: Number(sale.deposit), balance: Number(sale.balance),
+    full: pt.full, pay_label: pt.button, how: pt.how,
+  });
 }
 
 // The payment paragraph used in customer emails: what they owe now, why it matters, and the pay button if there is one.
@@ -285,7 +290,7 @@ ${Number(sale.deposit) > 0 && !payLink ? `<p style="background:#fbe9d0;border-ra
       attachments: [{ filename: `Agreement #${sale.number}.pdf`, content: toBase64(pdfBytes) }],
     });
   } catch (e) { console.error("staff notice failed", e); }
-
+  return { payLink };
 }
 
 // What a sale still needs before it can be signed (online or on paper).

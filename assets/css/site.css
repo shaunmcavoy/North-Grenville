@@ -453,3 +453,7 @@ section[id],.line[id]{scroll-margin-top:84px}
 .paperdone .photos .opt{font-weight:400;color:var(--muted)}
 .paperdone label.check{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-weight:500}
 .paperdone label.check input{margin-top:4px;width:18px;height:18px;flex:none}
+/* Pay right after signing */
+.paynow{background:var(--sand-soft, #efe5d6);border-radius:14px;padding:20px 22px;margin:18px 0 22px;text-align:left}
+.paynow .eyebrow{margin:0 0 6px}
+.paynow .btn{margin:8px 0 10px}

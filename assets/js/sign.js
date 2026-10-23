@@ -44,6 +44,15 @@
       .then(function (res) {
         if (!res.ok) { m.textContent = res.d.error || 'Something went wrong.'; b.disabled = false; return; }
         $('#agreement').hidden = true; $('#signForm').hidden = true; $('#signDone').hidden = false;
+        var d = res.d;
+        if (d.pay_link) {
+          $('#payWhy').textContent = (d.full
+            ? 'Your total of ' + NG.money(d.amount) + ' is paid in full, as we agreed. Paying it now confirms your order with Platinum Spas so your tub can be built and shipped to us, and there\'s nothing left to pay on delivery day.'
+            : 'Your deposit of ' + NG.money(d.amount) + ', as we agreed, confirms your order with Platinum Spas so your tub can be built and shipped to us. Your remaining balance of ' + NG.money(d.balance) + ' is due before delivery.') +
+            ' You can pay ' + d.how + '.';
+          $('#payBtn').href = d.pay_link; $('#payBtn').textContent = d.pay_label + ' now';
+          $('#payNow').hidden = false;
+        }
         $('#signTitle').textContent = 'Signed. Thank you.'; window.scrollTo(0, 0);
       })
       .catch(function () { m.textContent = 'We couldn\'t reach the server. Please try again.'; b.disabled = false; });
