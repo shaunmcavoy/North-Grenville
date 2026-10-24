@@ -49,7 +49,7 @@ nav.links a:hover{color:var(--cream)}
 .top .signin{padding:10px 16px}
 @media (max-width:520px){.top .signin{padding:10px 11px}.top .signin .lbl-signin{display:none}}
 @media (max-width:1140px){nav.links{gap:16px;font-size:.88rem}}
-@media (max-width:1020px){nav.links{display:none}}
+@media (max-width:1080px){nav.links{display:none}}
 @media (max-width:520px){.brand small{display:none}.top .btn .lbl-long{display:none}}
 
 /* Hero */
@@ -556,3 +556,16 @@ section[id],.line[id]{scroll-margin-top:84px}
 .swimsibs .sib{grid-template-columns:120px minmax(0,1fr)}
 @media (max-width:860px){.swimhero{grid-template-columns:1fr}.jetkinds.two{grid-template-columns:1fr}}
 .specs.two{grid-template-columns:repeat(2,1fr)}
+
+/* Saunas */
+.lphoto.light{background:#e9e7e4}
+.tub.sauna .ph{background:#e9e7e4}
+.tub.sauna .ph img{object-fit:contain}
+.rangegroup{margin-top:36px}
+.rangegroup:first-of-type{margin-top:8px}
+.rangehead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.rangehead h3{font-family:var(--display);font-weight:500;font-size:1.7rem;margin:0}
+.rangehead h3 span{font-family:var(--body);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--water-deep);margin-left:8px;vertical-align:middle}
+.rangehead p{color:var(--muted);margin:0}
+.rangegroup .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+@media (max-width:480px){.rangegroup .grid{grid-template-columns:1fr}}

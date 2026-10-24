@@ -589,6 +589,261 @@ def swim_jsonld(m):
             {"@type": "ListItem", "position": 3, "name": m["n"], "item": url}]}]}
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
+# ---------- Saunas (Hekla) ----------
+SAUNA = json.loads((SRC / "saunas.json").read_text())
+SAUNA_MODELS = SAUNA["models"]
+RANGES = {r["id"]: r for r in SAUNA["ranges"]}
+
+
+def sauna_size(m):
+    """Readable size line, and a short version for cards."""
+    if m.get("dims_in"):
+        w, d, h = m["dims_in"]
+        where = " inside" if m.get("dims_note") == "inside" else ""
+        return f"{w:g} x {d:g} x {h:g} in{where} (about {ftin(round(w))} x {ftin(round(d))})", f"{ftin(round(w))} x {ftin(round(d))}"
+    if m.get("dims_cm"):
+        w, d, h = m["dims_cm"]
+        wi, di, hi = (round(x / 2.54) for x in (w, d, h))
+        return f"{w} x {d} x {h} cm (about {ftin(wi)} x {ftin(di)}, {ftin(hi)} tall)", f"{ftin(wi)} x {ftin(di)}"
+    if m.get("size"):
+        return m["size"], m["size"]
+    return "", ""
+
+
+def sauna_card(m, base):
+    R = RANGES[m["range"]]
+    kind = {"traditional": "Classic"}.get(m["kind"], SAUNA["kinds"][m["kind"]]["name"])
+    return f"""<article class="tub sauna">
+      <a class="ph" href="{base}saunas/{m['k']}/" aria-label="See the {esc(m['n'])} in detail"><img src="{base}assets/img/{m['img']}.webp" alt="The Hekla {esc(m['n'])} sauna" loading="lazy" width="800" height="800"></a>
+      <div class="bd">
+        <h3 class="tubname"><a href="{base}saunas/{m['k']}/">The {esc(m['n'])}</a></h3>
+        <div class="specs"><div><b>{esc(m['people'])}</b><span>People</span></div><div><b>{R['where']}</b><span>Where</span></div><div><b>{kind}</b><span>Heat</span></div></div>
+        <p class="note">{esc(m['head'])}</p>
+        <a class="tubmore" href="{base}saunas/{m['k']}/">See the details <span aria-hidden="true">&rarr;</span></a>
+        <div class="acts">
+          <a class="btn btn-ink" href="{sms(f"Hi Blaine, I'm interested in the Hekla {m['n']} sauna. What's your best price?")}">Text Blaine for price</a>
+          <a class="btn btn-line" href="{TEL}" aria-label="Call Blaine about the {esc(m['n'])}">Call</a>
+        </div>
+      </div>
+    </article>"""
+
+
+def saunas_body(base):
+    mm = "".join(f"<article><h3>{esc(a)}</h3><p>{esc(b)}</p></article>" for a, b in SAUNA["moments"])
+    kinds = "".join(f"<div><b>{esc(v['name'])}</b><p>{esc(v['short'])}</p></div>" for v in SAUNA["kinds"].values())
+    groups = ""
+    for r in SAUNA["ranges"]:
+        cards = "\n      ".join(sauna_card(m, base) for m in SAUNA_MODELS if m["range"] == r["id"])
+        groups += f"""
+    <div class="rangegroup" id="{r['id']}" data-where="{r['where'].lower()}">
+      <div class="rangehead"><h3>{esc(r['name'])} <span>{r['where']}</span></h3><p>{esc(r['line'])}</p></div>
+      <div class="grid">
+      {cards}
+      </div>
+    </div>"""
+    return f"""<section class="lhero">
+  <div class="wrap">
+    <a class="back" href="{base}#more">&larr; Everything we sell</a>
+    <div class="lgrid">
+      <div>
+        <p class="eyebrow">Saunas &middot; {SAUNA['brand']}</p>
+        <h1>{esc(SAUNA['title'])}</h1>
+        <blockquote class="belief"><p>{esc(SAUNA['believe'])}</p><footer><img src="{base}assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></footer></blockquote>
+        <div class="ctas">
+          <a class="btn btn-gold" href="#pick">See the saunas</a>
+          <a class="btn btn-ghost" href="{sms("Hi Blaine, I'd like to talk about a sauna.")}">{CHAT}Text Blaine</a>
+        </div>
+      </div>
+      <img class="lphoto light" src="{base}assets/img/sauna-cube.webp" alt="The Hekla Cube outdoor sauna" width="560" height="560">
+    </div>
+  </div>
+</section>
+<section class="moments">
+  <div class="wrap">
+    <p class="eyebrow teal">Picture it at home</p>
+    <h2>What owning a sauna feels like.</h2>
+    <div class="mgrid">{mm}</div>
+  </div>
+</section>
+<section class="tseats">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">The first choice</p>
+    <h2>Traditional or infrared?</h2>
+    <p class="seatline">Both give you twenty quiet minutes of warmth. The difference is how they heat, and that decides how it feels.</p>
+    <div class="jetkinds two">{kinds}</div>
+    <p class="muted small">All of the outdoor saunas, the Cube, Barrel and Cabin ranges, are traditional. The Cube and Barrel can also take a wood-burning stove.</p>
+  </div>
+</section>
+<section class="pick" id="pick">
+  <div class="wrap">
+    <div class="pickhead">
+      <div>
+        <p class="eyebrow teal">Choose yours</p>
+        <h2>Which sauna is yours?</h2>
+        <p class="intro">Start with where it goes: inside the house, or out in the yard.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Filter by where it goes">
+        <button class="chip" type="button" data-w="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-w="indoor" aria-pressed="false">Indoor</button>
+        <button class="chip" type="button" data-w="outdoor" aria-pressed="false">Outdoor</button>
+      </div>
+    </div>{groups}
+  </div>
+</section>
+<section class="next">
+  <div class="wrap">
+    <p class="eyebrow">Next step</p>
+    <h2>What happens after you text Blaine.</h2>
+    <ol>
+      <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on which sauna fits your space and how you'll use it.</p></li>
+      <li><b>He checks your space</b><p>Room, base, and power. Most saunas need a 240V circuit for the heater, so it's worth sorting out first.</p></li>
+      <li><b>Yours is ordered</b><p>In the finish you choose, with the heater that suits you.</p></li>
+      <li><b>Your first session</b><p>Then pair it with your hot tub for a full hot and cold routine at home.</p></li>
+    </ol>
+    <div class="ctas">
+      <a class="btn btn-gold" href="{TEL}">{PHONE}Call Blaine</a>
+      <a class="btn btn-ghost" href="{sms("Hi Blaine, I'm interested in a sauna.")}">{CHAT}Text Blaine for price</a>
+    </div>
+    <p class="num">{SITE['phone_display']}</p>
+  </div>
+</section>
+<section class="others">
+  <div class="wrap">
+    <p class="eyebrow teal">Pair it with</p>
+    <div class="ogrid"><a href="{base}#lines"><span>Hot tubs</span><b>The Deluxe, Premium and Luxury lines</b><em>See them &rarr;</em></a><a href="{base}swim-spas/"><span>Swim spas</span><b>Swim, move and soak all year</b><em>See them &rarr;</em></a></div>
+  </div>
+</section>
+<script>
+document.querySelectorAll('[data-w]').forEach(function (b) {{
+  b.addEventListener('click', function () {{
+    document.querySelectorAll('[data-w]').forEach(function (x) {{ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }});
+    document.querySelectorAll('.rangegroup').forEach(function (g) {{ g.hidden = b.dataset.w !== 'all' && g.dataset.where !== b.dataset.w; }});
+  }});
+}});
+</script>"""
+
+
+def sauna_body(m, base):
+    R, K = RANGES[m["range"]], SAUNA["kinds"][m["kind"]]
+    n = m["n"]
+    size_long, size_short = sauna_size(m)
+    chips = [f"Seats {m['people']}", R["where"], K["name"]] + ([size_short] if size_short and not m.get("size") else [])
+    chip_html = "".join(f"<li>{esc(c)}</li>" for c in chips)
+    perfect = "".join(f"<li>{esc(x)}</li>" for x in m["perfect"])
+    rows = [("Type", f"{R['where']} {K['name'].lower()} sauna, {R['name']} range"), ("Seats", f"{m['people']} people")]
+    if size_long:
+        rows.append(("Size", size_long))
+    rows += [("Heat", m["heater"])]
+    if m.get("warm"):
+        rows.append(("Warm-up", m["warm"]))
+    rows.append(("Finish", m["finish"]))
+    spec_html = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in rows)
+    feats = "".join(f"<li>{esc(f)}</li>" for f in SAUNA["common"][m["range"]])
+    sibs = [x for x in SAUNA_MODELS if x["k"] != m["k"] and x["range"] == m["range"]]
+    if len(sibs) < 2:
+        sibs += [x for x in SAUNA_MODELS if x["k"] != m["k"] and x not in sibs and RANGES[x["range"]]["where"] == R["where"]][:3]
+    sib_html = "".join(f"""<a class="sib" href="{base}saunas/{x['k']}/"><img src="{base}assets/img/{x['img']}.webp" alt="" loading="lazy" width="160" height="160"><span><b>The {esc(x['n'])}</b><small>Seats {esc(x['people'])} &middot; {RANGES[x['range']]['where']}</small><em>{esc(x['head'])}</em></span></a>""" for x in sibs)
+    ask = sms(f"Hi Blaine, I'm interested in the Hekla {n} sauna. What's your best price?")
+    fit = sms(f"Hi Blaine, I'm trying to decide if the Hekla {n} sauna is right for me.")
+    return f"""<section class="lhero thero">
+  <div class="wrap">
+    <a class="back" href="{base}saunas/#{m['range']}">&larr; All saunas</a>
+    <div class="lgrid">
+      <div>
+        <p class="eyebrow">{esc(R['name'])} range &middot; {SAUNA['brand']} saunas</p>
+        <h1>The {esc(n)}</h1>
+        <p class="tlead">{esc(m['head'])}</p>
+        <ul class="tchips">{chip_html}</ul>
+        <div class="ctas">
+          <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+          <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+        </div>
+      </div>
+      <img class="lphoto light" src="{base}assets/img/{m['img']}.webp" alt="The Hekla {esc(n)} sauna" width="560" height="560">
+    </div>
+  </div>
+</section>
+<section class="twhy">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">Why people choose the {esc(n)}</p>
+    <blockquote class="belief light"><p>{esc(m['why'])}</p><footer><img src="{base}assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></footer></blockquote>
+  </div>
+</section>
+<section class="tfit">
+  <div class="wrap tfitgrid">
+    <div>
+      <p class="eyebrow teal">Is it the one?</p>
+      <h2>The {esc(n)} may be perfect for you if&hellip;</h2>
+      <ul class="checks">{perfect}</ul>
+    </div>
+    <aside class="honest">
+      <p class="eyebrow">Blaine's honest take</p>
+      <p>{esc(m['honest'])}</p>
+      <a class="btn btn-line btn-sm" href="{fit}">{CHAT}Ask Blaine which fits</a>
+    </aside>
+  </div>
+</section>
+<section class="tseats">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">How it heats</p>
+    <h2>{esc(K['name'])} heat.</h2>
+    <p class="seatline">{esc(K['short'])}</p>
+    <p class="seatline">{esc(R['line'])}</p>
+    <p class="muted small">Pair it with your hot tub for a hot and cold routine at home. If you have a health condition, check with your doctor before using a sauna.</p>
+  </div>
+</section>
+<section class="tspecs">
+  <div class="wrap tspecgrid">
+    <div>
+      <p class="eyebrow teal">The details</p>
+      <h2>{esc(n)} specifications</h2>
+      <dl class="spectable">{spec_html}</dl>
+      <p class="muted small">Specs as published by {SAUNA['brand']}. Blaine will confirm the details for yours, including the heater and the power it needs, before you order.</p>
+    </div>
+    <div>
+      <p class="eyebrow teal">What comes with it</p>
+      <h2>Built in.</h2>
+      <ul class="feats">{feats}</ul>
+    </div>
+  </div>
+</section>
+<section class="next">
+  <div class="wrap">
+    <p class="eyebrow">Next step</p>
+    <h2>Text Blaine for your price on the {esc(n)}.</h2>
+    <ol>
+      <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether the {esc(n)} is right for you.</p></li>
+      <li><b>He checks your space</b><p>Room, base and power, before anything is ordered.</p></li>
+      <li><b>Yours is ordered</b><p>In the finish you choose, with the heater that suits you.</p></li>
+      <li><b>Your first session</b><p>Twenty quiet minutes, then a cool-down or a soak in the tub.</p></li>
+    </ol>
+    <div class="ctas">
+      <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+      <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+    </div>
+    <p class="num">{SITE['phone_display']}</p>
+  </div>
+</section>
+<section class="others">
+  <div class="wrap">
+    <p class="eyebrow teal">Compare</p>
+    <div class="sibs">{sib_html}</div>
+    <p class="allines"><a href="{base}saunas/">See all {len(SAUNA_MODELS)} saunas &rarr;</a></p>
+  </div>
+</section>"""
+
+
+def sauna_jsonld(m):
+    url = f"{SITE['url']}/saunas/{m['k']}/"
+    data = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Product", "name": f"Hekla {m['n']} sauna", "brand": {"@type": "Brand", "name": SAUNA["brand"]},
+         "image": f"{SITE['url']}/assets/img/{m['img']}.webp", "description": f"{m['head']} {m['why']}", "category": "Sauna", "url": url},
+        {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{SITE['url']}/"},
+            {"@type": "ListItem", "position": 2, "name": "Saunas", "item": f"{SITE['url']}/saunas/"},
+            {"@type": "ListItem", "position": 3, "name": m["n"], "item": url}]}]}
+    return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
+
 
 def business_jsonld():
     data = {
@@ -780,6 +1035,11 @@ def build():
         page(f"{m['section']}/{m['k']}/", f"Platinum Spas {m['n']} {kind} | North Grenville Hot Tubs",
              f"The {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
              swim_body(m, "../../"), "../../", swim_jsonld(m))
+    page("saunas/", f"Saunas: {SAUNA['title'][:-1]} | North Grenville Hot Tubs", SAUNA["meta"], saunas_body("../"), "../")
+    for m in SAUNA_MODELS:
+        page(f"saunas/{m['k']}/", f"Hekla {m['n']} Sauna, Seats {m['people']} | North Grenville Hot Tubs",
+             f"The Hekla {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
+             sauna_body(m, "../../"), "../../", sauna_jsonld(m))
     page("404.html", "Page not found | North Grenville Hot Tubs", "That page isn't here.",
          """<section class="lhero"><div class="wrap" style="padding-block:96px">
   <p class="eyebrow">Page not found</p><h1>That page took a dip.</h1>
@@ -824,10 +1084,10 @@ def build():
         body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
              app_scripts + [f"/assets/js/{js}.js"])
-    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
-    print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, {len(SWIM_MODELS)} swim spa and mini pool pages, blog index, {len(posts)} posts, 404, sitemap")
+    print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, {len(SWIM_MODELS)} swim spa and mini pool pages, {len(SAUNA_MODELS)} sauna pages, blog index, {len(posts)} posts, 404, sitemap")
 
 
 if __name__ == "__main__":
