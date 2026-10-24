@@ -72,7 +72,16 @@ export async function buildAgreementPdf(opts: {
   row([["Shell colour", sale.shell_colour, 0.34], ["Siding", sale.siding, 0.33], ["Water care", sale.water_care, 0.33]]);
   row([["Stereo", sale.stereo, 0.34], ["Starter kit", sale.starter_kit, 0.33], ["Steps", sale.steps, 0.33]]);
   row([["Lifter", sale.lifter, 0.34], ["Spa cover", sale.spa_cover, 0.33], ["Other", sale.other, 0.33]]);
-  row([["Hot tub value", money(sale.hot_tub_value), 0.34], ["", "", 0.66]]);
+  if (sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care)))) {
+    // Where to register O-Care, so it's on the customer's paper copy too.
+    const total = W - 2 * M, x = M + total * 0.34;
+    field("Hot tub value", money(sale.hot_tub_value), M, total * 0.34);
+    page.drawText("Register your O-Care for free delivery to your door:", { x, y, size: 8, font, color: muted });
+    page.drawText("l.ead.me/bgkT4n  (choose Blaine McAvoy as your advisor)", { x, y: y - 13, size: 9.5, font: bold, color: ink });
+    y -= 32;
+  } else {
+    row([["Hot tub value", money(sale.hot_tub_value), 0.34], ["", "", 0.66]]);
+  }
 
   if (sale.sauna_model || Number(sale.sauna_total) > 0) {
     section("SAUNA");

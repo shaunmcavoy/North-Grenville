@@ -51,6 +51,7 @@ Product facts (seats, jets, power, features, sizes, pumps) come only from `src/d
   - `/deluxe/`, `/premium/`, `/luxury/` for the lines
   - a single tub's page, like `/premium/maximus/` or `/deluxe/tahiti/`, when a post talks about that model
   - `/#diet` for water care and O-Care
+  - When a post tells owners to start or keep using O-Care, link Blaine's O-Care registration: https://l.ead.me/bgkT4n (O-CareComfort sign-up with North Grenville as the dealer; customers choose Blaine McAvoy as their advisor). Say why: delivered free to the door, a saving on every box, never run out, pause or cancel any time.
   - `/#story` for Blaine's story
   - an earlier post at `/blog/<slug>/` when it fits
 - **Ending:** one short closing paragraph in Blaine's voice. The page adds the call/text box itself, so don't repeat the phone number at the end.

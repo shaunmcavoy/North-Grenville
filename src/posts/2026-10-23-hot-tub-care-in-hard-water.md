@@ -38,7 +38,7 @@ You don't need to be a chemist. Here's the routine I recommend for hard water ar
 
 1. **Fill through a hose pre-filter.** A simple filter on the end of your garden hose catches a lot of minerals and metals before they ever get into the tub. It's one of the cheapest things you can do.
 2. **Test the water once a week.** Use test strips and keep your levels in the range the strip and your tub's manual recommend. Balanced water is much less likely to form scale.
-3. **Use a weekly mineral treatment like O-Care.** This is what I set my customers up with. It goes in once a week and works on scale and biofilm at the source, so your sanitizer can do its job with a lot less help. Less junk in, more years out.
+3. **Use a weekly mineral treatment like O-Care.** This is what I set my customers up with. If you bought your tub from us, [register your O-Care with me here](https://l.ead.me/bgkT4n) and it's delivered free to your door, so you never run out. It goes in once a week and works on scale and biofilm at the source, so your sanitizer can do its job with a lot less help. Less junk in, more years out.
 4. **Rinse your filters every month.** Hard water clogs filters faster. A good rinse with a hose keeps water moving and takes some strain off the pump. Plan to replace them every six to twelve months.
 5. **Drain and refill on schedule.** Even with good care, minerals build up over time. Follow your tub's manual for how often to change the water, and give the shell a wipe while it's empty.
 

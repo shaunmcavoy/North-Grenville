@@ -35,6 +35,9 @@
         '<h3>Where things stand</h3><ol class="steps-v">' + steps + '</ol>' +
         '<h3>Your guides</h3><p class="muted">Read the pre-delivery guide before we book delivery. Getting the base, power and access right is what makes delivery day smooth and protects your warranty.</p>' +
         '<div class="formactions"><a class="btn btn-ink" href="/assets/docs/north-grenville-pre-delivery-guide.pdf" target="_blank" rel="noopener">Pre-delivery guide</a><a class="btn btn-line" href="/assets/docs/north-grenville-owners-manual.pdf" target="_blank" rel="noopener">Owner\'s manual</a></div>' +
+        (s.tub_model && (!s.water_care || /o.?care/i.test(s.water_care)) ?
+          '<h3>Your O-Care</h3><p class="muted">O-Care is the weekly mineral treatment that keeps our hard water from scaling up your heater and pipes, so you use fewer chemicals and your tub lasts. Register with Blaine as your sales advisor and it\'s delivered free to your door, sized to your tub, with a saving on every box. You\'ll never run out halfway through the season, and you can pause or cancel any time.</p>' +
+          '<div class="formactions"><a class="btn btn-ink" href="https://l.ead.me/bgkT4n" target="_blank" rel="noopener">Register my O-Care</a></div>' : '') +
         '<h3>Questions?</h3><p>Call or text Blaine directly at <b>(613) 292-1786</b>. He answers his own phone. Soon you\'ll also be able to send questions and book delivery right here.</p>' +
       '</article>';
     }).join('');

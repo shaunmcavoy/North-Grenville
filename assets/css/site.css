@@ -165,6 +165,10 @@ nav.links a:hover{color:var(--cream)}
 .compare .good h3{color:var(--water)}
 .compare .bad h3{color:var(--sand)}
 @media (max-width:860px){.diet .wrap{grid-template-columns:1fr;gap:32px}}
+.ocare-reg{display:flex;align-items:center;gap:18px;margin-top:28px;max-width:56ch}
+.ocare-reg p{color:var(--sand);font-size:.92rem;margin:0}
+@media (max-width:520px){.ocare-reg{flex-direction:column;align-items:flex-start;gap:12px}}
+a.oclink{color:inherit;text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:3px;font-weight:600}
 @media (max-width:480px){.compare{grid-template-columns:1fr}.compare > div + div{border-left:0;border-top:1px solid var(--line-dark)}}
 
 /* Steps */

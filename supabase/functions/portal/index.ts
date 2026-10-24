@@ -142,6 +142,8 @@ ${Number(sale.deposit) > 0 ? `<p>Once you've signed, you can pay your ${payTerms
 // GET ?t=token  -> agreement details for the customer to review.
 // POST {t, signature, typed_name, agree:true} -> customer signs; PDF is created, account made, welcome email sent.
 
+// O-CareComfort sign-up page, registered to North Grenville with Blaine as the sales advisor.
+const OCARE_URL = "https://l.ead.me/bgkT4n";
 const PUBLIC_FIELDS = ["number","status","sale_date","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","rep_name","rep_signed_at","terms_version"];
 
 async function load(token: string) {
@@ -259,6 +261,9 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">What to read first</p>
 <p><b>Your pre-delivery guide (attached).</b> Please read this before we book your delivery. A solid, level base, the right power from a licensed electrician and a clear path to the backyard are what make delivery day smooth, and they protect your warranty. Ten minutes now saves a rescheduled delivery later.</p>
 <p><b>Your owner's manual (attached).</b> Keep it handy. It walks you through start-up, water care and the simple weekly routine that keeps your water clean and your tub lasting for years, without a cupboard full of chemicals.</p>
+${sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care))) ? `<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your O-Care</p>
+<p>Your tub starts on O-Care, the weekly mineral treatment that keeps our hard water from building up scale in your heater and pipes. It means fewer chemicals, softer water and a tub that lasts. Register it with me and it's delivered free to your door on a schedule sized to your tub, with a saving on every box, so you never run out halfway through the season. Choose Blaine McAvoy as your sales advisor when you sign up. You can pause or cancel any time.</p>
+${button(OCARE_URL, "Register my O-Care")}` : ""}
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your customer portal</p>
 <p>We've set up your own portal with your tub's details and your agreement. As we go, it's where you'll schedule delivery, register your serial number for warranty, and send me questions directly.</p>
 ${button(portal, "Open my portal")}

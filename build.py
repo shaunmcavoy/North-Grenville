@@ -19,6 +19,13 @@ COPY = json.loads((SRC / "tubs_copy.json").read_text())  # Blaine's words for ea
 PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>'
 CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
 TEL = f"tel:{SITE['phone_tel']}"
+OCARE = SITE["ocare_url"]  # O-CareComfort sign-up, registered to Blaine as the sales advisor
+OCARE_A = f'<a class="oclink" href="{OCARE}" target="_blank" rel="noopener">'
+
+
+def ocl(html):
+    """Links the first mention of O-Care to Blaine's O-Care registration page."""
+    return html.replace("O-Care", OCARE_A + "O-Care</a>", 1)
 esc = html.escape
 
 
@@ -27,7 +34,7 @@ def sms(text):
 
 
 def fill(s, base):
-    s = s.replace("{{PHONE}}", PHONE).replace("{{CHAT}}", CHAT).replace("{{BASE}}", base)
+    s = s.replace("{{PHONE}}", PHONE).replace("{{CHAT}}", CHAT).replace("{{BASE}}", base).replace("{{OCARE}}", OCARE)
     s = s.replace("{{IMG:brandLogo}}", f"{base}assets/img/logo.webp")
     return re.sub(r"\{\{IMG:([\w-]+)\}\}", lambda m: f"{base}assets/img/{m.group(1)}.webp", s)
 
@@ -107,7 +114,7 @@ def line_body(lid, base):
     L = LINES[lid]
     tubs = [t for t in TUBS if t["line"] == lid]
     others = [k for k in LINES if k != lid]
-    moments = "".join(f"<article><h3>{esc(a)}</h3><p>{esc(b)}</p></article>" for a, b in L["moments"])
+    moments = "".join(f"<article><h3>{esc(a)}</h3><p>{ocl(esc(b))}</p></article>" for a, b in L["moments"])
     feats = "".join(f"<li>{esc(f)}</li>" for f in L["features"])
     cards = "\n    ".join(card(t, base) for t in tubs)
     other = "".join(f'<a href="{base}{o}/"><span>The {LINES[o]["name"]} line</span><b>{esc(LINES[o]["title"])}</b><em>See it &rarr;</em></a>' for o in others)
@@ -172,7 +179,7 @@ def line_body(lid, base):
       <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether this is the right tub for you.</p></li>
       <li><b>You sit in it</b><p>Come to the warehouse at {SITE['street']} by appointment and try the seats.</p></li>
       <li><b>Your tub is ordered</b><p>Built to your colour and spec through Platinum Spas, then delivered to your yard.</p></li>
-      <li><b>First soak, clean water</b><p>We set you up with O-Care and a weekly routine that takes minutes.</p></li>
+      <li><b>First soak, clean water</b><p>We set you up with O-Care and a weekly routine that takes minutes. {OCARE_A}Register your O-Care with Blaine</a> and it comes to your door, so you never run out.</p></li>
     </ol>
     <p class="help">{esc(L['help'])}</p>
     <div class="ctas">
@@ -308,7 +315,7 @@ def tub_body(t, base):
       <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether the {esc(n)} is the right tub for you.</p></li>
       <li><b>You sit in it</b><p>Come to the warehouse at {SITE['street']} by appointment and try the seats.</p></li>
       <li><b>Your tub is ordered</b><p>Built to your colour and spec through Platinum Spas, then delivered to your yard.</p></li>
-      <li><b>First soak, clean water</b><p>We set you up with O-Care and a weekly routine that takes minutes.</p></li>
+      <li><b>First soak, clean water</b><p>We set you up with O-Care and a weekly routine that takes minutes. {OCARE_A}Register your O-Care with Blaine</a> and it comes to your door, so you never run out.</p></li>
     </ol>
     <div class="ctas">
       <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
@@ -378,7 +385,7 @@ def swim_section_body(sid, base):
     hero_img = "swim" if sid == "swim-spas" else "chronos"
     moments = ""
     if S.get("moments"):
-        mm = "".join(f"<article><h3>{esc(a)}</h3><p>{esc(b)}</p></article>" for a, b in S["moments"])
+        mm = "".join(f"<article><h3>{esc(a)}</h3><p>{ocl(esc(b))}</p></article>" for a, b in S["moments"])
         moments = f"""<section class="moments">
   <div class="wrap">
     <p class="eyebrow teal">Picture it in your backyard</p>
@@ -440,7 +447,7 @@ def swim_section_body(sid, base):
       <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on which model fits how you'll use it.</p></li>
       <li><b>He checks your yard</b><p>{'Space, base, access and power. These are big, heavy tubs, so it&#x27;s worth getting right first.' if sid == 'swim-spas' else 'Space, access, power, and how it will sit in your landscaping.'}</p></li>
       <li><b>Yours is ordered</b><p>Built to spec through Platinum Spas, then delivered and set in place.</p></li>
-      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine.</p></li>
+      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine. {OCARE_A}Register your O-Care with Blaine</a> and it comes to your door, so you never run out.</p></li>
     </ol>
     {help_p}
     <div class="ctas">
@@ -563,7 +570,7 @@ def swim_body(m, base):
       <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether the {esc(n)} is right for you.</p></li>
       <li><b>He checks your yard</b><p>Space, base, access and power, before anything is ordered.</p></li>
       <li><b>Yours is ordered</b><p>Built to spec through Platinum Spas, then delivered and set in place.</p></li>
-      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine.</p></li>
+      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine. {OCARE_A}Register your O-Care with Blaine</a> and it comes to your door, so you never run out.</p></li>
     </ol>
     <div class="ctas">
       <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
