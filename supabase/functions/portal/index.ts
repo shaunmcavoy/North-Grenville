@@ -1,5 +1,5 @@
 // One edge function for the customer and staff portals. Route = last path segment, e.g. /functions/v1/portal/signing
-import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL } from "../_shared/common.ts";
+import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL, productNoun, productMaker, productWhat, usesOCare } from "../_shared/common.ts";
 import { buildAgreementPdf, sha256Hex, toBase64 } from "../_shared/pdf.ts";
 import { createDepositInvoice, invoiceBalance, qbAuthUrl, qbConfigured, qbDisconnect, qbExchange, qbLists, qbStatus } from "../_shared/qb.ts";
 
@@ -29,7 +29,7 @@ async function route_login_link(req: Request): Promise<Response> {
   const isStaff = prof.role !== "customer";
   const why = isStaff
     ? "This keeps every deal, agreement and delivery in one place, so nothing falls through the cracks and every customer gets the same great experience."
-    : "Your portal keeps everything about your hot tub in one place: your agreement, your tub's details, delivery and, later, your warranty and care reminders. No digging through emails, and you can always reach me directly.";
+    : "Your portal keeps everything about your purchase in one place: your agreement, its details, delivery and, later, your warranty and care reminders. No digging through emails, and you can always reach me directly.";
   const setPw = next.startsWith("/login/?setpw=1");
   await sendEmail({
     from: FROM, to: email, reply_to: REPLY_TO,
@@ -94,7 +94,7 @@ async function route_send_for_signature(req: Request): Promise<Response> {
   const missing = [];
   if (!c?.name) missing.push("customer name");
   if (!c?.email) missing.push("customer email");
-  if (!sale.tub_model && !sale.sauna_model) missing.push("a hot tub or sauna model");
+  if (!sale.tub_model && !sale.sauna_model) missing.push("a product model");
   if (Number(sale.total) <= 0) missing.push("pricing");
   if (Number(sale.deposit) > Number(sale.total)) missing.push("a deposit no bigger than the total");
   if (missing.length) return jsonAuth(req, { error: `Before sending, please add ${missing.join(", ")}.` }, 400);
@@ -120,7 +120,7 @@ async function route_send_for_signature(req: Request): Promise<Response> {
 
   const signUrl = `${SITE_URL}/sign/?t=${token}`;
   if (b.email_customer) {
-    const what = [sale.tub_model && `${sale.tub_make ?? ""} ${sale.tub_model} hot tub`, sale.sauna_model && `${sale.sauna_model} sauna`].filter(Boolean).join(" and ");
+    const what = productWhat(sale, true);
     await sendEmail({
       from: FROM, to: c.email, reply_to: REPLY_TO, subject: `Your North Grenville Hot Tubs agreement is ready to sign`,
       html: emailShell({
@@ -144,7 +144,7 @@ ${Number(sale.deposit) > 0 ? `<p>Once you've signed, you can pay your ${payTerms
 
 // O-CareComfort sign-up page, registered to North Grenville with Blaine as the sales advisor.
 const OCARE_URL = "https://l.ead.me/bgkT4n";
-const PUBLIC_FIELDS = ["number","status","sale_date","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","rep_name","rep_signed_at","terms_version"];
+const PUBLIC_FIELDS = ["number","status","sale_date","product_type","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","rep_name","rep_signed_at","terms_version"];
 
 async function load(token: string) {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
@@ -219,8 +219,8 @@ async function route_signing(req: Request): Promise<Response> {
 function payWhy(sale: any, link: string | null) {
   const p = payTerms(sale);
   const why = p.full
-    ? `Your total is ${money(sale.deposit)}, paid in full as we agreed. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us, and there's nothing left to pay on delivery day.`
-    : `Your deposit is ${money(sale.deposit)}, as we agreed. Paying it confirms your order with Platinum Spas so your tub can be built and shipped to us. Your remaining balance of ${money(sale.balance)} is due before delivery.`;
+    ? `Your total is ${money(sale.deposit)}, paid in full as we agreed. Paying it confirms your order with ${escapeHtml(productMaker(sale))} so your ${productNoun(sale)} can be built and shipped to us, and there's nothing left to pay on delivery day.`
+    : `Your deposit is ${money(sale.deposit)}, as we agreed. Paying it confirms your order with ${escapeHtml(productMaker(sale))} so your ${productNoun(sale)} can be built and shipped to us. Your remaining balance of ${money(sale.balance)} is due before delivery.`;
   return link
     ? `<p>${why} You can pay securely online ${p.how} through QuickBooks:</p>${button(link, p.button)}`
     : `<p>${why} I'll be in touch about payment.</p>`;
@@ -249,7 +249,7 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
 
   // Welcome to the family
   const portal = await loginLink(c.email, "/portal/");
-  const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
+  const what = productWhat(sale);
   const pt = payTerms(sale);
   try {
     await sendEmail({
@@ -258,12 +258,12 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
         preheader: "Your signed agreement, pre-delivery guide and owner's manual are attached.",
         body: `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p>
 <p style="font-family:Georgia,serif;font-size:22px;margin:0 0 10px">Congratulations!</p>
-<p>Deciding to bring home a ${escapeHtml(what)} is one of those few decisions in life that rewards you and your family every single day, for years and years. I'm happy to be the one who got to help you with it, and you picked one great ${sale.tub_model ? "hot tub" : "sauna"}.</p>
+<p>Deciding to bring home a ${escapeHtml(what)} is one of those few decisions in life that rewards you and your family every single day, for years and years. I'm happy to be the one who got to help you with it, and you picked one great ${productNoun(sale)}.</p>
 <p>Welcome to the family, and thank you for trusting us with your ${escapeHtml(what)}. ${method === "paper" ? `You have your signed paper copy, and a digital copy of agreement #${sale.number} is attached so it's always easy to find.` : `Your signed agreement (#${sale.number}) is attached for your records.`}</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">What to read first</p>
 <p><b>Your pre-delivery guide (attached).</b> Please read this before we book your delivery. A solid, level base, the right power from a licensed electrician and a clear path to the backyard are what make delivery day smooth, and they protect your warranty. Ten minutes now saves a rescheduled delivery later.</p>
 <p><b>Your owner's manual (attached).</b> Keep it handy. It walks you through start-up, water care and the simple weekly routine that keeps your water clean and your tub lasting for years, without a cupboard full of chemicals.</p>
-${sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care))) ? `<div style="background:#f4ecdf;border-left:4px solid #c8a35b;border-radius:10px;padding:18px 20px;margin:26px 0">
+${usesOCare(sale) ? `<div style="background:#f4ecdf;border-left:4px solid #c8a35b;border-radius:10px;padding:18px 20px;margin:26px 0">
 <p style="font-family:Georgia,serif;font-size:20px;margin:0 0 8px">Please register your O-Care</p>
 <p style="margin:0 0 12px">If you haven't registered your O-Care yet, please do it before your tub arrives. Here in North Grenville it's the most important thing you can do to protect your new tub, and here's why.</p>
 <p style="margin:0 0 12px"><b>Our water is hard.</b> When you heat hard water, the minerals come out and stick to the inside of your heater, pipes and jets as scale. Body oils and lotions feed a slimy biofilm inside the plumbing, where you can't see it or scrub it. Left alone, that's what leads to cloudy water, a smell you keep shocking away, jets that clog and a heater that works harder than it should.</p>
@@ -315,7 +315,7 @@ function missingForSigning(sale: any) {
   const c = sale.customers, missing: string[] = [];
   if (!c?.name) missing.push("customer name");
   if (!c?.email) missing.push("customer email");
-  if (!sale.tub_model && !sale.sauna_model) missing.push("a hot tub or sauna model");
+  if (!sale.tub_model && !sale.sauna_model) missing.push("a product model");
   if (Number(sale.total) <= 0) missing.push("pricing");
   if (Number(sale.deposit) > Number(sale.total)) missing.push("a deposit no bigger than the total");
   return missing;
@@ -616,13 +616,13 @@ async function route_qb_sync(req: Request): Promise<Response> {
       await logEvent(sale.id, "deposit_paid", null, { invoice: sale.qb_deposit_invoice_id });
       paid.push(sale.number);
       const c = sale.customers;
-      const what = sale.tub_model ? `${sale.tub_model} hot tub` : `${sale.sauna_model} sauna`;
+      const what = productWhat(sale);
       const portal = await loginLink(c.email, "/portal/");
       const pt = payTerms(sale);
       await sendEmail({
-        from: FROM, to: c.email, reply_to: REPLY_TO, subject: `${pt.received}. Your tub is on order.`,
+        from: FROM, to: c.email, reply_to: REPLY_TO, subject: `${pt.received}. Your ${productNoun(sale)} is on order.`,
         html: emailShell({ preheader: "Thank you. Here's what happens next.", body:
-          `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Thank you, we've received your ${money(sale.deposit)} ${pt.full ? "payment. You're paid in full, and your" : "deposit. Your"} ${escapeHtml(what)} is now on order with Platinum Spas.</p>
+          `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p><p>Thank you, we've received your ${money(sale.deposit)} ${pt.full ? "payment. You're paid in full, and your" : "deposit. Your"} ${escapeHtml(what)} is now on order with ${escapeHtml(productMaker(sale))}.</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:24px 0 6px">What to do while you wait</p>
 <p>This is the perfect time to get your spot ready using your pre-delivery guide: a solid, level base, power run by a licensed electrician, and a clear path to the backyard. Having these done before the tub arrives is what makes delivery day quick and stress-free, and it protects your warranty.</p>
 ${button(portal, "Open my portal")}

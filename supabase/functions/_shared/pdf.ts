@@ -67,25 +67,31 @@ export async function buildAgreementPdf(opts: {
   row([["City / Postal code", customer.city_pc, 0.6], ["Cell", customer.cell, 0.4]]);
   row([["Email", customer.email, 0.6], ["How did you hear about us?", customer.heard_about, 0.4]]);
 
-  section("HOT TUB");
-  row([["Make", sale.tub_make, 0.34], ["Model", sale.tub_model, 0.33], ["Estimated delivery time", sale.est_delivery, 0.33]]);
-  row([["Shell colour", sale.shell_colour, 0.34], ["Siding", sale.siding, 0.33], ["Water care", sale.water_care, 0.33]]);
-  row([["Stereo", sale.stereo, 0.34], ["Starter kit", sale.starter_kit, 0.33], ["Steps", sale.steps, 0.33]]);
-  row([["Lifter", sale.lifter, 0.34], ["Spa cover", sale.spa_cover, 0.33], ["Other", sale.other, 0.33]]);
-  if (sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care)))) {
-    // Where to register O-Care, so it's on the customer's paper copy too.
-    const total = W - 2 * M, x = M + total * 0.34;
-    field("Hot tub value", money(sale.hot_tub_value), M, total * 0.34);
-    page.drawText("Register your O-Care for free delivery to your door:", { x, y, size: 8, font, color: muted });
-    page.drawText("l.ead.me/bgkT4n  (choose Blaine McAvoy as your advisor)", { x, y: y - 13, size: 9.5, font: bold, color: ink });
-    y -= 32;
-  } else {
-    row([["Hot tub value", money(sale.hot_tub_value), 0.34], ["", "", 0.66]]);
+  const kind = sale.product_type ?? "hot_tub";
+  if (kind !== "sauna") {
+    const title = { hot_tub: "HOT TUB", swim_spa: "SWIM SPA", mini_pool: "MINI POOL" }[kind as string] ?? "HOT TUB";
+    const valueLabel = { hot_tub: "Hot tub value", swim_spa: "Swim spa value", mini_pool: "Mini pool value" }[kind as string] ?? "Hot tub value";
+    section(title);
+    row([["Make", sale.tub_make, 0.34], ["Model", sale.tub_model, 0.33], ["Estimated delivery time", sale.est_delivery, 0.33]]);
+    row([["Shell colour", sale.shell_colour, 0.34], ["Siding", sale.siding, 0.33], ["Water care", sale.water_care, 0.33]]);
+    row([["Stereo", sale.stereo, 0.34], ["Starter kit", sale.starter_kit, 0.33], ["Steps", sale.steps, 0.33]]);
+    row([["Lifter", sale.lifter, 0.34], ["Cover", sale.spa_cover, 0.33], ["Other", sale.other, 0.33]]);
+    if (["hot_tub", "swim_spa"].includes(kind) && sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care)))) {
+      // Where to register O-Care, so it's on the customer's paper copy too.
+      const total = W - 2 * M, x = M + total * 0.34;
+      field(valueLabel, money(sale.hot_tub_value), M, total * 0.34);
+      page.drawText("Register your O-Care for free delivery to your door:", { x, y, size: 8, font, color: muted });
+      page.drawText("l.ead.me/bgkT4n  (choose Blaine McAvoy as your advisor)", { x, y: y - 13, size: 9.5, font: bold, color: ink });
+      y -= 32;
+    } else {
+      row([[valueLabel, money(sale.hot_tub_value), 0.34], ["", "", 0.66]]);
+    }
   }
 
-  if (sale.sauna_model || Number(sale.sauna_total) > 0) {
-    section("SAUNA");
-    row([["Make", sale.sauna_make, 0.3], ["Model", sale.sauna_model, 0.3], ["Electrical", sale.sauna_electrical, 0.2], ["Total", money(sale.sauna_total), 0.2]]);
+  if (kind === "sauna" || sale.sauna_model || Number(sale.sauna_total) > 0) {
+    section(kind === "sauna" ? "SAUNA" : "SAUNA (ADDED)");
+    row([["Make", sale.sauna_make, 0.3], ["Model", sale.sauna_model, 0.3], ["Electrical", sale.sauna_electrical, 0.2], ["Price", money(sale.sauna_total), 0.2]]);
+    if (kind === "sauna") row([["Estimated delivery time", sale.est_delivery, 0.5], ["Other", sale.other, 0.5]]);
   }
 
   // Notes + money column

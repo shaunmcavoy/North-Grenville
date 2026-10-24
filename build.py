@@ -1120,10 +1120,21 @@ def build():
     # Portal pages (not indexed by search engines)
     tubs_js = json.dumps([{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "seats": t["seats"],
                            "jets": t["jets"], "power": t["power"]} for t in TUBS])
+    # Product picker for the sale form: category, then model. Also used for photos on the signing page and portal.
+    products_js = json.dumps({
+        "hot_tub": {"label": "Hot tub", "make": "Platinum Spas", "groups": [
+            {"name": f"{LINES[l]['name']} line", "items": [{"n": t["n"], "img": t["k"]} for t in TUBS if t["line"] == l]} for l in LINES]},
+        "swim_spa": {"label": "Swim spa", "make": "Platinum Spas", "groups": [
+            {"name": "", "items": [{"n": m["n"], "img": swim_img(m)} for m in SWIM_MODELS if m["section"] == "swim-spas"]}]},
+        "mini_pool": {"label": "Mini pool", "make": "Platinum Spas", "groups": [
+            {"name": "", "items": [{"n": m["n"], "img": swim_img(m)} for m in SWIM_MODELS if m["section"] == "mini-pools"]}]},
+        "sauna": {"label": "Sauna", "make": "Hekla", "groups": [
+            {"name": f"{r['name']} ({r['where'].lower()})", "items": [{"n": m["n"], "img": m["img"]} for m in SAUNA_MODELS if m["range"] == r["id"]]} for r in SAUNA["ranges"]]},
+    })
     app_head = '<meta name="robots" content="noindex">\n'
     app_scripts = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js", "/assets/js/app.js"]
     for slug, title, js in [("login", "Sign in", "login"), ("staff", "Staff portal", "staff"), ("sign", "Sign your agreement", "sign"), ("portal", "Your portal", "portal")]:
-        body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
+        body = f"<script>window.NG_TUBS={tubs_js};window.NG_PRODUCTS={products_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
         app, app_title = {"staff": ("staff", "NG Team"), "portal": ("portal", "My Hot Tub")}.get(slug, ("manifest", "NG Hot Tubs"))
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
              app_scripts + [f"/assets/js/{js}.js"], app=app, app_title=app_title)

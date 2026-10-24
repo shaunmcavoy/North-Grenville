@@ -4,30 +4,52 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var form = $('#saleForm');
   var CUST = ['name', 'email', 'cell', 'heard_about', 'address', 'city_pc'];
-  var SALE = ['sale_date', 'tub_make', 'tub_model', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'sauna_make', 'sauna_model', 'sauna_electrical', 'notes', 'payment_type', 'pay_methods'];
-  var MONEY = ['hot_tub_value', 'sauna_total', 'delivery_fee', 'deposit'];
+  // Product fields (category, model, make, electrical, prices) are handled by the product picker below.
+  var SALE = ['sale_date', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'notes', 'payment_type', 'pay_methods'];
+  var WATER = ['shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover'];
+  var MONEY = ['delivery_fee', 'deposit'];
   var TAX = 0.13;
 
-  // Model dropdown, grouped by line
-  (function () {
-    var sel = $('#tubModel'), tubs = window.NG_TUBS || [], lines = {};
-    tubs.forEach(function (t) { (lines[t.lineName] = lines[t.lineName] || []).push(t); });
-    var h = '<option value="">No hot tub</option>';
-    Object.keys(lines).forEach(function (l) {
-      h += '<optgroup label="' + NG.esc(l) + ' line">' + lines[l].map(function (t) { return '<option value="' + NG.esc(t.n) + '">' + NG.esc(t.n) + ' (seats ' + NG.esc(t.seats) + ')</option>'; }).join('') + '</optgroup>';
-    });
-    sel.innerHTML = h + '<option value="__other">Other model...</option>';
-    sel.addEventListener('change', function () {
-      if (sel.value === '__other') {
-        var input = document.createElement('input'); input.name = 'tub_model'; input.placeholder = 'Model name';
-        sel.replaceWith(input); input.focus();
-      }
-    });
-  })();
+  // ---------- Product picker: category first, then the models in it ----------
+  var P = window.NG_PRODUCTS || {};
+  var prodType = $('#prodType'), prodModel = $('#prodModel'), prodOther = $('#prodModelOther'), prodMake = $('#prodMake');
+  var addonModel = $('#addonModel'), addonOther = $('#addonModelOther'), addonMake = $('#addonMake');
+  function modelOptions(type, none) {
+    var cat = P[type]; if (!cat) return '';
+    return '<option value="">' + none + '</option>' + cat.groups.map(function (g) {
+      var o = g.items.map(function (it) { return '<option value="' + NG.esc(it.n) + '">' + NG.esc(it.n) + '</option>'; }).join('');
+      return g.name ? '<optgroup label="' + NG.esc(g.name) + '">' + o + '</optgroup>' : o;
+    }).join('') + '<option value="__other">Other model (type it in)...</option>';
+  }
+  function setModelSel(sel, other, v) {
+    var listed = !v || !!$('option[value="' + CSS.escape(v) + '"]', sel);
+    sel.value = listed ? (v || '') : '__other';
+    other.hidden = listed; other.value = listed ? '' : v;
+  }
+  function modelVal(sel, other) { return sel.value === '__other' ? (other.value.trim() || null) : (sel.value || null); }
+  function applyType(keepModel) {
+    var t = prodType.value, cat = P[t] || {}, sauna = t === 'sauna';
+    var prev = keepModel ? modelVal(prodModel, prodOther) : null;
+    prodModel.innerHTML = modelOptions(t, 'Choose a ' + NG.NOUN[t] + '...');
+    setModelSel(prodModel, prodOther, prev);
+    if (!keepModel || !prodMake.value) prodMake.value = cat.make || '';
+    $$('#saleForm .water').forEach(function (l) { l.hidden = sauna; });
+    $$('#saleForm .saunaonly').forEach(function (l) { l.hidden = !sauna; });
+    $('#addonCard').hidden = sauna;
+    $('#mainPriceLabel .lbl').textContent = sauna ? 'Sauna price' : NG.cap(NG.NOUN[t]) + ' value';
+    $('#addonPriceLabel').hidden = sauna;
+    sums();
+  }
+  addonModel.innerHTML = modelOptions('sauna', 'No sauna');
+  prodType.addEventListener('change', function () { applyType(false); });
+  [[prodModel, prodOther], [addonModel, addonOther]].forEach(function (p) {
+    p[0].addEventListener('change', function () { p[1].hidden = p[0].value !== '__other'; if (!p[1].hidden) p[1].focus(); });
+  });
+  addonModel.addEventListener('change', function () { if (addonModel.value && !addonMake.value) addonMake.value = 'Hekla'; });
 
   function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
   function sums() {
-    var tub = num(form.hot_tub_value.value), sauna = num(form.sauna_total.value), del = num(form.delivery_fee.value);
+    var tub = num(form.hot_tub_value.value), sauna = prodType.value === 'sauna' ? 0 : num(form.sauna_total.value), del = num(form.delivery_fee.value);
     var sub = tub + sauna + del, tax = Math.round(sub * TAX * 100) / 100, tot = Math.round((sub + tax) * 100) / 100;
     var full = form.payment_type.value === 'full';
     // Paid in full: the amount due on signing is the whole total, so the deposit box follows it.
@@ -64,13 +86,13 @@
 
   // ---------- List ----------
   function loadSales() {
-    var q = sb.from('sales').select('id,number,status,total,tub_model,sauna_model,updated_at,salesperson_id,customers(name),profiles!sales_salesperson_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(200);
+    var q = sb.from('sales').select('id,number,status,total,product_type,tub_model,sauna_model,updated_at,salesperson_id,customers(name),profiles!sales_salesperson_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(200);
     if (filter === 'open') q = q.in('status', ['draft', 'awaiting_customer', 'signed', 'deposit_paid', 'delivery_scheduled']);
     else if (filter !== 'all') q = q.eq('status', filter);
     q.then(function (r) {
       var rows = r.data || [], isAdmin = me.profile.role === 'admin';
       $('#saleRows').innerHTML = rows.length ? rows.map(function (s) {
-        var what = [s.tub_model, s.sauna_model && s.sauna_model + ' sauna'].filter(Boolean).join(' + ') || '-';
+        var what = NG.what(s) || '-';
         var rep = s.profiles ? (s.profiles.full_name || s.profiles.email) : '';
         return '<tr data-id="' + s.id + '" data-n="' + s.number + '" tabindex="0">' + (isAdmin ? '<td class="selcol"><input type="checkbox" class="sel" aria-label="Select sale #' + s.number + '"></td>' : '') + '<td>' + s.number + '</td><td>' + NG.esc(s.customers && s.customers.name) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + NG.money(s.total) + '</td><td>' + NG.pill(s.status) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(s.updated_at) + '</td></tr>';
       }).join('') : '<tr><td colspan="8" class="empty">No sales here yet. Start one with <a href="#new">New sale</a>.</td></tr>';
@@ -114,18 +136,22 @@
   });
 
   // ---------- Editor ----------
-  function setModel(v) {
-    var el = form.querySelector('[name="tub_model"]');
-    if (el.tagName === 'SELECT' && v && !$('option[value="' + CSS.escape(v) + '"]', el)) {
-      var input = document.createElement('input'); input.name = 'tub_model'; el.replaceWith(input); el = input;
-    }
-    el.value = v || '';
-  }
   function fill(s, c) {
     CUST.forEach(function (k) { form['c_' + k].value = (c && c[k]) || ''; });
-    SALE.forEach(function (k) { if (k === 'tub_model') setModel(s && s.tub_model); else if (form[k]) form[k].value = (s && s[k] != null) ? s[k] : ''; });
-    if (!s) { form.tub_make.value = 'Platinum Spas'; form.sale_date.value = new Date().toISOString().slice(0, 10); form.payment_type.value = 'full'; form.pay_methods.value = 'both'; }
+    SALE.forEach(function (k) { if (form[k]) form[k].value = (s && s[k] != null) ? s[k] : ''; });
     MONEY.forEach(function (k) { form[k].value = s && Number(s[k]) ? s[k] : ''; });
+    var t = (s && s.product_type) || 'hot_tub', sauna = t === 'sauna';
+    prodType.value = t; prodMake.value = ''; applyType(false);
+    setModelSel(prodModel, prodOther, s ? (sauna ? s.sauna_model : s.tub_model) : null);
+    prodMake.value = s ? ((sauna ? s.sauna_make : s.tub_make) || (P[t] || {}).make || '') : (P[t] || {}).make || '';
+    $('#mainElectrical').value = s && sauna ? (s.sauna_electrical || '') : '';
+    var mainPrice = s ? Number(sauna ? s.sauna_total : s.hot_tub_value) : 0;
+    form.hot_tub_value.value = mainPrice ? mainPrice : '';
+    setModelSel(addonModel, addonOther, s && !sauna ? s.sauna_model : null);
+    addonMake.value = s && !sauna ? (s.sauna_make || '') : '';
+    $('#addonElectrical').value = s && !sauna ? (s.sauna_electrical || '') : '';
+    form.sauna_total.value = s && !sauna && Number(s.sauna_total) ? s.sauna_total : '';
+    if (!s) { form.sale_date.value = new Date().toISOString().slice(0, 10); form.payment_type.value = 'full'; form.pay_methods.value = 'both'; }
     sums();
   }
   function lock(locked) {
@@ -191,9 +217,21 @@
     var c = {}, s = {};
     CUST.forEach(function (k) { c[k] = form['c_' + k].value.trim() || null; });
     SALE.forEach(function (k) { var el = form.querySelector('[name="' + k + '"]'); if (el) s[k] = el.value.trim() || null; });
-    if (s.tub_model === '__other') s.tub_model = null;
-    var t = NG.tubFor(s.tub_model); s.tub_line = t ? t.lineName : null;
     MONEY.forEach(function (k) { s[k] = num(form[k].value); });
+    var type = prodType.value, model = modelVal(prodModel, prodOther), make = prodMake.value.trim() || null;
+    s.product_type = type;
+    if (type === 'sauna') {
+      s.sauna_make = make; s.sauna_model = model; s.sauna_electrical = $('#mainElectrical').value.trim() || null; s.sauna_total = num(form.hot_tub_value.value);
+      s.tub_make = null; s.tub_model = null; s.tub_line = null; s.hot_tub_value = 0;
+      WATER.forEach(function (k) { s[k] = null; });
+    } else {
+      s.tub_make = make; s.tub_model = model; s.hot_tub_value = num(form.hot_tub_value.value);
+      var t = type === 'hot_tub' ? NG.tubFor(model) : null; s.tub_line = t ? t.lineName : null;
+      var am = modelVal(addonModel, addonOther);
+      s.sauna_model = am; s.sauna_make = am ? (addonMake.value.trim() || 'Hekla') : null;
+      s.sauna_electrical = am ? ($('#addonElectrical').value.trim() || null) : null;
+      s.sauna_total = am ? num(form.sauna_total.value) : 0;
+    }
     if (!s.sale_date) delete s.sale_date;
     return { c: c, s: s };
   }
@@ -400,7 +438,7 @@
   function stagePill(k) { var st = STAGES[k]; return '<span class="pill pill-' + st[1] + '">' + st[0] + '</span>'; }
   var custCache = [], custStage = 'all';
   function loadCustomers() {
-    sb.from('customers').select('id,name,email,cell,city_pc,created_at,created_by,sales(id,number,status,total,balance,balance_paid_at,tub_model,sauna_model,created_at,salesperson_id,profiles!sales_salesperson_id_fkey(full_name,email))')
+    sb.from('customers').select('id,name,email,cell,city_pc,created_at,created_by,sales(id,number,status,total,balance,balance_paid_at,product_type,tub_model,sauna_model,created_at,salesperson_id,profiles!sales_salesperson_id_fkey(full_name,email))')
       .order('created_at', { ascending: false }).limit(1000).then(function (r) {
         if (r.error) { $('#custRows').innerHTML = '<tr><td colspan="7" class="empty">' + NG.esc(r.error.message) + '</td></tr>'; return; }
         custCache = (r.data || []).map(function (c) { var st = stageOf(c); c._stage = st.key; c._deal = st.deal; return c; });
@@ -417,7 +455,7 @@
       return !q || [c.name, c.email, c.cell, c.city_pc].join(' ').toLowerCase().indexOf(q) >= 0;
     });
     $('#custRows').innerHTML = rows.length ? rows.map(function (c) {
-      var d = c._deal, what = d ? '#' + d.number + ' ' + ([d.tub_model, d.sauna_model && d.sauna_model + ' sauna'].filter(Boolean).join(' + ') || '') : '-';
+      var d = c._deal, what = d ? '#' + d.number + ' ' + (NG.what(d) || '') : '-';
       var bal = d && SIGNED.indexOf(d.status) >= 0 ? (d.balance_paid_at ? 0 : Number(d.balance)) : null;
       var rep = d && d.profiles ? (d.profiles.full_name || d.profiles.email) : '';
       return '<tr data-cid="' + c.id + '" tabindex="0"><td><b>' + NG.esc(c.name) + '</b></td><td>' + NG.esc([c.cell, c.email].filter(Boolean).join(' · ') || '-') + '</td><td>' + stagePill(c._stage) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + (bal == null ? '-' : NG.money(bal)) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(c.created_at) + '</td></tr>';
@@ -440,7 +478,7 @@
     $('#custDeals').hidden = true; $('#custDanger').hidden = true; $('#custNewSale').hidden = true; $('#custStage').innerHTML = '';
     var del = $('#custDelete'); del.dataset.confirm = ''; del.textContent = 'Delete customer';
     if (!id) { CFIELDS.forEach(function (k) { cform[k].value = ''; }); $('#custHeading').textContent = 'New lead'; show('customer'); cform.name.focus(); return; }
-    sb.from('customers').select('*, sales(id,number,status,total,balance,deposit,balance_paid_at,tub_model,sauna_model,created_at,updated_at)').eq('id', id).maybeSingle().then(function (r) {
+    sb.from('customers').select('*, sales(id,number,status,total,balance,deposit,balance_paid_at,product_type,tub_model,sauna_model,created_at,updated_at)').eq('id', id).maybeSingle().then(function (r) {
       if (!r.data) { NG.toast("That customer wasn't found."); location.hash = 'customers'; return; }
       var c = currentCust = r.data, st = stageOf(c);
       CFIELDS.forEach(function (k) { cform[k].value = c[k] || ''; });
@@ -449,7 +487,7 @@
       var deals = (c.sales || []).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
       if (deals.length) {
         $('#custDealList').innerHTML = '<ul class="deallist">' + deals.map(function (d) {
-          var what = [d.tub_model, d.sauna_model && d.sauna_model + ' sauna'].filter(Boolean).join(' + ') || 'Sale';
+          var what = NG.what(d) || 'Sale';
           return '<li><a href="#sale-' + d.id + '"><b>#' + d.number + ' ' + NG.esc(what) + '</b><span>' + NG.pill(d.status) + ' ' + NG.money(d.total) + (Number(d.balance) > 0 && !d.balance_paid_at && SIGNED.indexOf(d.status) >= 0 ? ' · ' + NG.money(d.balance) + ' owing' : '') + '</span></a></li>';
         }).join('') + '</ul>';
         $('#custDeals').hidden = false;

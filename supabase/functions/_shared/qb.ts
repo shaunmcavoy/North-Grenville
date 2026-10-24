@@ -1,5 +1,5 @@
 // QuickBooks Online: connection, customers and deposit invoices.
-import { admin, payTerms } from "./common.ts";
+import { admin, payTerms, productWhat } from "./common.ts";
 
 const ENV = Deno.env.get("QB_ENV") === "sandbox" ? "sandbox" : "production";
 const API = ENV === "sandbox" ? "https://sandbox-quickbooks.api.intuit.com" : "https://quickbooks.api.intuit.com";
@@ -137,7 +137,7 @@ export async function createDepositInvoice(sale: any, customer: any) {
   const { data: taxId } = await db.rpc("setting_get", { k: "qb_deposit_tax_code_id" });
   if (!itemId) throw new Error("Choose the QuickBooks item for deposits in the staff portal (Team tab) first.");
   const custId = sale.qb_customer_id || await findOrCreateCustomer(customer);
-  const what = sale.tub_model ? `${sale.tub_make ?? ""} ${sale.tub_model} hot tub`.trim() : `${sale.sauna_model} sauna`;
+  const what = productWhat(sale, true);
   const p = payTerms(sale);
   const line: any = {
     DetailType: "SalesItemLineDetail", Amount: Number(sale.deposit),

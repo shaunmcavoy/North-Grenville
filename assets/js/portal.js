@@ -17,7 +17,8 @@
       return;
     }
     $('#portalBody').innerHTML = sales.map(function (s) {
-      var tub = NG.tubFor(s.tub_model), idx = ORDER.indexOf(s.status);
+      var kind = s.product_type || 'hot_tub', isSauna = kind === 'sauna', noun = NG.noun(s);
+      var tub = kind === 'hot_tub' ? NG.tubFor(s.tub_model) : null, pic = NG.productFor(kind, isSauna ? s.sauna_model : s.tub_model), idx = ORDER.indexOf(s.status);
       var steps = STEPS.map(function (st, i) {
         var state = idx >= i ? 'done' : (idx + 1 === i ? 'next' : '');
         var label = st[0] === 'deposit_paid' && s.payment_type === 'full' ? 'Payment received' : st[1];
@@ -25,17 +26,18 @@
       }).join('');
       return '<article class="card mytub">' +
         '<div class="mytub-top">' +
-          (tub ? '<img src="/assets/img/' + tub.k + '.webp" alt="Your ' + NG.esc(tub.n) + ' hot tub from above" width="560" height="560">' : '') +
-          '<div><p class="eyebrow teal">Your ' + NG.esc(s.tub_line ? s.tub_line + ' line ' : '') + 'hot tub</p>' +
-          '<h2>' + NG.esc(s.tub_model ? 'The ' + s.tub_model : (s.sauna_model || 'Your purchase')) + '</h2>' +
+          (pic ? '<img src="/assets/img/' + pic.img + '.webp" alt="Your ' + NG.esc(pic.n) + ' ' + noun + '" width="560" height="560">' : '') +
+          '<div><p class="eyebrow teal">Your ' + NG.esc(kind === 'hot_tub' && s.tub_line ? s.tub_line + ' line ' : '') + noun + '</p>' +
+          '<h2>' + NG.esc(isSauna ? 'The ' + (s.sauna_model || 'sauna') : (s.tub_model ? 'The ' + s.tub_model : 'Your purchase')) + '</h2>' +
+          (!isSauna && s.sauna_model ? '<p class="muted">Plus the ' + NG.esc(s.sauna_model) + ' sauna</p>' : '') +
           (tub ? '<p class="muted">Seats ' + NG.esc(tub.seats) + ' · ' + tub.jets + ' jets · ' + NG.esc(tub.power) + '</p>' : '') +
-          '<dl class="kv">' + dl('Shell colour', s.shell_colour) + dl('Siding', s.siding) + dl('Water care', s.water_care) + dl('Spa cover', s.spa_cover) + dl('Steps', s.steps) + dl('Lifter', s.lifter) + dl('Serial number', s.serial_number) + dl('Agreement', '#' + s.number) + '</dl>' +
+          '<dl class="kv">' + (isSauna ? dl('Make', s.sauna_make) + dl('Electrical', s.sauna_electrical) : dl('Shell colour', s.shell_colour) + dl('Siding', s.siding) + dl('Water care', s.water_care) + dl('Cover', s.spa_cover) + dl('Steps', s.steps) + dl('Lifter', s.lifter)) + dl('Serial number', s.serial_number) + dl('Agreement', '#' + s.number) + '</dl>' +
           '<div class="formactions"><button class="btn btn-gold" type="button" data-pdf="' + s.id + '">Download my agreement</button></div></div>' +
         '</div>' +
         '<h3>Where things stand</h3><ol class="steps-v">' + steps + '</ol>' +
         '<h3>Your guides</h3><p class="muted">Read the pre-delivery guide before we book delivery. Getting the base, power and access right is what makes delivery day smooth and protects your warranty.</p>' +
         '<div class="formactions"><a class="btn btn-ink" href="/assets/docs/north-grenville-pre-delivery-guide.pdf" target="_blank" rel="noopener">Pre-delivery guide</a><a class="btn btn-line" href="/assets/docs/north-grenville-owners-manual.pdf" target="_blank" rel="noopener">Owner\'s manual</a></div>' +
-        (s.tub_model && (!s.water_care || /o.?care/i.test(s.water_care)) ?
+        ((kind === 'hot_tub' || kind === 'swim_spa') && s.tub_model && (!s.water_care || /o.?care/i.test(s.water_care)) ?
           '<h3>Your O-Care</h3><p class="muted">O-Care is the weekly mineral treatment that keeps our hard water from scaling up your heater and pipes, so you use fewer chemicals and your tub lasts. Register with Blaine as your sales advisor and it\'s delivered free to your door, sized to your tub, with a saving on every box. You\'ll never run out halfway through the season, and you can pause or cancel any time.</p>' +
           '<div class="formactions"><a class="btn btn-ink" href="https://l.ead.me/bgkT4n" target="_blank" rel="noopener">Register my O-Care</a></div>' : '') +
         '<h3>Questions?</h3><p>Call or text Blaine directly at <b>(613) 292-1786</b>. He answers his own phone. Soon you\'ll also be able to send questions and book delivery right here.</p>' +

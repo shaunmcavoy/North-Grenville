@@ -144,3 +144,31 @@ export function dataUrlToBytes(d: string) {
   if (bin.length > 400_000) return null;
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
+
+// ---- What was sold ----
+// product_type is the main product. Hot tubs, swim spas and mini pools use tub_make/tub_model;
+// a sauna on its own uses sauna_make/sauna_model. A sauna can also be added to a water product.
+const NOUN: Record<string, string> = { hot_tub: "hot tub", swim_spa: "swim spa", mini_pool: "mini pool", sauna: "sauna" };
+// deno-lint-ignore no-explicit-any
+export function productNoun(sale: any): string { return NOUN[sale?.product_type ?? "hot_tub"] ?? "hot tub"; }
+// deno-lint-ignore no-explicit-any
+export function productMaker(sale: any): string {
+  return sale?.product_type === "sauna" ? (sale.sauna_make || "Hekla") : (sale?.tub_make || "Platinum Spas");
+}
+// "Palma hot tub", "Platinum Spas Eros swim spa and Cube 160 sauna"
+// deno-lint-ignore no-explicit-any
+export function productWhat(sale: any, withMake = false): string {
+  const sauna = sale?.product_type === "sauna";
+  const main = sauna
+    ? (sale.sauna_model ? `${withMake && sale.sauna_make ? sale.sauna_make + " " : ""}${sale.sauna_model} sauna` : "")
+    : (sale?.tub_model ? `${withMake && sale.tub_make ? sale.tub_make + " " : ""}${sale.tub_model} ${productNoun(sale)}` : "");
+  const addon = !sauna && sale?.sauna_model ? `${sale.sauna_model} sauna` : "";
+  return [main, addon].filter(Boolean).join(" and ") || `your ${productNoun(sale)}`;
+}
+// Whether the O-Care registration belongs on this sale (water products using O-Care or no water care set yet).
+// deno-lint-ignore no-explicit-any
+export function usesOCare(sale: any): boolean {
+  return ["hot_tub", "swim_spa"].includes(sale?.product_type ?? "hot_tub") && !!sale?.tub_model &&
+    (!sale.water_care || /o.?care/i.test(String(sale.water_care)));
+}
+

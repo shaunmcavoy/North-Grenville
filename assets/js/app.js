@@ -102,6 +102,25 @@
   };
   NG.pill = function (st) { var s = NG.STATUS[st] || [st, 'grey']; return '<span class="pill pill-' + s[1] + '">' + NG.esc(s[0]) + '</span>'; };
 
+  // Product types on a sale. Hot tubs, swim spas and mini pools use the tub_* fields; a sauna on its own uses sauna_*.
+  NG.NOUN = { hot_tub: 'hot tub', swim_spa: 'swim spa', mini_pool: 'mini pool', sauna: 'sauna' };
+  NG.noun = function (s) { return NG.NOUN[(s && s.product_type) || 'hot_tub'] || 'hot tub'; };
+  NG.cap = function (t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; };
+  // What was sold, in words: "Palma hot tub", "Eros swim spa + Cube 160 sauna".
+  NG.what = function (s) {
+    var main = s.product_type === 'sauna' ? '' : (s.tub_model ? s.tub_model + ' ' + NG.noun(s) : '');
+    return [main, s.sauna_model && s.sauna_model + ' sauna'].filter(Boolean).join(' + ');
+  };
+  // Photo for a model in a category, from the product list the build writes into the page.
+  NG.productFor = function (type, model) {
+    var cat = (window.NG_PRODUCTS || {})[type || 'hot_tub'], m = String(model || '').toLowerCase().trim();
+    if (!cat || !m) return null;
+    for (var g = 0; g < cat.groups.length; g++) for (var i = 0; i < cat.groups[g].items.length; i++) {
+      var it = cat.groups[g].items[i]; if (it.n.toLowerCase() === m) return it;
+    }
+    return null;
+  };
+
   // Match a model name like "Palma" to its photo and line.
   NG.tubFor = function (model) {
     var m = String(model || '').toLowerCase().replace(/hot tub/, '').trim();
