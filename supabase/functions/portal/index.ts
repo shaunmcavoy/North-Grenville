@@ -261,9 +261,15 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">What to read first</p>
 <p><b>Your pre-delivery guide (attached).</b> Please read this before we book your delivery. A solid, level base, the right power from a licensed electrician and a clear path to the backyard are what make delivery day smooth, and they protect your warranty. Ten minutes now saves a rescheduled delivery later.</p>
 <p><b>Your owner's manual (attached).</b> Keep it handy. It walks you through start-up, water care and the simple weekly routine that keeps your water clean and your tub lasting for years, without a cupboard full of chemicals.</p>
-${sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care))) ? `<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your O-Care</p>
-<p>Your tub starts on O-Care, the weekly mineral treatment that keeps our hard water from building up scale in your heater and pipes. It means fewer chemicals, softer water and a tub that lasts. Register it with me and it's delivered free to your door on a schedule sized to your tub, with a saving on every box, so you never run out halfway through the season. Choose Blaine McAvoy as your sales advisor when you sign up. You can pause or cancel any time.</p>
-${button(OCARE_URL, "Register my O-Care")}` : ""}
+${sale.tub_model && (!sale.water_care || /o.?care/i.test(String(sale.water_care))) ? `<div style="background:#f4ecdf;border-left:4px solid #c8a35b;border-radius:10px;padding:18px 20px;margin:26px 0">
+<p style="font-family:Georgia,serif;font-size:20px;margin:0 0 8px">Please register your O-Care</p>
+<p style="margin:0 0 12px">If you haven't registered your O-Care yet, please do it before your tub arrives. Here in North Grenville it's the most important thing you can do to protect your new tub, and here's why.</p>
+<p style="margin:0 0 12px"><b>Our water is hard.</b> When you heat hard water, the minerals come out and stick to the inside of your heater, pipes and jets as scale. Body oils and lotions feed a slimy biofilm inside the plumbing, where you can't see it or scrub it. Left alone, that's what leads to cloudy water, a smell you keep shocking away, jets that clog and a heater that works harder than it should.</p>
+<p style="margin:0 0 12px"><b>O-Care stops it at the source.</b> It goes in once a week, keeps those minerals from building up, and lets your sanitizer do its job with a lot less help. That means softer water on your skin, far fewer chemicals, and a tub that lasts.</p>
+<p style="margin:0 0 12px"><b>Why register through us.</b> Register with me as your sales advisor and O-Care is delivered free to your door on a schedule sized to your tub, with a saving on every box. You'll never run out halfway through the season, and you can pause or cancel any time.</p>
+${button(OCARE_URL, "Register my O-Care")}
+<p style="color:#6e5d4f;font-size:14px;margin:10px 0 0">When you sign up, choose Blaine McAvoy as your sales advisor. Already registered? Thank you, you're all set.</p>
+</div>` : ""}
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Your customer portal</p>
 <p>We've set up your own portal with your tub's details and your agreement. As we go, it's where you'll schedule delivery, register your serial number for warranty, and send me questions directly.</p>
 ${button(portal, "Open my portal")}
