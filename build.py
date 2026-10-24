@@ -337,6 +337,256 @@ def tub_jsonld(t):
             {"@type": "ListItem", "position": 3, "name": t["n"], "item": url}]}]}
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
+# ---------- Swim spas and mini pools ----------
+SWIM = json.loads((SRC / "swim.json").read_text())
+SWIM_MODELS = SWIM["models"]
+
+
+def swim_img(m):
+    return m.get("img", m["k"])
+
+
+def swim_card(m, base):
+    sysname = SWIM["systems"][m["system"]]["name"]
+    w, d, h = m["dims"]
+    people = f"<div><b>{m['people']}</b><span>People</span></div>" if m.get("people") else "<div><b>In-ground</b><span>Install</span></div>"
+    return f"""<article class="swimcard">
+      <a class="ph" href="{base}{m['section']}/{m['k']}/" aria-label="See the {esc(m['n'])} in detail"><img src="{base}assets/img/{swim_img(m)}.webp" alt="The {esc(m['n'])} seen from above" loading="lazy" width="1200" height="560"></a>
+      <div class="bd">
+        <p class="eyebrow teal">{esc(sysname)}{' &middot; split temperature' if m.get('split') else ''}</p>
+        <h3 class="tubname"><a href="{base}{m['section']}/{m['k']}/">The {esc(m['n'])}</a></h3>
+        <div class="specs">{people}<div><b>{w // 12}&prime;{w % 12}&Prime;</b><span>Long</span></div><div><b>{m['jets']}</b><span>Jets</span></div></div>
+        <p class="note">{esc(m['head'])}</p>
+        <a class="tubmore" href="{base}{m['section']}/{m['k']}/">See the details <span aria-hidden="true">&rarr;</span></a>
+        <div class="acts">
+          <a class="btn btn-ink" href="{sms(f"Hi Blaine, I'm interested in the {m['n']}. What's your best price?")}">Text Blaine for price</a>
+          <a class="btn btn-line" href="{TEL}" aria-label="Call Blaine about the {esc(m['n'])}">Call</a>
+        </div>
+      </div>
+    </article>"""
+
+
+def swim_section_body(sid, base):
+    S = SWIM["sections"][sid]
+    models = [m for m in SWIM_MODELS if m["section"] == sid]
+    cards = "\n    ".join(swim_card(m, base) for m in models)
+    hero_img = "swim" if sid == "swim-spas" else "chronos"
+    moments = ""
+    if S.get("moments"):
+        mm = "".join(f"<article><h3>{esc(a)}</h3><p>{esc(b)}</p></article>" for a, b in S["moments"])
+        moments = f"""<section class="moments">
+  <div class="wrap">
+    <p class="eyebrow teal">Picture it in your backyard</p>
+    <h2>What owning a swim spa feels like.</h2>
+    <div class="mgrid">{mm}</div>
+  </div>
+</section>"""
+    systems = ""
+    if sid == "swim-spas":
+        sy = "".join(f"<div><b>{esc(v['name'])}</b><p>{esc(v['short'])}</p><small>{', '.join('The ' + esc(m['n']) for m in models if m['system'] == k)}</small></div>" for k, v in SWIM["systems"].items())
+        systems = f"""<section class="tseats">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">The first choice</p>
+    <h2>River jet or turbine?</h2>
+    <p class="seatline">Every swim spa gives you a current to swim against. The difference is how it's made, and that decides how it feels.</p>
+    <div class="jetkinds two">{sy}</div>
+    <p class="muted small">The Helios and Helios Pro also split into two separate tubs, so the swim end and the hot tub end can sit at different temperatures.</p>
+  </div>
+</section>"""
+    others = [("deluxe/", "Hot tubs", "The Deluxe, Premium and Luxury lines"), ("mini-pools/" if sid == "swim-spas" else "swim-spas/", "Mini pools" if sid == "swim-spas" else "Swim spas", "The Chronos mini pool" if sid == "swim-spas" else "Seven models, river jet and turbine")]
+    other = "".join(f'<a href="{base}{u}"><span>{esc(a)}</span><b>{esc(b)}</b><em>See them &rarr;</em></a>' for u, a, b in others)
+    help_p = f'<p class="help">{esc(S["help"])}</p>' if S.get("help") else ""
+    return f"""<section class="lhero">
+  <div class="wrap">
+    <a class="back" href="{base}#more">&larr; Everything we sell</a>
+    <div class="lgrid">
+      <div>
+        <p class="eyebrow">{esc(S['name'])} &middot; Platinum Spas</p>
+        <h1>{esc(S['title'])}</h1>
+        <blockquote class="belief"><p>{esc(S['believe'])}</p><footer><img src="{base}assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></footer></blockquote>
+        <div class="ctas">
+          <a class="btn btn-gold" href="#pick">See the {'models' if len(models) > 1 else esc(models[0]['n'])}</a>
+          <a class="btn btn-ghost" href="{sms(f"Hi Blaine, I'd like to talk about {S['name'].lower()}.")}">{CHAT}Text Blaine</a>
+        </div>
+      </div>
+      <img class="lphoto" src="{base}assets/img/{hero_img}.webp" alt="" width="560" height="560">
+    </div>
+  </div>
+</section>
+{moments}
+{systems}
+<section class="pick" id="pick">
+  <div class="wrap">
+    <div class="pickhead"><div>
+      <p class="eyebrow teal">Choose yours</p>
+      <h2>{'Which swim spa is yours?' if len(models) > 1 else 'Meet the ' + esc(models[0]['n']) + '.'}</h2>
+      <p class="intro">{'Start with how you will use it: swimming laps, family play, or both with a hot soak.' if len(models) > 1 else 'Platinum Spas&#x27; in-ground mini pool, heated for year-round use.'}</p>
+    </div></div>
+    <div class="grid swimgrid">
+    {cards}
+    </div>
+  </div>
+</section>
+<section class="next">
+  <div class="wrap">
+    <p class="eyebrow">Next step</p>
+    <h2>What happens after you text Blaine.</h2>
+    <ol>
+      <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on which model fits how you'll use it.</p></li>
+      <li><b>He checks your yard</b><p>Space, base, access and power. These are big, heavy tubs, so it's worth getting right first.</p></li>
+      <li><b>Yours is ordered</b><p>Built to spec through Platinum Spas, then delivered and set in place.</p></li>
+      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine.</p></li>
+    </ol>
+    {help_p}
+    <div class="ctas">
+      <a class="btn btn-gold" href="{TEL}">{PHONE}Call Blaine</a>
+      <a class="btn btn-ghost" href="{sms(f"Hi Blaine, I'm interested in {S['name'].lower()}.")}">{CHAT}Text Blaine for price</a>
+    </div>
+    <p class="num">{SITE['phone_display']}</p>
+  </div>
+</section>
+<section class="others">
+  <div class="wrap">
+    <p class="eyebrow teal">Still deciding?</p>
+    <div class="ogrid">{other}</div>
+  </div>
+</section>"""
+
+
+def swim_body(m, base):
+    S = SWIM["sections"][m["section"]]
+    sysv = SWIM["systems"][m["system"]]
+    n = m["n"]
+    w, d, h = m["dims"]
+    size = f"{ftin(w)} x {ftin(d)}"
+    pool = m["section"] == "mini-pools"
+    chips = ([f"For {m['people']} people"] if m.get("people") else ["In-ground mini pool"]) + [size, sysv["name"], m["power"]]
+    chip_html = "".join(f"<li>{esc(c)}</li>" for c in chips)
+    perfect = "".join(f"<li>{esc(x)}</li>" for x in m["perfect"])
+    seats = ""
+    if m.get("seats") is not None:
+        lo = m.get("loungers", 0)
+        seats = f"{m['seats']} seat{'s' if m['seats'] != 1 else ''}" + (f" and {lo} lounger{'s' if lo > 1 else ''}" if lo else "")
+    rows = [("Swim current", sysv["name"])]
+    if seats:
+        rows.append(("Hot tub seating", f"{seats}, for {m['people']} people"))
+    rows += [
+        ("Jets", f"{m['jets']}" + (f": {m['jetmix']}" if m.get("jetmix") else "")),
+        ("Size", f"{w} x {d} in, {h} in tall ({size}, about {round(w * 2.54)} x {round(d * 2.54)} cm)"),
+    ]
+    if m.get("gal"):
+        rows.append(("Water", f"{m['gal']} gallons"))
+    rows.append(("Weight", f"{m['dry']:,} lb empty" + (f", {m['wet']:,} lb filled" if m.get("wet") else "")))
+    rows += [("Pumps", m["pumps"]), ("Heater", m["heater"]), ("Power", m["power"]), ("Controls", m["controls"])]
+    if m.get("split"):
+        rows.insert(1, ("Zones", "Fully split swim and hot tub ends, each with its own temperature"))
+    spec_html = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in rows)
+    feats = "".join(f"<li>{esc(f)}</li>" for f in m["extra"])
+    sibs = "".join(f"""<a class="sib" href="{base}{x['section']}/{x['k']}/"><img src="{base}assets/img/{swim_img(x)}.webp" alt="" loading="lazy" width="160" height="80"><span><b>The {esc(x['n'])}</b><small>{esc(SWIM['systems'][x['system']]['name'])} &middot; {ftin(x['dims'][0])}</small><em>{esc(x['head'])}</em></span></a>"""
+                   for x in SWIM_MODELS if x["k"] != m["k"] and x["section"] == "swim-spas")
+    ask = sms(f"Hi Blaine, I'm interested in the {n}. What's your best price?")
+    fit = sms(f"Hi Blaine, I'm trying to decide if the {n} is right for me.")
+    return f"""<section class="lhero thero">
+  <div class="wrap">
+    <a class="back" href="{base}{m['section']}/">&larr; {esc(S['name'])}</a>
+    <div class="lgrid swimhero">
+      <div>
+        <p class="eyebrow">{esc(S['name'][:-1] if not pool else 'Mini pool')} &middot; Platinum Spas</p>
+        <h1>The {esc(n)}</h1>
+        <p class="tlead">{esc(m['head'])}</p>
+        <ul class="tchips">{chip_html}</ul>
+        <div class="ctas">
+          <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+          <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+        </div>
+      </div>
+      <img class="lphoto wide" src="{base}assets/img/{swim_img(m)}.webp" alt="The {esc(n)} seen from above" width="1200" height="560">
+    </div>
+  </div>
+</section>
+<section class="twhy">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">Why people choose the {esc(n)}</p>
+    <blockquote class="belief light"><p>{esc(m['why'])}</p><footer><img src="{base}assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></footer></blockquote>
+  </div>
+</section>
+<section class="tfit">
+  <div class="wrap tfitgrid">
+    <div>
+      <p class="eyebrow teal">Is it the one?</p>
+      <h2>The {esc(n)} may be perfect for you if&hellip;</h2>
+      <ul class="checks">{perfect}</ul>
+    </div>
+    <aside class="honest">
+      <p class="eyebrow">Blaine's honest take</p>
+      <p>{esc(m['honest'])}</p>
+      <a class="btn btn-line btn-sm" href="{fit}">{CHAT}Ask Blaine which fits</a>
+    </aside>
+  </div>
+</section>
+<section class="tseats">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">How it works</p>
+    <h2>{esc(sysv['name'])} current.</h2>
+    <p class="seatline">{esc(sysv['short'])}</p>
+    <p class="seatline">{esc(m['seating'])}</p>
+    <p class="muted small">The best way to know is to see it in person. Text Blaine and he'll talk you through what fits your yard and how you'll use it.</p>
+  </div>
+</section>
+<section class="tspecs">
+  <div class="wrap tspecgrid">
+    <div>
+      <p class="eyebrow teal">The details</p>
+      <h2>{esc(n)} specifications</h2>
+      <dl class="spectable">{spec_html}</dl>
+      <p class="muted small">Specs as published by Platinum Spas. Blaine will confirm the details for yours and help you check your space, base, access and power before you order.</p>
+    </div>
+    <div>
+      <p class="eyebrow teal">What comes with it</p>
+      <h2>Built in.</h2>
+      <ul class="feats">{feats}</ul>
+    </div>
+  </div>
+</section>
+<section class="next">
+  <div class="wrap">
+    <p class="eyebrow">Next step</p>
+    <h2>Text Blaine for your price on the {esc(n)}.</h2>
+    <ol>
+      <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether the {esc(n)} is right for you.</p></li>
+      <li><b>He checks your yard</b><p>Space, base, access and power, before anything is ordered.</p></li>
+      <li><b>Yours is ordered</b><p>Built to spec through Platinum Spas, then delivered and set in place.</p></li>
+      <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine.</p></li>
+    </ol>
+    <div class="ctas">
+      <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+      <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+    </div>
+    <p class="num">{SITE['phone_display']}</p>
+  </div>
+</section>
+<section class="others">
+  <div class="wrap">
+    <p class="eyebrow teal">{'Compare the swim spas' if not pool else 'Rather have a swim spa? Compare them'}</p>
+    <div class="sibs swimsibs">{sibs}</div>
+    <p class="allines"><a href="{base}#lines">Or see the hot tubs &rarr;</a></p>
+  </div>
+</section>"""
+
+
+def swim_jsonld(m):
+    S = SWIM["sections"][m["section"]]
+    url = f"{SITE['url']}/{m['section']}/{m['k']}/"
+    data = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Product", "name": f"Platinum Spas {m['n']} {'mini pool' if m['section'] == 'mini-pools' else 'swim spa'}",
+         "brand": {"@type": "Brand", "name": "Platinum Spas"}, "image": f"{SITE['url']}/assets/img/{swim_img(m)}.webp",
+         "description": f"{m['head']} {m['why']}", "category": "Mini pool" if m["section"] == "mini-pools" else "Swim spa", "url": url},
+        {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{SITE['url']}/"},
+            {"@type": "ListItem", "position": 2, "name": S["name"], "item": f"{SITE['url']}/{m['section']}/"},
+            {"@type": "ListItem", "position": 3, "name": m["n"], "item": url}]}]}
+    return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
+
 
 def business_jsonld():
     data = {
@@ -521,6 +771,13 @@ def build():
         page(f"{t['line']}/{t['k']}/", f"Platinum Spas {t['n']} Hot Tub, Seats {t['seats']} | North Grenville Hot Tubs",
              f"The {t['n']}: {cp['head']} Seats {t['seats']}, {t['jets']} jets. See if it's right for you, then text Blaine in Kemptville for your price.",
              tub_body(t, "../../"), "../../", tub_jsonld(t))
+    for sid, S in SWIM["sections"].items():
+        page(f"{sid}/", f"{S['name']}: {S['title'][:-1]} | North Grenville Hot Tubs", S["meta"], swim_section_body(sid, "../"), "../")
+    for m in SWIM_MODELS:
+        kind = "Mini Pool" if m["section"] == "mini-pools" else "Swim Spa"
+        page(f"{m['section']}/{m['k']}/", f"Platinum Spas {m['n']} {kind} | North Grenville Hot Tubs",
+             f"The {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
+             swim_body(m, "../../"), "../../", swim_jsonld(m))
     page("404.html", "Page not found | North Grenville Hot Tubs", "That page isn't here.",
          """<section class="lhero"><div class="wrap" style="padding-block:96px">
   <p class="eyebrow">Page not found</p><h1>That page took a dip.</h1>
@@ -565,10 +822,10 @@ def build():
         body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
              app_scripts + [f"/assets/js/{js}.js"])
-    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
-    print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, blog index, {len(posts)} posts, 404, sitemap")
+    print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, {len(SWIM_MODELS)} swim spa and mini pool pages, blog index, {len(posts)} posts, 404, sitemap")
 
 
 if __name__ == "__main__":

@@ -529,3 +529,28 @@ section[id],.line[id]{scroll-margin-top:84px}
 @media (max-width:860px){.tfitgrid,.tspecgrid{grid-template-columns:1fr;gap:28px}.honest{margin-top:0}.jetkinds{grid-template-columns:1fr}}
 @media (max-width:520px){.spectable div{grid-template-columns:1fr;gap:4px}.checks li{font-size:1rem}}
 .belief.light footer{background:none;padding:0;border:0}
+
+/* Swim spas and mini pools */
+.more .ph{display:block}
+.more h3 a{text-decoration:none;color:inherit}
+.more li a{text-decoration:none;color:inherit}
+.more li a:hover{text-decoration:underline}
+.swimgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+@media (max-width:480px){.swimgrid{grid-template-columns:1fr}}
+.swimcard{background:var(--cream);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+.swimcard .ph{display:block;aspect-ratio:2/1;background:var(--paper);padding:14px}
+.swimcard .ph img{width:100%;height:100%;object-fit:contain}
+.swimcard .bd{padding:16px;display:grid;gap:10px;grid-template-rows:auto auto auto 1fr auto auto}
+.swimcard .note{color:var(--muted);font-size:.92rem;line-height:1.45}
+.swimcard .acts{display:flex;gap:6px}
+.swimcard .acts .btn{padding:10px 12px;font-size:.84rem;flex:1}
+.swimcard .tubname a{text-decoration:none;color:inherit}
+.swimcard .tubmore{font-size:.88rem;font-weight:700;color:var(--water-deep);text-decoration:none}
+.swimcard .tubname{font-family:var(--display);font-weight:500;font-size:1.4rem;margin:0}
+.jetkinds.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.jetkinds small{font-size:.82rem;font-weight:600;color:var(--water-deep)}
+.swimhero{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.lphoto.wide{aspect-ratio:auto;object-fit:contain;background:var(--paper);border-radius:18px;padding:14px;width:100%;height:auto}
+.swimsibs .sib img{width:120px;height:60px;object-fit:contain;background:var(--cream)}
+.swimsibs .sib{grid-template-columns:120px minmax(0,1fr)}
+@media (max-width:860px){.swimhero{grid-template-columns:1fr}.jetkinds.two{grid-template-columns:1fr}}
