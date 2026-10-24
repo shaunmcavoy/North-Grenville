@@ -590,6 +590,7 @@
   // ---------- Profit and margin (admins only) ----------
   // Costs live in their own admin-only tables (sale_costs, product_costs), never on the sale itself,
   // so salespeople and customers can't read them.
+  var DELIVERY_COST = 350; // what a delivery costs us, filled in on each new deal
   var COSTF = ['product_cost', 'sauna_cost', 'warehouse_shipping', 'delivery_cost', 'other_costs'];
   var costList = null;
   function getCostList() {
@@ -632,9 +633,10 @@
       pf.notes.value = (saved && saved.notes) || '';
       // First time: fill the cost from the list when there's exactly one match.
       if (!saved) {
+        pf.delivery_cost.value = DELIVERY_COST;
         if (mainList.length === 1) pf.product_cost.value = mainList[0].cost;
         if (addList.length === 1) pf.sauna_cost.value = addList[0].cost;
-        $('#profitMsg').textContent = mainList.length === 1 ? 'Cost filled in from the cost list. Add shipping and anything else, then save.' : '';
+        $('#profitMsg').textContent = (mainList.length === 1 ? 'Cost filled in from the cost list, and delivery at $350. ' : 'Delivery filled in at $350. ') + 'Add shipping and anything else, then save.';
       }
       profitSums();
     });
