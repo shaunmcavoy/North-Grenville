@@ -23,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Figtree:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../assets/css/site.css?v=7869c2352e">
+<link rel="stylesheet" href="../assets/css/site.css?v=6950b0f6a2">
 </head>
 <body>
 <header class="top">
@@ -92,8 +92,8 @@
     <p class="eyebrow teal">The first choice</p>
     <h2>Traditional or infrared?</h2>
     <p class="seatline">Both give you twenty quiet minutes of warmth. The difference is how they heat, and that decides how it feels.</p>
-    <div class="jetkinds two"><div><b>Traditional</b><p>A heater warms a bed of stones and the air around you to a real, enveloping heat. Pour water on the stones for a burst of steam. This is the classic Scandinavian sauna, and it takes about 30 to 45 minutes to heat up.</p></div><div><b>Infrared</b><p>Infrared panels warm your body directly instead of heating the air, so it&#x27;s comfortable at around 45 to 60°C and ready in minutes. No stones, water or steam to manage. Good for longer, gentler sessions.</p></div></div>
-    <p class="muted small">All of the outdoor saunas, the Cube, Barrel and Cabin ranges, are traditional. The Cube and Barrel can also take a wood-burning stove.</p>
+    <div class="jetkinds two"><div><b>Traditional</b><p>A traditional sauna heats the whole room and gets to a very high heat. Pour water on the hot rocks to raise the humidity, and the room feels hotter still. This is the classic Scandinavian sauna, it takes about 30 to 45 minutes to heat up, and all of our outdoor saunas are traditional.</p></div><div><b>Infrared</b><p>Infrared heats your body from the inside out instead of heating the air around you, so it needs a lower heat, around 45 to 60°C, to get the same benefits. It&#x27;s ready in minutes, there are no rocks, water or steam to manage, and the gentler warmth makes a longer session easy.</p></div></div>
+    <p class="muted small">Our outdoor saunas are the Cube, Barrel and Cabin ranges, and they are all traditional. The Cube and Barrel can also take a wood-burning stove.</p>
   </div>
 </section>
 <section class="pick" id="pick">
@@ -102,15 +102,27 @@
       <div>
         <p class="eyebrow teal">Choose yours</p>
         <h2>Which sauna is yours?</h2>
-        <p class="intro">Start with where it goes: inside the house, or out in the yard.</p>
+        <p class="intro">Choose where it goes and how you like your heat.</p>
       </div>
-      <div class="filters" role="group" aria-label="Filter by where it goes">
-        <button class="chip" type="button" data-w="all" aria-pressed="true">All</button>
-        <button class="chip" type="button" data-w="indoor" aria-pressed="false">Indoor</button>
-        <button class="chip" type="button" data-w="outdoor" aria-pressed="false">Outdoor</button>
+      <div class="filtersets">
+        <div class="filterset"><span class="flabel" id="fWhere">Where it goes</span>
+          <div class="filters" role="group" aria-labelledby="fWhere">
+            <button class="chip" type="button" data-f="where" data-v="all" aria-pressed="true">All</button>
+            <button class="chip" type="button" data-f="where" data-v="indoor" aria-pressed="false">Indoor</button>
+            <button class="chip" type="button" data-f="where" data-v="outdoor" aria-pressed="false">Outdoor</button>
+          </div>
+        </div>
+        <div class="filterset"><span class="flabel" id="fHeat">How it heats</span>
+          <div class="filters" role="group" aria-labelledby="fHeat">
+            <button class="chip" type="button" data-f="heat" data-v="all" aria-pressed="true">All</button>
+            <button class="chip" type="button" data-f="heat" data-v="traditional" aria-pressed="false">Traditional</button>
+            <button class="chip" type="button" data-f="heat" data-v="infrared" aria-pressed="false">Infrared</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="rangegroup" id="traditional" data-where="indoor">
+    <p class="pickcount" id="pickCount" aria-live="polite"></p>
+    <div class="rangegroup" id="traditional" data-where="indoor" data-heat="traditional">
       <div class="rangehead"><h3>Traditional <span>Indoor</span></h3><p>Indoor traditional saunas in knot-free thermo-aspen, with glass fronts and two bench heights.</p></div>
       <div class="grid">
       <article class="tub sauna">
@@ -167,7 +179,7 @@
     </article>
       </div>
     </div>
-    <div class="rangegroup" id="infrared" data-where="indoor">
+    <div class="rangegroup" id="infrared" data-where="indoor" data-heat="infrared">
       <div class="rangehead"><h3>Infrared <span>Indoor</span></h3><p>Indoor infrared cabins that heat up in minutes, with Wi-Fi control and Bluetooth sound.</p></div>
       <div class="grid">
       <article class="tub sauna">
@@ -211,7 +223,7 @@
     </article>
       </div>
     </div>
-    <div class="rangegroup" id="cube" data-where="outdoor">
+    <div class="rangegroup" id="cube" data-where="outdoor" data-heat="traditional">
       <div class="rangehead"><h3>Cube <span>Outdoor</span></h3><p>Glass-fronted garden saunas in heat-treated spruce, with a shingled roof made for every season.</p></div>
       <div class="grid">
       <article class="tub sauna">
@@ -268,7 +280,7 @@
     </article>
       </div>
     </div>
-    <div class="rangegroup" id="barrel" data-where="outdoor">
+    <div class="rangegroup" id="barrel" data-where="outdoor" data-heat="traditional">
       <div class="rangehead"><h3>Barrel <span>Outdoor</span></h3><p>The classic round barrel sauna in thermo-spruce, with facing benches for a group.</p></div>
       <div class="grid">
       <article class="tub sauna">
@@ -299,7 +311,7 @@
     </article>
       </div>
     </div>
-    <div class="rangegroup" id="cabin" data-where="outdoor">
+    <div class="rangegroup" id="cabin" data-where="outdoor" data-heat="traditional">
       <div class="rangehead"><h3>Cabin <span>Outdoor</span></h3><p>Modern black cabins in weatherproof, low-maintenance composite, glass-fronted and wired for sound.</p></div>
       <div class="grid">
       <article class="tub sauna">
@@ -330,6 +342,11 @@
     </article>
       </div>
     </div>
+    <div class="pickempty" id="pickEmpty" hidden>
+      <h3>All of our outdoor saunas are traditional.</h3>
+      <p>Our infrared cabins are made for indoors, so outside you get real heat and steam from a heater and rocks. If you like the gentler warmth of infrared, an indoor infrared cabin fits in a basement or spare room.</p>
+      <div class="ctas"><button class="btn btn-ink" type="button" data-pick="indoor,infrared">See indoor infrared</button><button class="btn btn-line" type="button" data-pick="outdoor,traditional">See outdoor saunas</button></div>
+    </div>
   </div>
 </section>
 <section class="next">
@@ -356,12 +373,21 @@
   </div>
 </section>
 <script>
-document.querySelectorAll('[data-w]').forEach(function (b) {
-  b.addEventListener('click', function () {
-    document.querySelectorAll('[data-w]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-    document.querySelectorAll('.rangegroup').forEach(function (g) { g.hidden = b.dataset.w !== 'all' && g.dataset.where !== b.dataset.w; });
-  });
-});
+(function () {
+  var f = { where: 'all', heat: 'all' };
+  function apply() {
+    var shown = 0;
+    document.querySelectorAll('[data-f]').forEach(function (x) { x.setAttribute('aria-pressed', f[x.dataset.f] === x.dataset.v ? 'true' : 'false'); });
+    document.querySelectorAll('.rangegroup').forEach(function (g) {
+      var on = (f.where === 'all' || g.dataset.where === f.where) && (f.heat === 'all' || g.dataset.heat === f.heat);
+      g.hidden = !on; if (on) shown += g.querySelectorAll('article.tub').length;
+    });
+    document.getElementById('pickEmpty').hidden = shown > 0;
+    document.getElementById('pickCount').textContent = (f.where === 'all' && f.heat === 'all') ? '' : shown ? 'Showing ' + shown + (shown === 1 ? ' sauna' : ' saunas') : '';
+  }
+  document.querySelectorAll('[data-f]').forEach(function (b) { b.addEventListener('click', function () { f[b.dataset.f] = b.dataset.v; apply(); }); });
+  document.querySelectorAll('[data-pick]').forEach(function (b) { b.addEventListener('click', function () { var p = b.dataset.pick.split(','); f.where = p[0]; f.heat = p[1]; apply(); }); });
+})();
 </script>
 </main>
 <footer>

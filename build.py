@@ -637,10 +637,11 @@ def saunas_body(base):
     mm = "".join(f"<article><h3>{esc(a)}</h3><p>{esc(b)}</p></article>" for a, b in SAUNA["moments"])
     kinds = "".join(f"<div><b>{esc(v['name'])}</b><p>{esc(v['short'])}</p></div>" for v in SAUNA["kinds"].values())
     groups = ""
+    RANGE_KIND = {r["id"]: next(m["kind"] for m in SAUNA_MODELS if m["range"] == r["id"]) for r in SAUNA["ranges"]}
     for r in SAUNA["ranges"]:
         cards = "\n      ".join(sauna_card(m, base) for m in SAUNA_MODELS if m["range"] == r["id"])
         groups += f"""
-    <div class="rangegroup" id="{r['id']}" data-where="{r['where'].lower()}">
+    <div class="rangegroup" id="{r['id']}" data-where="{r['where'].lower()}" data-heat="{RANGE_KIND[r['id']]}">
       <div class="rangehead"><h3>{esc(r['name'])} <span>{r['where']}</span></h3><p>{esc(r['line'])}</p></div>
       <div class="grid">
       {cards}
@@ -676,7 +677,7 @@ def saunas_body(base):
     <h2>Traditional or infrared?</h2>
     <p class="seatline">Both give you twenty quiet minutes of warmth. The difference is how they heat, and that decides how it feels.</p>
     <div class="jetkinds two">{kinds}</div>
-    <p class="muted small">All of the outdoor saunas, the Cube, Barrel and Cabin ranges, are traditional. The Cube and Barrel can also take a wood-burning stove.</p>
+    <p class="muted small">Our outdoor saunas are the Cube, Barrel and Cabin ranges, and they are all traditional. The Cube and Barrel can also take a wood-burning stove.</p>
   </div>
 </section>
 <section class="pick" id="pick">
@@ -685,14 +686,31 @@ def saunas_body(base):
       <div>
         <p class="eyebrow teal">Choose yours</p>
         <h2>Which sauna is yours?</h2>
-        <p class="intro">Start with where it goes: inside the house, or out in the yard.</p>
+        <p class="intro">Choose where it goes and how you like your heat.</p>
       </div>
-      <div class="filters" role="group" aria-label="Filter by where it goes">
-        <button class="chip" type="button" data-w="all" aria-pressed="true">All</button>
-        <button class="chip" type="button" data-w="indoor" aria-pressed="false">Indoor</button>
-        <button class="chip" type="button" data-w="outdoor" aria-pressed="false">Outdoor</button>
+      <div class="filtersets">
+        <div class="filterset"><span class="flabel" id="fWhere">Where it goes</span>
+          <div class="filters" role="group" aria-labelledby="fWhere">
+            <button class="chip" type="button" data-f="where" data-v="all" aria-pressed="true">All</button>
+            <button class="chip" type="button" data-f="where" data-v="indoor" aria-pressed="false">Indoor</button>
+            <button class="chip" type="button" data-f="where" data-v="outdoor" aria-pressed="false">Outdoor</button>
+          </div>
+        </div>
+        <div class="filterset"><span class="flabel" id="fHeat">How it heats</span>
+          <div class="filters" role="group" aria-labelledby="fHeat">
+            <button class="chip" type="button" data-f="heat" data-v="all" aria-pressed="true">All</button>
+            <button class="chip" type="button" data-f="heat" data-v="traditional" aria-pressed="false">Traditional</button>
+            <button class="chip" type="button" data-f="heat" data-v="infrared" aria-pressed="false">Infrared</button>
+          </div>
+        </div>
       </div>
-    </div>{groups}
+    </div>
+    <p class="pickcount" id="pickCount" aria-live="polite"></p>{groups}
+    <div class="pickempty" id="pickEmpty" hidden>
+      <h3>All of our outdoor saunas are traditional.</h3>
+      <p>Our infrared cabins are made for indoors, so outside you get real heat and steam from a heater and rocks. If you like the gentler warmth of infrared, an indoor infrared cabin fits in a basement or spare room.</p>
+      <div class="ctas"><button class="btn btn-ink" type="button" data-pick="indoor,infrared">See indoor infrared</button><button class="btn btn-line" type="button" data-pick="outdoor,traditional">See outdoor saunas</button></div>
+    </div>
   </div>
 </section>
 <section class="next">
@@ -719,12 +737,21 @@ def saunas_body(base):
   </div>
 </section>
 <script>
-document.querySelectorAll('[data-w]').forEach(function (b) {{
-  b.addEventListener('click', function () {{
-    document.querySelectorAll('[data-w]').forEach(function (x) {{ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }});
-    document.querySelectorAll('.rangegroup').forEach(function (g) {{ g.hidden = b.dataset.w !== 'all' && g.dataset.where !== b.dataset.w; }});
-  }});
-}});
+(function () {{
+  var f = {{ where: 'all', heat: 'all' }};
+  function apply() {{
+    var shown = 0;
+    document.querySelectorAll('[data-f]').forEach(function (x) {{ x.setAttribute('aria-pressed', f[x.dataset.f] === x.dataset.v ? 'true' : 'false'); }});
+    document.querySelectorAll('.rangegroup').forEach(function (g) {{
+      var on = (f.where === 'all' || g.dataset.where === f.where) && (f.heat === 'all' || g.dataset.heat === f.heat);
+      g.hidden = !on; if (on) shown += g.querySelectorAll('article.tub').length;
+    }});
+    document.getElementById('pickEmpty').hidden = shown > 0;
+    document.getElementById('pickCount').textContent = (f.where === 'all' && f.heat === 'all') ? '' : shown ? 'Showing ' + shown + (shown === 1 ? ' sauna' : ' saunas') : '';
+  }}
+  document.querySelectorAll('[data-f]').forEach(function (b) {{ b.addEventListener('click', function () {{ f[b.dataset.f] = b.dataset.v; apply(); }}); }});
+  document.querySelectorAll('[data-pick]').forEach(function (b) {{ b.addEventListener('click', function () {{ var p = b.dataset.pick.split(','); f.where = p[0]; f.heat = p[1]; apply(); }}); }});
+}})();
 </script>"""
 
 
