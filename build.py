@@ -44,7 +44,7 @@ def ver(url):
     return f"{url}?v={hashlib.sha1(f.read_bytes()).hexdigest()[:10]}"
 
 
-def page(path, title, desc, body, base, extra_head="", scripts=()):
+def page(path, title, desc, body, base, extra_head="", scripts=(), app="manifest", app_title="NG Hot Tubs"):
     canonical = SITE["url"] + "/" + path
     head = f"""<!doctype html>
 <html lang="en-CA">
@@ -63,6 +63,11 @@ def page(path, title, desc, body, base, extra_head="", scripts=()):
 <meta name="theme-color" content="#1d1611">
 <link rel="icon" type="image/png" href="{base}favicon.png">
 <link rel="apple-touch-icon" href="{base}apple-touch-icon.png">
+<link rel="manifest" href="/{app}.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="{app_title}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Figtree:wght@400;500;600;700&display=swap">
@@ -1082,8 +1087,11 @@ def build():
     app_scripts = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js", "/assets/js/app.js"]
     for slug, title, js in [("login", "Sign in", "login"), ("staff", "Staff portal", "staff"), ("sign", "Sign your agreement", "sign"), ("portal", "Your portal", "portal")]:
         body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
+        app, app_title = {"staff": ("staff", "NG Team"), "portal": ("portal", "My Hot Tub")}.get(slug, ("manifest", "NG Hot Tubs"))
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
-             app_scripts + [f"/assets/js/{js}.js"])
+             app_scripts + [f"/assets/js/{js}.js"], app=app, app_title=app_title)
+    # Offline page, shown by sw.js when the phone has no connection
+    page("offline/", "You're offline | North Grenville Hot Tubs", "No connection right now.", (SRC / "offline.html").read_text(), "../", app_head)
     urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")

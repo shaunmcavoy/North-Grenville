@@ -70,3 +70,8 @@ document.querySelectorAll('.subform').forEach(function (form) {
 (function(){var m=document.querySelector('.mnav');if(!m)return;
 m.addEventListener('click',function(e){if(e.target.closest('.mnav-panel a'))m.removeAttribute('open')});
 document.addEventListener('click',function(e){if(m.open&&!m.contains(e.target))m.removeAttribute('open')});})();
+
+// Let the site be saved to a phone's home screen and open like an app
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* the site still works without it */ }); });
+}

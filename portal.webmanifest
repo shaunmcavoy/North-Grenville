@@ -1,0 +1,38 @@
+{
+  "id": "/portal/",
+  "name": "My North Grenville Hot Tub",
+  "short_name": "My Hot Tub",
+  "description": "Your North Grenville Hot Tubs portal: your agreement, payments, delivery and care.",
+  "start_url": "/portal/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d1611",
+  "theme_color": "#1d1611",
+  "lang": "en-CA",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "shopping",
+    "lifestyle"
+  ]
+}
