@@ -504,6 +504,57 @@ async function route_sale_reopen(req: Request): Promise<Response> {
   return jsonAuth(req, { ok: true });
 }
 
+// ---- past-sale ----
+// POST  Admins. Records a sale made before the website (or outside it) so it counts in Financials.
+// Creates the customer and a sold sale with its costs. No agreement, emails or QuickBooks invoice.
+async function route_past_sale(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || me.profile.role !== "admin") return jsonAuth(req, { error: "Only an admin can record a past sale." }, 403);
+  const b = await req.json().catch(() => ({}));
+  const str = (v: unknown) => { const t = String(v ?? "").trim(); return t ? t.slice(0, 300) : null; };
+  const n = (v: unknown) => { const x = Number(v); return isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : 0; };
+  const type = ["hot_tub", "swim_spa", "mini_pool", "sauna"].includes(b.product_type) ? b.product_type : "hot_tub";
+  const name = str(b.name), model = str(b.model), date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.sale_date)) ? String(b.sale_date) : null;
+  if (!name) return jsonAuth(req, { error: "Add the customer's name." }, 400);
+  if (!model) return jsonAuth(req, { error: "Choose the model that was sold." }, 400);
+  if (!date) return jsonAuth(req, { error: "Add the date it was sold." }, 400);
+  if (!n(b.price)) return jsonAuth(req, { error: "Add the sale price before HST." }, 400);
+  const email = str(b.email);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return jsonAuth(req, { error: "That email doesn't look right." }, 400);
+  const db = admin();
+  const { data: cust, error: ce } = await db.from("customers").insert({
+    name, email: email ? email.toLowerCase() : null, cell: str(b.cell), city_pc: str(b.city_pc), created_by: me.user.id,
+  }).select("id").single();
+  if (ce || !cust) return jsonAuth(req, { error: "Couldn't save the customer." }, 500);
+  const sauna = type === "sauna", addon = !sauna ? str(b.addon_model) : null;
+  const sale: Record<string, unknown> = {
+    customer_id: cust.id, salesperson_id: me.user.id, rep_name: me.profile.full_name || me.profile.email,
+    product_type: type, sale_date: date, customer_signed_at: `${date}T12:00:00-04:00`,
+    status: b.status === "sold" ? "deposit_paid" : "delivered", signing_method: "paper", recorded_past: true,
+    payment_type: "full", pay_methods: "both", delivery_fee: n(b.delivery_fee), notes: str(b.notes),
+    tub_make: sauna ? null : (str(b.make) || "Platinum Spas"), tub_model: sauna ? null : model,
+    hot_tub_value: sauna ? 0 : n(b.price),
+    sauna_make: sauna ? (str(b.make) || "Hekla") : (addon ? "Hekla" : null), sauna_model: sauna ? model : addon,
+    sauna_total: sauna ? n(b.price) : (addon ? n(b.addon_price) : 0),
+    tax_rate: b.tax_rate === 0 || b.tax_rate === "0" ? 0 : 0.13,
+  };
+  if (sale.status === "delivered") sale.delivered_at = `${date}T12:00:00-04:00`;
+  const { data: row, error: se } = await db.from("sales").insert(sale).select("id, number").single();
+  if (se || !row) {
+    await db.from("customers").delete().eq("id", cust.id);
+    console.error("past-sale", se);
+    return jsonAuth(req, { error: "Couldn't save the sale." }, 500);
+  }
+  const c = b.costs ?? {};
+  await db.from("sale_costs").insert({
+    sale_id: row.id, product_cost: n(c.product_cost), sauna_cost: n(c.sauna_cost), warehouse_shipping: n(c.warehouse_shipping),
+    delivery_cost: n(c.delivery_cost), other_costs: n(c.other_costs), notes: str(c.notes), updated_by: me.user.id,
+  });
+  await logEvent(row.id, "recorded_past", me.user.id);
+  return jsonAuth(req, { ok: true, id: row.id, number: row.number });
+}
+
 // ---- sale-delete ----
 // POST {sale_ids: string[]}  Admins only. Removes the sales, their history, signed agreements and photos.
 // The customer stays (as a lead) and QuickBooks is left alone: invoices and payments stay in the books.
@@ -666,7 +717,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
-  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen, "past-sale": route_past_sale,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

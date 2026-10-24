@@ -213,7 +213,7 @@
   }
   function loadEvents(id) {
     sb.from('sale_events').select('at,kind,detail').eq('sale_id', id).order('at').then(function (r) {
-      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send', balance_paid: 'Balance recorded as paid', undo_balance: 'Balance payment undone', delivered: 'Marked delivered', undo_delivered: 'Delivery undone', paper_signed: 'Signed on paper', printed_for_paper: 'Printed for paper signing', reopened: 'Unlocked for changes (old signing link cancelled)' };
+      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send', balance_paid: 'Balance recorded as paid', undo_balance: 'Balance payment undone', delivered: 'Marked delivered', undo_delivered: 'Delivery undone', paper_signed: 'Signed on paper', printed_for_paper: 'Printed for paper signing', recorded_past: 'Recorded as a past sale (no agreement, emails or invoice)', reopened: 'Unlocked for changes (old signing link cancelled)' };
       var ev = r.data || []; if (!ev.length) return;
       $('#events').innerHTML = ev.map(function (e) { return '<li><b>' + NG.esc(L[e.kind] || e.kind) + '</b><span>' + NG.dateTime(e.at) + '</span></li>'; }).join('');
       $('#eventsPanel').hidden = false;
@@ -676,7 +676,7 @@
   function loadMoney() {
     $('#moneyRows').innerHTML = '<tr><td colspan="9" class="empty">Loading...</td></tr>';
     Promise.all([
-      sb.from('sales').select('id,number,status,product_type,tub_model,sauna_model,hot_tub_value,sauna_total,delivery_fee,sale_date,customer_signed_at').in('status', SIGNED).limit(5000),
+      sb.from('sales').select('id,number,status,product_type,tub_model,sauna_model,hot_tub_value,sauna_total,delivery_fee,sale_date,customer_signed_at,recorded_past,customers(name)').in('status', SIGNED).limit(5000),
       sb.from('sale_costs').select('*').limit(5000)
     ]).then(function (res) {
       var costs = {}; (res[1].data || []).forEach(function (c) { costs[c.sale_id] = c; });
@@ -708,7 +708,7 @@
       var b = m[i];
       ['units', 'sold', 'profit', 'costedSold', 'deals', 'missing'].forEach(function (k) { run[k] += b[k]; });
       var flag = b.missing ? ' <span class="muted small" title="Deals without costs saved">(' + b.missing + ' without costs)</span>' : '';
-      rows.push('<tr' + (b.deals ? '' : ' class="quiet"') + '><td>' + MONTHS[i] + flag + '</td>' +
+      rows.push('<tr' + (b.deals ? ' class="mrow" data-m="' + i + '" tabindex="0" aria-expanded="false"' : ' class="quiet"') + '><td>' + (b.deals ? '<span class="caret" aria-hidden="true">&#9656;</span> ' : '') + MONTHS[i] + flag + '</td>' +
         cell(b.units || '-') + cell(b.sold ? NG.money(b.sold) : '-') + cell(pf(b), b.profit < 0 ? 'neg' : '') + cell(mg(b)) +
         cell(run.units || '-', 'ytd') + cell(run.sold ? NG.money(run.sold) : '-', 'ytd') + cell(pf(run), 'ytd' + (run.profit < 0 ? ' neg' : '')) + cell(mg(run), 'ytd') + '</tr>');
     }
@@ -721,6 +721,86 @@
       : 'Every sold deal in ' + year + ' has its costs saved.';
   }
   $('#moneyYear').addEventListener('change', renderMoney);
+  function toggleMonth(tr) {
+    var open = tr.getAttribute('aria-expanded') === 'true', next = tr.nextElementSibling;
+    if (open) { if (next && next.classList.contains('mdetail')) next.remove(); tr.setAttribute('aria-expanded', 'false'); return; }
+    var year = Number($('#moneyYear').value), mi = Number(tr.dataset.m);
+    var deals = moneyData.filter(function (x) { return x.d.getFullYear() === year && x.d.getMonth() === mi; }).sort(function (a, b) { return a.d - b.d; });
+    var rows = deals.map(function (x) {
+      var rev = revenueOf(x.s), cost = x.c ? costOf(x.c) : null, profit = cost == null ? null : rev - cost;
+      return '<tr data-go="' + x.s.id + '" tabindex="0"><td>#' + x.s.number + (x.s.recorded_past ? ' <span class="pill pill-grey">Past</span>' : '') + '</td><td>' + NG.esc(x.s.customers ? x.s.customers.name : '') + '</td><td>' + NG.esc(NG.what(x.s) || '-') + '</td><td>' + x.d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + '</td><td>' + NG.pill(x.s.status) + '</td>' +
+        '<td class="num">' + unitsOf(x.s) + '</td><td class="num">' + NG.money(rev) + '</td><td class="num">' + (cost == null ? '<span class="muted small">Add costs</span>' : NG.money(cost)) + '</td>' +
+        '<td class="num ' + (profit == null ? '' : profit >= 0 ? 'pos' : 'neg') + '">' + (profit == null ? '-' : NG.money(profit)) + '</td><td class="num">' + (profit == null || !rev ? '-' : pct(profit / rev)) + '</td></tr>';
+    }).join('');
+    var d = document.createElement('tr'); d.className = 'mdetail';
+    d.innerHTML = '<td colspan="9"><table class="saletable dealtable"><thead><tr><th>#</th><th>Customer</th><th>What</th><th>Signed</th><th>Status</th><th class="num">Units</th><th class="num">Sold</th><th class="num">Our cost</th><th class="num">Profit</th><th class="num">Margin</th></tr></thead><tbody>' + rows + '</tbody></table></td>';
+    tr.after(d); tr.setAttribute('aria-expanded', 'true');
+  }
+  $('#moneyRows').addEventListener('click', function (e) {
+    var go = e.target.closest('tr[data-go]'); if (go) { location.hash = 'sale-' + go.dataset.go; return; }
+    var tr = e.target.closest('tr.mrow'); if (tr) toggleMonth(tr);
+  });
+  $('#moneyRows').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var go = e.target.closest('tr[data-go]'); if (go) { location.hash = 'sale-' + go.dataset.go; return; }
+    var tr = e.target.closest('tr.mrow'); if (tr) toggleMonth(tr);
+  });
+
+  // ---------- Record a past sale (admins) ----------
+  var pform = $('#pastForm'), pastType = $('#pastType'), pastModel = $('#pastModel'), pastOther = $('#pastModelOther'), pastAddon = $('#pastAddon');
+  pastAddon.innerHTML = modelOptions('sauna', 'No sauna').replace('<option value="__other">Other model (type it in)...</option>', '');
+  function pastApplyType() {
+    var t = pastType.value, sauna = t === 'sauna';
+    pastModel.innerHTML = modelOptions(t, 'Choose a ' + NG.NOUN[t] + '...'); pastOther.hidden = true; pastOther.value = '';
+    $('#pastPriceLbl').textContent = NG.cap(NG.NOUN[t]) + ' price before HST';
+    $('#pastCostLbl').textContent = sauna ? 'Sauna cost with heater' : NG.cap(NG.NOUN[t]) + ' cost';
+    $$('#pastForm .pastaddon').forEach(function (l) { l.hidden = sauna; });
+    pastHints();
+  }
+  function pastHints() {
+    getCostList().then(function () {
+      var t = pastType.value, model = modelVal(pastModel, pastOther);
+      var main = matches(t, model), add = matches('sauna', pastAddon.value);
+      hintFor($('#pastCostHint'), 'product_cost', main); hintFor($('#pastAddonHint'), 'sauna_cost', add);
+      if (main.length === 1 && !pform.product_cost.value) pform.product_cost.value = main[0].cost;
+      if (add.length === 1 && !pform.sauna_cost.value) pform.sauna_cost.value = add[0].cost;
+      pastSums();
+    });
+  }
+  function pastSums() {
+    var sauna = pastType.value === 'sauna';
+    var rev = num(pform.price.value) + (sauna ? 0 : num(pform.addon_price.value)) + num(pform.delivery_fee.value);
+    var cost = num(pform.product_cost.value) + (sauna ? 0 : num(pform.sauna_cost.value)) + num(pform.warehouse_shipping.value) + num(pform.delivery_cost.value) + num(pform.other_costs.value);
+    var profit = rev - cost;
+    $('#pastSums').innerHTML = [['Sold before HST', NG.money(rev)], ['Our total cost', NG.money(cost)], ['Profit', NG.money(profit), profit >= 0 ? 'good' : 'bad'], ['Margin', rev ? pct(profit / rev) : '-', profit >= 0 ? 'good' : 'bad']]
+      .map(function (r) { return '<div class="strong ' + (r[2] || '') + '"><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('');
+  }
+  pastType.addEventListener('change', function () { pform.product_cost.value = ''; pastApplyType(); });
+  pastModel.addEventListener('change', function () { pastOther.hidden = pastModel.value !== '__other'; if (!pastOther.hidden) pastOther.focus(); pform.product_cost.value = ''; pastHints(); });
+  pastOther.addEventListener('change', function () { pform.product_cost.value = ''; pastHints(); });
+  pastAddon.addEventListener('change', function () { pform.sauna_cost.value = ''; pastHints(); });
+  pform.addEventListener('input', pastSums);
+  pform.addEventListener('click', function (e) { var b = e.target.closest('button[data-f]'); if (!b) return; pform[b.dataset.f].value = b.dataset.v; pastSums(); });
+  $('#pastOpen').addEventListener('click', function () {
+    $('#pastCard').hidden = false; pform.reset(); pform.delivery_cost.value = DELIVERY_COST; pform.querySelector('.formmsg').textContent = '';
+    pastApplyType(); pform.name.focus();
+  });
+  $('#pastCancel').addEventListener('click', function () { $('#pastCard').hidden = true; });
+  pform.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var m = pform.querySelector('.formmsg'), sauna = pastType.value === 'sauna';
+    var body = {
+      name: pform.name.value, email: pform.email.value, cell: pform.cell.value, city_pc: pform.city_pc.value, sale_date: pform.sale_date.value,
+      status: pform.status.value, product_type: pastType.value, model: modelVal(pastModel, pastOther), price: pform.price.value,
+      addon_model: sauna ? null : pastAddon.value || null, addon_price: sauna ? 0 : pform.addon_price.value, delivery_fee: pform.delivery_fee.value, notes: pform.notes.value,
+      costs: { product_cost: pform.product_cost.value, sauna_cost: sauna ? 0 : pform.sauna_cost.value, warehouse_shipping: pform.warehouse_shipping.value, delivery_cost: pform.delivery_cost.value, other_costs: pform.other_costs.value }
+    };
+    m.textContent = 'Saving...';
+    NG.api('past-sale', body).then(function (r) {
+      NG.toast('Past sale #' + r.number + ' saved'); $('#pastCard').hidden = true;
+      var y = (pform.sale_date.value || '').slice(0, 4); loadMoney(); if (y) setTimeout(function () { if ($('#moneyYear').querySelector('option[value="' + y + '"]')) { $('#moneyYear').value = y; renderMoney(); } }, 600);
+    }).catch(function (err) { m.textContent = err.message; });
+  });
 
   // ---------- Cost list (Team tab, admins) ----------
   var CAT = { hot_tub: 'Hot tub', swim_spa: 'Swim spa', mini_pool: 'Mini pool', sauna: 'Sauna' };

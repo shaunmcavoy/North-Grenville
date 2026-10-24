@@ -639,4 +639,17 @@ label.inline input{width:110px}
 .moneytable tr.quiet td{color:var(--muted)}
 .moneytable tfoot td{border-top:2px solid var(--ink);padding:13px 14px}
 .saletable td.neg{color:#a3412b;font-weight:600}
+.moneytable tr.mrow{cursor:pointer}
+.moneytable tr.mrow:hover td{background:rgba(200,163,91,.12)}
+.moneytable .caret{display:inline-block;transition:transform .15s;color:var(--muted)}
+.moneytable tr.mrow[aria-expanded="true"] .caret{transform:rotate(90deg)}
+.moneytable tr.mdetail > td{padding:0 0 14px;background:var(--paper)}
+.dealtable{min-width:0;font-size:.88rem}
+.dealtable th,.dealtable td{padding:9px 12px}
+.dealtable tbody tr{cursor:pointer}
+.dealtable tbody tr:hover td{background:rgba(47,111,106,.06)}
+#pastCard{margin-bottom:18px}
+#pastCard .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:4px;font-weight:500}
+#pastCard .hint button{font:inherit;color:var(--water-deep,#2f6f6a);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;margin-right:8px}
+#pastForm .grid3{align-items:start}
 

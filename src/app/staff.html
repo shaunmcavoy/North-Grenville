@@ -249,9 +249,40 @@
     <div id="view-money" class="view" hidden>
       <div class="listhead">
         <div>
-          <p class="muted small">Sold deals only (signed or further along), counted in the month the customer signed. Amounts are before HST. Admins only.</p>
+          <p class="muted small">Sold deals only (signed or further along), counted in the month the customer signed. Amounts are before HST. Tap a month to see its deals. Admins only.</p>
         </div>
-        <label class="inline">Year<select id="moneyYear"></select></label>
+        <div class="formactions"><label class="inline">Year<select id="moneyYear"></select></label><button class="btn btn-gold" type="button" id="pastOpen">Record a past sale</button></div>
+      </div>
+      <div class="card" id="pastCard" hidden>
+        <h3>Record a past sale</h3>
+        <p class="muted small">For tubs sold before the website, or outside it. It counts in Financials and shows on the Sales and Customers tabs. No agreement, emails or QuickBooks invoice are made, and nothing is sent to the customer.</p>
+        <form id="pastForm" class="form" novalidate>
+          <div class="grid3">
+            <label>Customer name<input name="name" required autocomplete="off"></label>
+            <label><span>Email <span class="opt">(optional)</span></span><input name="email" type="email" autocomplete="off"></label>
+            <label><span>Cell <span class="opt">(optional)</span></span><input name="cell" type="tel" autocomplete="off"></label>
+            <label><span>City <span class="opt">(optional)</span></span><input name="city_pc" autocomplete="off"></label>
+            <label>Date sold<input name="sale_date" type="date" required></label>
+            <label>Where it's at<select name="status"><option value="delivered">Delivered</option><option value="sold">Sold, not delivered yet</option></select></label>
+            <label>Category<select name="product_type" id="pastType"><option value="hot_tub">Hot tub</option><option value="swim_spa">Swim spa</option><option value="mini_pool">Mini pool</option><option value="sauna">Sauna</option></select></label>
+            <label>Model<select id="pastModel"></select><input id="pastModelOther" placeholder="Model name" autocomplete="off" hidden></label>
+            <label><span class="lbl" id="pastPriceLbl">Hot tub price before HST</span><input name="price" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+            <label class="pastaddon"><span>Sauna sold with it <span class="opt">(optional)</span></span><select id="pastAddon"></select></label>
+            <label class="pastaddon">Sauna price before HST<input name="addon_price" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            <label>Delivery fee charged<input name="delivery_fee" type="number" min="0" step="0.01" inputmode="decimal"></label>
+          </div>
+          <h3>Our costs (CAD)</h3>
+          <div class="grid3">
+            <label><span class="lbl" id="pastCostLbl">Hot tub cost</span><input name="product_cost" type="number" min="0" step="0.01" inputmode="decimal"><span class="hint" id="pastCostHint"></span></label>
+            <label class="pastaddon">Sauna cost with heater<input name="sauna_cost" type="number" min="0" step="0.01" inputmode="decimal"><span class="hint" id="pastAddonHint"></span></label>
+            <label>Shipping to our warehouse<input name="warehouse_shipping" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Surrey or Hekla to Kemptville"></label>
+            <label>Our delivery cost<input name="delivery_cost" type="number" min="0" step="0.01" inputmode="decimal" value="350"></label>
+            <label>Other costs<input name="other_costs" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            <label>Notes<input name="notes" autocomplete="off"></label>
+          </div>
+          <dl class="sums profitsums" id="pastSums"></dl>
+          <div class="formactions"><button class="btn btn-gold" type="submit">Save past sale</button><button class="linkbtn" type="button" id="pastCancel">Cancel</button><p class="formmsg" role="status" aria-live="polite"></p></div>
+        </form>
       </div>
       <div class="moneycards" id="moneyCards"></div>
       <div class="tablewrap"><table class="saletable moneytable">
