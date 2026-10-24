@@ -68,7 +68,10 @@ def page(path, title, desc, body, base, extra_head="", scripts=(), app="manifest
 <meta property="og:image" content="{SITE['url']}/assets/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1d1611">
-<link rel="icon" type="image/png" href="{base}favicon.png">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/favicon-192.png">
 <link rel="apple-touch-icon" href="{base}apple-touch-icon.png">
 <link rel="manifest" href="/{app}.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
