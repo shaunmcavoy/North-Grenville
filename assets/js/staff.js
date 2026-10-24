@@ -77,7 +77,7 @@
 
   function route() {
     var h = location.hash.slice(1) || 'sales';
-    if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); loadQb(); }
+    if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); loadQb(); loadCosts(); }
     else if (h === 'new') { openSale(null); }
     else if (h.indexOf('new-c-') === 0) { openSale(null, h.slice(6)); }
     else if (h === 'customers') { show('customers'); loadCustomers(); }
@@ -89,7 +89,7 @@
 
   // ---------- List ----------
   function loadSales() {
-    var q = sb.from('sales').select('id,number,status,total,product_type,tub_model,sauna_model,updated_at,salesperson_id,customers(name),profiles!sales_salesperson_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(200);
+    var q = sb.from('sales').select('id,number,status,total,hot_tub_value,sauna_total,delivery_fee,product_type,tub_model,sauna_model,updated_at,salesperson_id,customers(name),profiles!sales_salesperson_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(200);
     if (filter === 'open') q = q.in('status', ['draft', 'awaiting_customer', 'signed', 'deposit_paid', 'delivery_scheduled']);
     else if (filter !== 'all') q = q.eq('status', filter);
     q.then(function (r) {
@@ -97,9 +97,10 @@
       $('#saleRows').innerHTML = rows.length ? rows.map(function (s) {
         var what = NG.what(s) || '-';
         var rep = s.profiles ? (s.profiles.full_name || s.profiles.email) : '';
-        return '<tr data-id="' + s.id + '" data-n="' + s.number + '" tabindex="0">' + (isAdmin ? '<td class="selcol"><input type="checkbox" class="sel" aria-label="Select sale #' + s.number + '"></td>' : '') + '<td>' + s.number + '</td><td>' + NG.esc(s.customers && s.customers.name) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + NG.money(s.total) + '</td><td>' + NG.pill(s.status) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(s.updated_at) + '</td></tr>';
-      }).join('') : '<tr><td colspan="8" class="empty">No sales here yet. Start one with <a href="#new">New sale</a>.</td></tr>';
+        return '<tr data-id="' + s.id + '" data-n="' + s.number + '" tabindex="0">' + (isAdmin ? '<td class="selcol"><input type="checkbox" class="sel" aria-label="Select sale #' + s.number + '"></td>' : '') + '<td>' + s.number + '</td><td>' + NG.esc(s.customers && s.customers.name) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + NG.money(s.total) + '</td><td>' + NG.pill(s.status) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td><td class="num" data-profit="' + s.id + '"></td><td class="num" data-margin="' + s.id + '"></td>' : '') + '<td>' + NG.date(s.updated_at) + '</td></tr>';
+      }).join('') : '<tr><td colspan="10" class="empty">No sales here yet. Start one with <a href="#new">New sale</a>.</td></tr>';
       $('#selAll').checked = false; updateBulk();
+      if (isAdmin) listProfits(rows);
     });
   }
   $('#saleRows').addEventListener('click', function (e) {
@@ -166,7 +167,7 @@
   var newForCustomer = null; // starting a sale for an existing customer (a lead)
   function openSale(id, custId) {
     current = null; newForCustomer = null; form.querySelector('.formmsg').textContent = '';
-    ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel', '#saleDanger'].forEach(function (p) { $(p).hidden = true; });
+    ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel', '#saleDanger', '#profitCard'].forEach(function (p) { $(p).hidden = true; });
     if (!id) {
       fill(null, null); lock(false); $('#saleHeading').textContent = 'New sale'; $('#saleStatus').innerHTML = ''; show('sale');
       if (custId) sb.from('customers').select('*').eq('id', custId).maybeSingle().then(function (r) {
@@ -203,6 +204,7 @@
       }
       // Admins can delete any sale (tests, deals that fell through). Salespeople keep the Delete draft button.
       $('#saleDanger').hidden = me.profile.role !== 'admin';
+      openProfit(current);
       $('#saleDelMsg').textContent = ''; $('#saleDelete').dataset.confirm = ''; $('#saleDelete').textContent = 'Delete sale';
       loadEvents(current.id);
       show('sale');
@@ -582,6 +584,192 @@
     NG.api('invite-staff', { full_name: f.full_name.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim(), role: f.role.value })
       .then(function () { m.textContent = 'Invite sent.'; f.reset(); loadTeam(); }).catch(function (err) { m.textContent = err.message; });
   });
+
+
+  // ---------- Profit and margin (admins only) ----------
+  // Costs live in their own admin-only tables (sale_costs, product_costs), never on the sale itself,
+  // so salespeople and customers can't read them.
+  var COSTF = ['product_cost', 'sauna_cost', 'warehouse_shipping', 'delivery_cost', 'other_costs'];
+  var costList = null;
+  function getCostList() {
+    if (costList) return Promise.resolve(costList);
+    return sb.from('product_costs').select('id,product_type,model,cost,note').order('product_type').order('model').then(function (r) { costList = r.data || []; return costList; });
+  }
+  function revenueOf(s) { return num(s.hot_tub_value) + num(s.sauna_total) + num(s.delivery_fee); }
+  function costOf(c) { return COSTF.reduce(function (t, k) { return t + num(c && c[k]); }, 0); }
+  function pct(x) { return isFinite(x) ? (Math.round(x * 1000) / 10).toFixed(1) + '%' : '-'; }
+  // Cost list entries for a model: an exact match, or its finish variants like "Cube 210 (Nero)".
+  function matches(type, model) {
+    var m = String(model || '').toLowerCase().trim(); if (!m || !costList) return [];
+    var exact = costList.filter(function (c) { return c.product_type === type && c.model.toLowerCase() === m; });
+    return exact.length ? exact : costList.filter(function (c) { return c.product_type === type && c.model.toLowerCase().indexOf(m + ' (') === 0; });
+  }
+  function hintFor(el, field, list) {
+    el.innerHTML = list.length ? 'Cost list: ' + list.map(function (c) { return '<button type="button" data-f="' + field + '" data-v="' + c.cost + '">' + NG.esc(c.model) + ' ' + NG.money(c.cost) + '</button>'; }).join('') : 'Not on the cost list yet';
+  }
+  var pf = $('#profitForm');
+  function profitSums() {
+    if (!current) return;
+    var c = {}; COSTF.forEach(function (k) { c[k] = num(pf[k].value); });
+    var rev = revenueOf(current), cost = costOf(c), profit = rev - cost, m = rev ? profit / rev : NaN;
+    $('#profitSums').innerHTML = [['Sale price before HST', NG.money(rev)], ['Our total cost', NG.money(cost)], ['Profit', NG.money(profit), profit >= 0 ? 'good' : 'bad'], ['Margin', pct(m), profit >= 0 ? 'good' : 'bad']]
+      .map(function (r) { return '<div class="strong ' + (r[2] || '') + '"><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('');
+  }
+  function openProfit(sale) {
+    var card = $('#profitCard');
+    if (!sale || me.profile.role !== 'admin') { card.hidden = true; return; }
+    card.hidden = false; $('#profitMsg').textContent = '';
+    var sauna = sale.product_type === 'sauna';
+    $('#pcLabel').textContent = (sauna ? 'Sauna cost with heater' : NG.cap(NG.noun(sale)) + ' cost') + ' (CAD)';
+    $('#scWrap').hidden = sauna || !sale.sauna_model;
+    Promise.all([getCostList(), sb.from('sale_costs').select('*').eq('sale_id', sale.id).maybeSingle()]).then(function (res) {
+      var saved = res[1].data;
+      var mainList = matches(sale.product_type || 'hot_tub', sauna ? sale.sauna_model : sale.tub_model);
+      var addList = !sauna && sale.sauna_model ? matches('sauna', sale.sauna_model) : [];
+      hintFor($('#pcHint'), 'product_cost', mainList); hintFor($('#scHint'), 'sauna_cost', addList);
+      COSTF.forEach(function (k) { pf[k].value = saved && Number(saved[k]) ? saved[k] : ''; });
+      pf.notes.value = (saved && saved.notes) || '';
+      // First time: fill the cost from the list when there's exactly one match.
+      if (!saved) {
+        if (mainList.length === 1) pf.product_cost.value = mainList[0].cost;
+        if (addList.length === 1) pf.sauna_cost.value = addList[0].cost;
+        $('#profitMsg').textContent = mainList.length === 1 ? 'Cost filled in from the cost list. Add shipping and anything else, then save.' : '';
+      }
+      profitSums();
+    });
+  }
+  pf.addEventListener('input', profitSums);
+  pf.addEventListener('click', function (e) { var b = e.target.closest('button[data-f]'); if (!b) return; pf[b.dataset.f].value = b.dataset.v; profitSums(); });
+  $('#profitSave').addEventListener('click', function () {
+    var m = $('#profitMsg'); if (!current) return;
+    var d = { sale_id: current.id, notes: pf.notes.value.trim() || null, updated_at: new Date().toISOString(), updated_by: me.user.id };
+    COSTF.forEach(function (k) { d[k] = num(pf[k].value); });
+    m.textContent = 'Saving...';
+    sb.from('sale_costs').upsert(d, { onConflict: 'sale_id' }).then(function (r) { m.textContent = r.error ? r.error.message : 'Saved.'; if (!r.error) NG.toast('Costs saved'); });
+  });
+  function listProfits(rows) {
+    var sold = rows.filter(function (s) { return SIGNED.indexOf(s.status) >= 0; });
+    if (!sold.length) return;
+    sb.from('sale_costs').select('*').in('sale_id', sold.map(function (s) { return s.id; })).then(function (r) {
+      var by = {}; (r.data || []).forEach(function (c) { by[c.sale_id] = c; });
+      sold.forEach(function (s) {
+        var pc = $('[data-profit="' + s.id + '"]'), mc = $('[data-margin="' + s.id + '"]'); if (!pc) return;
+        var c = by[s.id];
+        if (!c) { pc.innerHTML = '<span class="muted small">Add costs</span>'; return; }
+        var rev = revenueOf(s), profit = rev - costOf(c);
+        pc.textContent = NG.money(profit); pc.className = 'num ' + (profit >= 0 ? 'pos' : 'neg');
+        mc.textContent = rev ? pct(profit / rev) : '-';
+      });
+    });
+  }
+
+  // ---------- Cost list (Team tab, admins) ----------
+  var CAT = { hot_tub: 'Hot tub', swim_spa: 'Swim spa', mini_pool: 'Mini pool', sauna: 'Sauna' };
+  function loadCosts() {
+    costList = null;
+    getCostList().then(function (list) {
+      $('#costRows').innerHTML = list.length ? list.map(function (c) {
+        return '<tr data-cost="' + c.id + '"><td>' + CAT[c.product_type] + '</td><td>' + NG.esc(c.model) + '</td><td class="num"><input type="number" step="0.01" min="0" value="' + c.cost + '" aria-label="Cost of ' + NG.esc(c.model) + '"></td><td class="src">' + NG.esc(c.note || '') + '</td><td><button class="linkbtn" type="button" data-del="' + c.id + '">Remove</button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="empty">No costs yet. Upload a spreadsheet to get started.</td></tr>';
+    });
+  }
+  $('#costRows').addEventListener('change', function (e) {
+    var tr = e.target.closest('tr[data-cost]'); if (!tr || !e.target.matches('input')) return;
+    sb.from('product_costs').update({ cost: num(e.target.value), note: 'Edited in the portal', updated_at: new Date().toISOString(), updated_by: me.user.id }).eq('id', tr.dataset.cost)
+      .then(function (r) { if (r.error) return NG.toast(r.error.message); NG.toast('Cost updated'); tr.querySelector('.src').textContent = 'Edited in the portal'; costList = null; });
+  });
+  $('#costRows').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del]'); if (!b) return;
+    if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'Tap again'; setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Remove'; }, 4000); return; }
+    sb.from('product_costs').delete().eq('id', b.dataset.del).then(function (r) { if (r.error) return NG.toast(r.error.message); loadCosts(); });
+  });
+  $('#costDownload').addEventListener('click', function () {
+    getCostList().then(function (list) {
+      var csv = 'Category,Model,Cost (CAD),Source\n' + list.map(function (c) { return [CAT[c.product_type], c.model, c.cost, c.note || ''].map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'north-grenville-cost-list.csv'; a.click();
+    });
+  });
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    return new Promise(function (ok, fail) {
+      var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      sc.onload = function () { ok(window.XLSX); }; sc.onerror = function () { fail(new Error("Couldn't load the spreadsheet reader. Check your connection and try again.")); };
+      document.head.appendChild(sc);
+    });
+  }
+  // Reads Platinum's price sheet as it comes, or any sheet with Model and Cost columns.
+  function parseSheet(rows, sheetName, rate) {
+    var out = [], hdr = -1, mCol = -1, cCol = -1, catCol = -1, usd = false, sect = null;
+    var low = function (v) { return String(v == null ? '' : v).toLowerCase().replace(/\s+/g, ' ').trim(); };
+    var catOf = function (t) { t = low(t); return /swim/.test(t) ? 'swim_spa' : /mini ?pool/.test(t) ? 'mini_pool' : /sauna|hekla/.test(t) ? 'sauna' : /hot ?tub|spa|deluxe|premium|luxury/.test(t) ? 'hot_tub' : null; };
+    for (var i = 0; i < rows.length && hdr < 0; i++) {
+      var r = rows[i] || [];
+      for (var j = 0; j < r.length; j++) if (/^model/.test(low(r[j]))) { hdr = i; mCol = j; break; }
+    }
+    if (hdr < 0) return { error: 'No "Model" column found in ' + sheetName + '.' };
+    var h = (rows[hdr] || []).map(low), pick = function (test) { for (var k = 0; k < h.length; k++) if (test(h[k])) return k; return -1; };
+    cCol = pick(function (t) { return /(cdn|cad)/.test(t) && /landed/.test(t); });
+    if (cCol < 0) cCol = pick(function (t) { return /(cdn|cad)/.test(t) && /cost/.test(t); });
+    if (cCol < 0) { cCol = pick(function (t) { return /landed/.test(t) && /usd/.test(t); }); usd = cCol >= 0; }
+    if (cCol < 0) { cCol = pick(function (t) { return /cost|trade|price/.test(t) && !/retail|sale|msrp|map/.test(t); }); usd = cCol >= 0 && /usd/.test(h[cCol]); }
+    catCol = pick(function (t) { return /^(category|type|product)/.test(t); });
+    if (cCol < 0) return { error: 'No cost column found in ' + sheetName + '.' };
+    var sheetCat = catOf(sheetName);
+    for (var n = hdr + 1; n < rows.length; n++) {
+      var row = rows[n] || [], name = String(row[mCol] == null ? '' : row[mCol]).trim(), v = row[cCol];
+      if (!name) continue;
+      if ((v === '' || v == null) && row.filter(function (x) { return x !== '' && x != null; }).length === 1) { sect = catOf(name) || sect; continue; }
+      var cost = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,\s]/g, ''));
+      if (!isFinite(cost) || cost <= 0) continue;
+      var model = name.replace(/\s+Professional\b/i, ' Pro').replace(/^Palmero$/i, 'Palermo');
+      var cat = (catCol >= 0 && catOf(row[catCol])) || sect || sheetCat || 'hot_tub';
+      out.push({ product_type: cat, model: model, cost: Math.round((usd ? cost * rate : cost) * 100) / 100,
+        note: sheetName + ': ' + String(rows[hdr][cCol]).replace(/\s+/g, ' ').trim() + (usd ? ' x ' + rate : '') });
+    }
+    return { rows: out };
+  }
+  var pending = null;
+  $('#costFile').addEventListener('change', function () {
+    var f = this.files[0], m = $('#costMsg'); if (!f) return;
+    var rate = num($('#costRate').value) || 1;
+    m.textContent = 'Reading ' + f.name + '...';
+    loadXlsx().then(function (X) { return f.arrayBuffer().then(function (buf) { return X.read(buf, { type: 'array' }); }); }).then(function (wb) {
+      var all = [], errs = [];
+      wb.SheetNames.forEach(function (sn) {
+        var rows = window.XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' });
+        var p = parseSheet(rows, sn, rate); if (p.error) errs.push(p.error); else all = all.concat(p.rows);
+      });
+      $('#costFile').value = '';
+      if (!all.length) { m.textContent = errs.join(' ') || 'No costs found in that file.'; return; }
+      pending = all; m.textContent = '';
+      var byCat = {}; all.forEach(function (r) { byCat[r.product_type] = (byCat[r.product_type] || 0) + 1; });
+      $('#costPreview').innerHTML = '<div class="costpreview"><p><b>Found ' + all.length + ' costs</b> (' + Object.keys(byCat).map(function (k) { return byCat[k] + ' ' + CAT[k].toLowerCase() + (byCat[k] > 1 ? 's' : ''); }).join(', ') + ').</p>' +
+        '<p class="muted small">' + all.slice(0, 6).map(function (r) { return NG.esc(r.model) + ' ' + NG.money(r.cost); }).join(', ') + (all.length > 6 ? ', ...' : '') + '</p>' +
+        '<div class="formactions"><button class="btn btn-gold" type="button" id="costApply">Save these costs</button><button class="linkbtn" type="button" id="costCancel">Cancel</button></div></div>';
+      $('#costApply').onclick = applyCosts; $('#costCancel').onclick = function () { pending = null; $('#costPreview').innerHTML = ''; };
+    }).catch(function (err) { m.textContent = err.message; });
+  });
+  function applyCosts() {
+    if (!pending) return;
+    var m = $('#costMsg'), rows = pending; pending = null; $('#costPreview').innerHTML = ''; m.textContent = 'Saving...';
+    costList = null;
+    getCostList().then(function (list) {
+      var key = function (t, mo) { return t + '|' + mo.toLowerCase(); }, have = {};
+      list.forEach(function (c) { have[key(c.product_type, c.model)] = c.id; });
+      var now = new Date().toISOString(), ins = [], ups = [];
+      rows.forEach(function (r) {
+        var d = { product_type: r.product_type, model: r.model, cost: r.cost, note: r.note, updated_at: now, updated_by: me.user.id };
+        var id = have[key(r.product_type, r.model)];
+        if (id) ups.push(sb.from('product_costs').update(d).eq('id', id)); else ins.push(d);
+      });
+      if (ins.length) ups.push(sb.from('product_costs').insert(ins));
+      return Promise.all(ups).then(function (res) {
+        var bad = res.filter(function (x) { return x.error; });
+        m.textContent = bad.length ? bad[0].error.message : 'Saved ' + rows.length + ' costs (' + ins.length + ' new, ' + (rows.length - ins.length) + ' updated).';
+        loadCosts();
+      });
+    });
+  }
 
   // ---------- Start ----------
   NG.requireRole(['admin', 'staff']).then(function (m) {

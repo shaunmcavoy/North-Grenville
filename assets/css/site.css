@@ -613,3 +613,18 @@ section[id],.line[id]{scroll-margin-top:84px}
 .show{border-top:6px solid var(--gold)}
 .startpill{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--night);font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:999px;margin-bottom:18px}
 .lnum{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--water-deep,#2f6f6a);color:#fff;font-size:.72rem;letter-spacing:0;margin-right:8px;vertical-align:1px}
+/* Profit (admins) */
+.card.profit{border-color:rgba(47,111,106,.35)}
+.card.profit .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:4px;font-weight:500}
+.card.profit .hint button{font:inherit;color:var(--water-deep,#2f6f6a);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;margin-right:8px}
+.profitsums{margin-top:16px}
+.profitsums .good dd{color:#2f6f6a}.profitsums .bad dd{color:#a3412b}
+.saletable td.pos{color:#2f6f6a;font-weight:600}.saletable td.neg{color:#a3412b;font-weight:600}
+.filebtn{cursor:pointer}
+label.inline{display:inline-flex;align-items:center;gap:8px;font-size:.85rem}
+label.inline input{width:110px}
+.costtable input{width:120px;text-align:right;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+#profitForm{margin-top:8px;align-items:start}
+.costtable .src{font-size:.8rem;color:var(--muted)}
+.costpreview{border:1px dashed var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+
