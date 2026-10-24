@@ -65,3 +65,8 @@ document.querySelectorAll('.subform').forEach(function (form) {
     });
   } catch (e) { /* storage blocked or unreadable: keep the Sign in button */ }
 })();
+
+// Close the phone menu after a tap or a tap outside it
+(function(){var m=document.querySelector('.mnav');if(!m)return;
+m.addEventListener('click',function(e){if(e.target.closest('.mnav-panel a'))m.removeAttribute('open')});
+document.addEventListener('click',function(e){if(m.open&&!m.contains(e.target))m.removeAttribute('open')});})();

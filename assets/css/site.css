@@ -29,9 +29,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
 .brand img{width:46px;height:46px;flex:none}
 .brand b{font-family:var(--display);font-weight:500;font-size:1.12rem;display:block;line-height:1.1}
-.brand small{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sand)}
-nav.links{display:flex;gap:24px;font-size:.92rem}
-nav.links a{text-decoration:none;color:var(--sand)}
+.brand{flex:none}@media (max-width:520px){.brand{flex:0 1 auto}}.brand small{white-space:nowrap;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sand)}
+nav.links{display:flex;gap:22px;font-size:.92rem}
+nav.links a{text-decoration:none;color:var(--sand);white-space:nowrap}
 nav.links a:hover{color:var(--cream)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font:600 .98rem/1 var(--body);padding:14px 22px;border-radius:999px;text-decoration:none;border:1.5px solid transparent;cursor:pointer;white-space:nowrap;transition:transform .15s ease, background .15s ease}
 .btn:hover{transform:translateY(-1px)}
@@ -48,8 +48,17 @@ nav.links a:hover{color:var(--cream)}
 .top-acts{display:flex;align-items:center;gap:10px;flex:none}
 .top .signin{padding:10px 16px}
 @media (max-width:520px){.top .signin{padding:10px 11px}.top .signin .lbl-signin{display:none}}
-@media (max-width:1140px){nav.links{gap:16px;font-size:.88rem}}
-@media (max-width:1080px){nav.links{display:none}}
+.mnav{display:none}
+.mnav summary{list-style:none;display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--cream);font:600 .9rem/1 var(--body);padding:10px 14px;border:1.5px solid rgba(244,236,223,.45);border-radius:999px}
+.mnav summary::-webkit-details-marker{display:none}
+.mnav-panel{position:absolute;left:0;right:0;top:100%;background:#1d1611;border-bottom:1px solid var(--line-dark);box-shadow:0 18px 30px rgba(0,0,0,.35);display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;padding:12px 20px 18px}
+.mnav-panel a{color:var(--sand);text-decoration:none;padding:12px 4px;font-size:1rem;border-bottom:1px solid var(--line-dark)}
+.mnav-panel a:hover{color:var(--cream)}
+@media (max-width:1140px){.mnav{display:block}}
+@media (min-width:700px){.mnav-panel{grid-template-columns:repeat(4,1fr);padding-inline:max(20px,calc((100vw - 1140px)/2))}}
+@media (max-width:520px){.mnav summary span{display:none}.mnav summary{padding:10px 11px}.top-acts{gap:8px}}
+@media (max-width:1260px){nav.links{gap:15px;font-size:.87rem}}
+@media (max-width:1140px){nav.links{display:none}}
 @media (max-width:520px){.brand small{display:none}.top .btn .lbl-long{display:none}}
 
 /* Hero */
