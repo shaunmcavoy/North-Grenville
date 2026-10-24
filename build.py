@@ -213,7 +213,7 @@ def tub_body(t, base):
     w, d, h = sp["dims"]
     size = f"{ftin(w)} x {ftin(d)}" if w != d else f"{ftin(w)} square"
     lounge = sp["loungers"]
-    layout = f"{sp['seats']} seat{'s' if sp['seats'] != 1 else ''}" + (f" and {lounge} lounger{'s' if lounge > 1 else ''}" if lounge else ", no lounger")
+    layout = f"{sp['seats']} seat{'s' if sp['seats'] != 1 else ''}" + (f" and {lounge} lounger{'s' if lounge > 1 else ''}" if lounge else ", all upright")
     chips = [f"Seats {t['seats']}", f"{t['jets']} jets", size, "Plugs into 120V" if t["power"] == "120V" else f"{t['power']} / 240V"]
     chip_html = "".join(f"<li>{esc(c)}</li>" for c in chips)
     perfect = "".join(f"<li>{esc(x)}</li>" for x in cp["perfect"])
@@ -239,7 +239,7 @@ def tub_body(t, base):
     ask = sms(f"Hi Blaine, I'm interested in the {n} hot tub. What's your best price?")
     fit = sms(f"Hi Blaine, I'm trying to decide if the {n} is right for me.")
     seat_kind = ("Your lounger", "Lie back and the jets run from your shoulders down to your feet. Most people try it first.") if lounge else \
-                ("Upright seats", "Everyone sits up at the same height, which makes it easier to talk and to fit more people in.")
+                ("Upright seats", "Everyone sits up at the same height, face to face, with room to move around. It's the layout people pick when the tub is for talking, family nights and having people over.")
     heading = layout[0].upper() + layout[1:]
     return f"""<section class="lhero thero">
   <div class="wrap">

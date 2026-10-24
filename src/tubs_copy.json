@@ -2,140 +2,260 @@
   "tahiti": {
     "head": "A real lounger in a small footprint.",
     "why": "People choose the Tahiti because it fits where bigger tubs don't: a small deck, a townhouse patio, a tucked-away corner of the yard. It still gives you a full lounger to stretch out in, and it plugs into a regular outdoor outlet, so you can be soaking the weekend it arrives.",
-    "perfect": ["It's mostly the two of you, with room for one more", "You want to lie back and stretch out, not just sit", "Your space is tight, about 7 ft by 5 ft 5 in", "You'd rather not hire an electrician to get started", "It's your first hot tub and you want to keep it simple"],
+    "perfect": [
+      "It's mostly the two of you, with room for one more",
+      "You want to lie back and stretch out, not just sit",
+      "Your space is tight, about 7 ft by 5 ft 5 in",
+      "You'd rather not hire an electrician to get started",
+      "It's your first hot tub and you want to keep it simple"
+    ],
     "seating": "Two seats and one lounger, each with its own mix of jets, so every spot feels a little different.",
     "honest": "On a regular 120V outlet the heater is small, so it warms up slowly after you add cold water. If you'll be in it every night through January, ask me about wiring it for 240V. The same tub goes from a 1 kW to a 4 kW heater."
   },
   "st-lucia": {
     "head": "Four upright seats, face to face.",
-    "why": "The St Lucia is for people who sit up and talk. Four seats and no lounger means nobody is stretched out across the tub and everyone gets a proper seat. It plugs into a regular outlet, it has Wi-Fi so you can check on it from your phone, and it comes ready for a heat pump if you want to add one later.",
-    "perfect": ["You soak to talk, more than to lie back", "It's two to four people most nights", "You like checking and adjusting things from your phone", "You might heat it with a heat pump down the road", "You want to plug in and go, with no electrician"],
+    "why": "The St Lucia is for people who sit up and talk. Four upright seats face each other, so it feels like sitting around the kitchen table, just warmer. It plugs into a regular outlet, it has Wi-Fi so you can check on it from your phone, and it comes ready for a heat pump if you want to add one later.",
+    "perfect": [
+      "You soak to talk, more than to lie back",
+      "It's two to four people most nights",
+      "You like checking and adjusting things from your phone",
+      "You might heat it with a heat pump down the road",
+      "You want to plug in and go, with no electrician"
+    ],
     "seating": "Four upright seats, each with its own jet layout, so you can trade spots and get a different massage.",
-    "honest": "This tub is built for conversation more than deep massage. If a sore back is the real reason you're shopping, the Palma or the Tahiti will do more for you."
+    "honest": "More than half the tubs I sell don't have a lounger, and the St Lucia is a good example of why: four real seats, everyone at eye level, and the conversation just flows. On a regular outlet the massage is relaxing rather than deep, which suits most nights. If a sore back is the main reason you're shopping, ask me about wiring it for 240V or about our stronger tubs."
   },
   "reims": {
     "head": "Six people and a lounger, on a regular outlet.",
     "why": "Most people assume a six-person tub with a lounger needs a 240V hookup. The Reims doesn't. It plugs in, it's a 6 ft 7 in square that fits most decks and patios, and it gives a family a lounger plus five seats without a big electrical job before the first soak.",
-    "perfect": ["You're a family of four to six", "Someone in the house always claims the lounger", "You want to skip the electrician on day one", "You're watching the budget and still want room for everyone", "You like the clean look of a white shell"],
+    "perfect": [
+      "You're a family of four to six",
+      "Someone in the house always claims the lounger",
+      "You want to skip the electrician on day one",
+      "You're watching the budget and still want room for everyone",
+      "You like the clean look of a white shell"
+    ],
     "seating": "Five seats and one lounger, each placed to work on a different set of muscles.",
     "honest": "One pump on a regular outlet gives a gentle massage, not a deep one. If you want stronger jets at every seat, the Refresh and the Palma are the same size and run on 240V."
   },
   "refresh": {
     "head": "Full-body lounger and real pressure, at a value price.",
     "why": "The Refresh is the same 6 ft 7 in square as the Reims, but it steps up to two pumps and 49 jets. Each seat has its own control, so the person who wants it strong and the person who wants it gentle can both get their way in the same soak.",
-    "perfect": ["Different people in the house like different pressure", "You want a full-body lounger", "A 240V hookup isn't a problem for you", "You want more massage without jumping to a pricier line", "You like that the side panels come off easily for service"],
+    "perfect": [
+      "Different people in the house like different pressure",
+      "You want a full-body lounger",
+      "A 240V hookup isn't a problem for you",
+      "You want more massage without jumping to a pricier line",
+      "You like that the side panels come off easily for service"
+    ],
     "seating": "One full-body lounger and five sculpted seats, with the pressure adjustable seat by seat.",
     "honest": "If massage is the main reason you're buying, look at the Palma. It's the same footprint with 83 jets."
   },
   "palma": {
     "head": "The massage pick of the Deluxe line.",
     "why": "83 jets in a 6 ft 7 in tub is a lot of massage for the space. The big 5 inch jets give broad, deep pressure across your back, and the dozens of small jets work into the tighter spots. People buy the Palma when they want real hydrotherapy at a Deluxe price.",
-    "perfect": ["Your back or shoulders are sore at the end of the day", "You want deep massage without paying for a bigger line", "You'd like a full lounger plus five seats", "Your yard fits a 6 ft 7 in square", "You want different seats for different kinds of massage"],
+    "perfect": [
+      "Your back or shoulders are sore at the end of the day",
+      "You want deep massage without paying for a bigger line",
+      "You'd like a full lounger plus five seats",
+      "Your yard fits a 6 ft 7 in square",
+      "You want different seats for different kinds of massage"
+    ],
     "seating": "One full-size lounger and five sculpted seats, with 7 large, 14 medium and 62 small jets spread between them.",
     "honest": "If you want even more power and more water around you, the Tokyo and the Maximus in the Premium line go further. For most sore backs, though, the Palma is plenty."
   },
   "st-tropez": {
     "head": "Seven seats, and still a plug-in.",
     "why": "The St Tropez seats seven and still plugs into a regular outdoor outlet. Every seat is upright, so it's made for a group sitting around and talking. Each seat has its own pressure control.",
-    "perfect": ["You have friends or family over a lot", "Your teenagers bring their friends home", "You want everyone sitting up and chatting", "You'd rather not hire an electrician", "You like a white shell"],
+    "perfect": [
+      "You have friends or family over a lot",
+      "Your teenagers bring their friends home",
+      "You want everyone sitting up and chatting",
+      "You'd rather not hire an electrician",
+      "You like a white shell"
+    ],
     "seating": "Seven upright seats in a 6 ft 7 in square, with jets aimed at different muscle groups at each seat.",
-    "honest": "Seven people in a 6 ft 7 in tub is cozy, and one pump gives a gentle massage. If you host often and want more power and room, look at the Seville or the Colombo."
+    "honest": "Seven seats on a plug-in is rare, and it's why families who host love this one. Every seat is upright, so everyone is facing each other and part of the conversation. With seven adults it's cozy, and one pump gives a relaxing massage. If you'd like stronger jets, the Seville has the same size and seating with two pumps on 240V."
   },
   "seville": {
     "head": "Seven upright seats, built for family nights.",
     "why": "The Seville is an all-seater with two pumps and 48 jets. Everyone sits facing each other, the pressure at each seat can go from gentle to strong, and the waterfall and fountain effects add a nice sound in the background.",
-    "perfect": ["You have a big family and want everyone in at once", "You host and want every seat to feel like a good one", "You'd rather sit up than lie back", "You like adjusting the pressure seat by seat", "You love the sound of running water"],
+    "perfect": [
+      "You have a big family and want everyone in at once",
+      "You host and want every seat to feel like a good one",
+      "You'd rather sit up than lie back",
+      "You like adjusting the pressure seat by seat",
+      "You love the sound of running water"
+    ],
     "seating": "Seven upright seats with rotating jets for deeper massage and directional jets for gentler relief.",
-    "honest": "There's no lounger. If someone in your family wants to stretch out, the Santorini gives you a lounger and five seats."
+    "honest": "This is a family tub through and through. Everyone gets a proper seat at the same height, so nobody feels left out of the conversation, and you can turn the pressure up or down seat by seat. More than half the tubs I sell are all-seaters like this one, and the Seville is a big part of why."
   },
   "topaz": {
     "head": "Made for two people who both like to lie back.",
     "why": "The Topaz is the smallest tub in the Premium line, and it puts two adult loungers side by side. At just over 5 ft wide it fits narrow spaces, and with two pumps and 64 jets it doesn't give up any massage for its size.",
-    "perfect": ["It's the two of you, and you both want the lounger", "The kids have grown up and moved out", "Your space is long and narrow", "You want strong massage in a small tub", "Your soak is your quiet time together"],
+    "perfect": [
+      "It's the two of you, and you both want the lounger",
+      "The kids have grown up and moved out",
+      "Your space is long and narrow",
+      "You want strong massage in a small tub",
+      "Your soak is your quiet time together"
+    ],
     "seating": "Two adult-sized loungers and one seat, with sculpted headrests and an illuminated waterfall.",
     "honest": "With only one regular seat it isn't a tub for entertaining. If you'll have guests over, the Barcelona keeps the two loungers and adds three seats."
   },
   "barcelona": {
-    "head": "Two loungers, so nobody fights over the best seat.",
-    "why": "In most tubs there's one lounger and everyone wants it. The Barcelona has two, and three more seats so the loungers still work when the tub is full. Three pumps drive 86 jets, so there's real power behind every spot.",
-    "perfect": ["You and your partner both love to stretch out", "You want room for three more on the weekend", "Deep massage matters to you", "You want three pumps behind the jets", "Your yard fits a 7 ft 4 in square"],
+    "head": "Two loungers, plus room for friends.",
+    "why": "If you both love to lie back, one lounger isn't enough. The Barcelona has two, and three more seats for when friends join you. Three pumps drive 86 jets, so there's real power behind every spot.",
+    "perfect": [
+      "You and your partner both love to stretch out",
+      "You want room for three more on the weekend",
+      "Deep massage matters to you",
+      "You want three pumps behind the jets",
+      "Your yard fits a 7 ft 4 in square"
+    ],
     "seating": "Two full loungers and three seats, each set up to work on key muscles and pressure points.",
     "honest": "Fewer upright seats means it isn't the best pick for six people every week. For bigger groups, the Tokyo or the Oslo will suit you better."
   },
   "maximus": {
     "head": "The most massage we carry.",
     "why": "The Maximus is the biggest and deepest tub we sell. Four pumps run 99 jets, and at 39 inches tall with 420 gallons of water there's a lot of warm water around you. People buy it when hydrotherapy is the whole point.",
-    "perfect": ["Massage is the main reason you want a hot tub", "You're tall and want water up to your shoulders", "You want different seats for different kinds of massage", "You'd like a lounger and room for six", "You want the most hot tub you can get"],
+    "perfect": [
+      "Massage is the main reason you want a hot tub",
+      "You're tall and want water up to your shoulders",
+      "You want different seats for different kinds of massage",
+      "You'd like a lounger and room for six",
+      "You want the most hot tub you can get"
+    ],
     "seating": "Five seats and a sculpted lounger, with rotating jets for the back and shoulders and directional jets for arms, legs and feet.",
     "honest": "It's our largest footprint, 8 ft 6 in by 7 ft 3 in, and it's heavy once it's full. It needs a solid, level base, so talk to me before you put it on a deck."
   },
   "santorini": {
     "head": "A balanced family tub that fits most yards.",
     "why": "The Santorini is the middle of the road in the best way. It has a lounger for solo time and five seats for family time, with 52 jets spread so every seat gets massage where it's needed. At 6 ft 11 in square it fits more yards than the bigger Premium tubs.",
-    "perfect": ["You're a family of four to six", "Some of you want massage and some just want to soak", "You'd like a lounger for quiet nights alone", "A 7 ft 4 in tub is a bit big for your space", "You want clean water with ozone and good filtration"],
+    "perfect": [
+      "You're a family of four to six",
+      "Some of you want massage and some just want to soak",
+      "You'd like a lounger for quiet nights alone",
+      "A 7 ft 4 in tub is a bit big for your space",
+      "You want clean water with ozone and good filtration"
+    ],
     "seating": "Five seats and one lounger, with sculpted headrests, drink holders and illuminated waterfalls.",
     "honest": "If massage is the priority for the whole family, the Tokyo gives you 89 jets and three pumps in a tub only a few inches bigger."
   },
   "tokyo": {
     "head": "Serious hydrotherapy for the whole family.",
-    "why": "The Tokyo has three pumps and 89 jets with the same seating as the Santorini: a full lounger and five seats. It's for families where everyone wants a real massage, not just the person who grabs the lounger first.",
-    "perfect": ["Everyone in the house wants a strong massage", "Your neck and shoulders hold your stress", "You want a full lounger plus five seats", "You want three pumps, not two", "You want most of the Maximus in a smaller footprint"],
+    "why": "The Tokyo has three pumps and 89 jets with the same seating as the Santorini: a full lounger and five seats. It's for families where everyone wants a real massage, whichever seat they're in.",
+    "perfect": [
+      "Everyone in the house wants a strong massage",
+      "Your neck and shoulders hold your stress",
+      "You want a full lounger plus five seats",
+      "You want three pumps, not two",
+      "You want most of the Maximus in a smaller footprint"
+    ],
     "seating": "Five sculpted seats and one full lounger, mixing rotating jets for deep pressure and directional jets for gentler relief.",
     "honest": "If you want the most massage possible and have the room, the Maximus goes further. For most families, the Tokyo is the sweet spot."
   },
   "colombo": {
     "head": "Seven seats and big jets, built for entertaining.",
     "why": "The Colombo seats seven upright and is loaded with large 5 inch jets, 17 of them, which give broad, deep pressure across your back. Waterline and underwater lighting make it look great at night, so it's a tub people buy for hosting.",
-    "perfect": ["You host friends and family often", "You like broad, strong back massage", "You soak at night and want it lit up", "You want seven proper seats", "A 6 ft 11 in square fits your yard"],
+    "perfect": [
+      "You host friends and family often",
+      "You like broad, strong back massage",
+      "You soak at night and want it lit up",
+      "You want seven proper seats",
+      "A 6 ft 11 in square fits your yard"
+    ],
     "seating": "Seven upright seats with 17 large, 9 medium and 22 small jets, plus drink holders and headrests.",
-    "honest": "There's no lounger. If someone wants to lie back, look at the Santorini or the Tokyo."
+    "honest": "Seven upright seats facing each other is exactly what you want when people come over: everyone has a real seat and everyone is in the conversation. Add the big jets and the lighting, and it's one of the best tubs I have for hosting. If you'd like even more room per person, the Oslo seats seven in a 7 ft 7 in square."
   },
   "oslo": {
     "head": "Room for the whole crew, with power to match.",
-    "why": "The Oslo is a 7 ft 7 in square with seven upright seats, so there's more room per person than in a smaller seven-seater. Three pumps run 64 jets, so a full tub still gets good pressure.",
-    "perfect": ["You have a large family", "Your teenagers' friends end up in the tub too", "You want seven seats without feeling squeezed", "You want three pumps for strong jets", "You want ozone helping keep the water clear"],
+    "why": "The Oslo is one of the most popular tubs I sell, and the reason is room. It's a 7 ft 7 in square with seven upright seats, so there's more space per person than in a smaller seven-seater. Three pumps run 64 jets, so a full tub still gets good pressure.",
+    "perfect": [
+      "You have a large family",
+      "Your teenagers' friends end up in the tub too",
+      "You want seven seats without feeling squeezed",
+      "You want three pumps for strong jets",
+      "You want ozone helping keep the water clear"
+    ],
     "seating": "Seven ergonomically sculpted seats with headrests, drink holders and illuminated waterfalls.",
-    "honest": "It's a big tub. Measure your space and the path to your backyard before you fall for it, and I'll help you check."
+    "honest": "People love this tub for how roomy it is, so the only real question is space. Measure your yard and the path to your backyard before you fall for it, and I'll happily help you check."
   },
   "capri": {
     "head": "The cleanest water we sell, in a compact size.",
     "why": "The Capri gives you the full Luxury water care, UV, ozone, an ozone mixing chamber and a mineral ionizer, in a tub only 6 ft 7 in by 5 ft 7 in. People choose it when they want the water to mostly look after itself and don't need a big tub.",
-    "perfect": ["It's two to four people", "You're done fighting chemicals and want simple water", "You find a strong chlorine smell harsh", "Your space is on the small side", "You like a modern look with the Shadow Weave cabinet"],
+    "perfect": [
+      "It's two to four people",
+      "You're done fighting chemicals and want simple water",
+      "You find a strong chlorine smell harsh",
+      "Your space is on the small side",
+      "You like a modern look with the Shadow Weave cabinet"
+    ],
     "seating": "Four seats with a mix of rotating and directional jets, and a 7 inch touchscreen.",
-    "honest": "There's no lounger. If you want to stretch out, the Positano and the Florence have Luxury water care and a lounger."
+    "honest": "Four seats keeps the Capri compact without feeling cramped, so two to four people each get a proper seat and the water looks after itself. If you'd like the same Luxury water care with room for more guests, the Sicily and the Palermo seat six."
   },
   "portofino": {
     "head": "Room to spread out, with water that looks after itself.",
     "why": "The Portofino is a roomy 7 ft 7 in square with four seats and a lounger, so five people have space. Three pumps drive 66 jets, the Luxury water care keeps things clean with less effort, and you can run it all from the Wi-Fi app.",
-    "perfect": ["You want a lounger and lots of elbow room", "You want the easiest water care we offer", "You like controlling the tub from your phone", "You want three pumps behind the massage", "You have the space for a bigger tub"],
+    "perfect": [
+      "You want a lounger and lots of elbow room",
+      "You want the easiest water care we offer",
+      "You like controlling the tub from your phone",
+      "You want three pumps behind the massage",
+      "You have the space for a bigger tub"
+    ],
     "seating": "Four seats and a lounger, with every seat set up as a different massage zone.",
     "honest": "If 7 ft 7 in is more tub than your yard has room for, the Positano has the same seating in a 6 ft 11 in square."
   },
   "positano": {
     "head": "Luxury water care with a lounger, in a mid-size tub.",
     "why": "The Positano has four contoured seats and a full-body lounger in a 6 ft 11 in square. You get the full Luxury water care and phone control, with cup holders built into the rim, in a size that fits most backyards.",
-    "perfect": ["It's three to five people most nights", "You want a lounger and the cleanest water we sell", "You want to adjust jets, heat and lights from your phone", "Your yard fits a 6 ft 11 in square", "You like a modern look"],
+    "perfect": [
+      "It's three to five people most nights",
+      "You want a lounger and the cleanest water we sell",
+      "You want to adjust jets, heat and lights from your phone",
+      "Your yard fits a 6 ft 11 in square",
+      "You like a modern look"
+    ],
     "seating": "Four contoured seats and a full-body lounger, with rotating jets for the back and shoulders and gentler directional jets.",
     "honest": "If you want more pump power and more room, the Portofino has three pumps in a bigger tub."
   },
   "florence": {
     "head": "The most jets in the Luxury line, in a 6 ft 7 in tub.",
     "why": "The Florence fits five seats and a full lounger into a 6 ft 7 in square and has 67 jets, the most in the Luxury line. Add the Luxury water care, a lit waterfall and fountain jets, and it's a lot of tub for a modest footprint.",
-    "perfect": ["You want a lounger plus seats for five", "You want strong massage and the easiest water care", "You love the look and sound of a waterfall", "Your yard fits a 6 ft 7 in square", "You want the most massage in the Luxury line"],
+    "perfect": [
+      "You want a lounger plus seats for five",
+      "You want strong massage and the easiest water care",
+      "You love the look and sound of a waterfall",
+      "Your yard fits a 6 ft 7 in square",
+      "You want the most massage in the Luxury line"
+    ],
     "seating": "Five sculpted seats and one full lounger, with rotating jets aimed at deep muscle knots.",
     "honest": "Six adults in a 6 ft 7 in tub is cozy. If you'll often have a full tub, the Palermo or the Portofino give you more room."
   },
   "palermo": {
     "head": "Six upright seats for long conversations.",
-    "why": "The Palermo is an all-seater in a roomy 7 ft 7 in square. Every seat is sculpted, three pumps power 61 jets, and the Luxury water care keeps things clean when you have people over. It's a tub made for talking.",
-    "perfect": ["You soak to visit and talk", "You often have six people in", "You want every seat to be a good seat", "You want clean water without the work, even when it's busy", "You have room for a bigger tub"],
+    "why": "The Palermo is one of the most popular tubs I sell, because of how roomy it is. It's an all-seater in a 7 ft 7 in square, every seat is sculpted, three pumps power 61 jets, and the Luxury water care keeps things clean when you have people over. It's a tub made for talking.",
+    "perfect": [
+      "You soak to visit and talk",
+      "You often have six people in",
+      "You want every seat to be a good seat",
+      "You want clean water without the work, even when it's busy",
+      "You have room for a bigger tub"
+    ],
     "seating": "Six sculpted seats, a cup holder built into the seating, and a jet mix from one extra-large jet down to 24 small ones.",
-    "honest": "There's no lounger. If someone wants to lie back, the Florence or the Portofino will suit you better."
+    "honest": "Six people can settle in with space to spare, which is exactly why it's so good for having friends and family over. The only thing to check is your yard: make sure there's room for a 7 ft 7 in square and a clear path to get it there, and I'll help you measure."
   },
   "sicily": {
     "head": "Six seats and clean water, sized for most yards.",
     "why": "The Sicily is a six-seat all-seater in a 6 ft 11 in square with the full Luxury water care. You can preheat it from your phone on the way home, stream your music through the speakers, and spend very little time on the water.",
-    "perfect": ["You're a family of up to six", "You want to preheat from your phone", "Music is part of your soak", "Your yard fits a 6 ft 11 in square", "You want the simplest water care"],
+    "perfect": [
+      "You're a family of up to six",
+      "You want to preheat from your phone",
+      "Music is part of your soak",
+      "Your yard fits a 6 ft 11 in square",
+      "You want the simplest water care"
+    ],
     "seating": "Six seats, each positioned to work on key muscle groups, with rotating and directional jets.",
     "honest": "If you want more massage and more room, the Palermo has three pumps in a bigger tub."
   }
