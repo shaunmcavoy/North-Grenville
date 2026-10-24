@@ -35,6 +35,8 @@
       var s = r.data && r.data.session;
       if (!s) return null;
       return sb.from('profiles').select('*').eq('id', s.user.id).maybeSingle().then(function (p) {
+        // Remember the role so the public site's header can link straight to the right portal.
+        try { if (p.data) localStorage.setItem('ng_role', p.data.role); } catch (e) { /* storage blocked */ }
         return p.data ? { user: s.user, profile: p.data } : null;
       });
     });
@@ -50,7 +52,7 @@
     });
   };
 
-  NG.signOut = function () { sb.auth.signOut().then(function () { location.href = '/login/'; }); };
+  NG.signOut = function () { try { localStorage.removeItem('ng_role'); } catch (e) { /* ignore */ } sb.auth.signOut().then(function () { location.href = '/login/'; }); };
 
   NG.toast = function (msg) {
     var t = document.getElementById('toast'); if (!t) return;

@@ -48,3 +48,20 @@ document.querySelectorAll('.subform').forEach(function (form) {
   var text = { confirmed: "You're in. You'll get Blaine's next post by email.", unsubscribed: "You've been unsubscribed. You won't get any more blog emails.", invalid: "That link didn't work. It may be old. Try signing up again below." }[s];
   if (text) { note.textContent = text; note.hidden = false; }
 })();
+
+// Signed in? Turn the header's "Sign in" button into a shortcut to the right portal.
+(function () {
+  try {
+    var raw = localStorage.getItem('sb-vpqbgsgrvapxwvstrpfs-auth-token');
+    var role = localStorage.getItem('ng_role');
+    if (!raw || !role) return;
+    var tok = JSON.parse(raw);
+    if (!tok || !tok.refresh_token) return; // the session can still be renewed while a refresh token exists
+    var staff = role === 'admin' || role === 'staff';
+    document.querySelectorAll('.top .signin').forEach(function (a) {
+      a.href = staff ? '/staff/' : '/portal/';
+      a.setAttribute('aria-label', staff ? 'Open the staff portal' : 'Open your portal');
+      var l = a.querySelector('.lbl-signin'); if (l) l.textContent = staff ? 'Staff portal' : 'My portal';
+    });
+  } catch (e) { /* storage blocked or unreadable: keep the Sign in button */ }
+})();
