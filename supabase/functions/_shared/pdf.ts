@@ -1,6 +1,6 @@
 // Builds the signed sales agreement PDF, laid out like the paper form, with a signing record at the end.
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
-import { money, payTerms, SITE_URL } from "./common.ts";
+import { money, payTerms, SITE_URL, balanceHow } from "./common.ts";
 
 // Standard PDF fonts only cover basic Latin characters, so tidy up anything fancier.
 const clean = (s: unknown) =>
@@ -111,7 +111,9 @@ export async function buildAgreementPdf(opts: {
     [payTerms(sale).full ? "Paid in full" : "Deposit", money(sale.deposit), false],
     ["Balance", money(sale.balance), true],
   ];
-  const payNote = `Payment ${payTerms(sale).how}`;
+  const payNote = payTerms(sale).full || Number(sale.balance) <= 0
+    ? `Payment ${payTerms(sale).how}`
+    : `Deposit ${payTerms(sale).how}. Balance ${balanceHow(sale)}.`;
   let sy = notesTop;
   for (const [l, v, b] of sums) {
     page.drawText(l.toUpperCase(), { x: mx, y: sy - 2, size: 8, font: bold, color: ink });

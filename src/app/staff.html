@@ -92,7 +92,7 @@
     <div id="view-sale" class="view" hidden>
       <a class="back dark" href="#sales">&larr; All sales</a>
       <div class="salehead"><h2 id="saleHeading">New sale</h2><span id="saleStatus"></span></div>
-      <p id="lockNote" class="note" hidden>This agreement has been sent for signature, so it can't be edited. If something needs to change, cancel it and write up a new one.</p>
+      <p id="lockNote" class="note" hidden>This agreement has been sent for signature, so it's locked. If something needs to change before the customer signs, use Edit this agreement below.</p>
 
       <form id="saleForm" class="saleform" novalidate>
         <fieldset class="card"><legend>Customer</legend>
@@ -147,7 +147,8 @@
               <label id="addonPriceLabel">Added sauna<input name="sauna_total" type="number" min="0" step="0.01" inputmode="decimal"></label>
               <label>Delivery<input name="delivery_fee" type="number" min="0" step="0.01" inputmode="decimal"></label>
               <label>Deposit<input name="deposit" type="number" min="0" step="0.01" inputmode="decimal"></label>
-              <label>Payment on signing<select name="payment_type"><option value="full">Paid in full</option><option value="deposit">Deposit, balance before delivery</option></select></label>
+              <label>Payment on signing<select name="payment_type"><option value="full">Paid in full online</option><option value="deposit">Part online now, the rest later</option></select></label>
+              <label id="balanceMethodLabel">Rest paid by<select name="balance_method"><option value="before_delivery">Before delivery (we'll arrange it)</option><option value="cash">Cash</option><option value="cheque">Cheque</option><option value="financing">Financing</option></select></label>
               <label>Customer can pay by<select name="pay_methods"><option value="both">Card or bank transfer</option><option value="card">Credit card only</option><option value="bank">Bank transfer only</option></select></label>
             </div>
             <p class="muted small span2">The customer's QuickBooks invoice is for exactly this amount, and the pay page only offers the payment method chosen here.</p>
@@ -204,6 +205,10 @@
           <a class="btn btn-ink" id="openSign" href="#" target="_blank" rel="noopener">Open signing page on this device</a>
           <button class="btn btn-line" type="button" id="resendLink">Email a fresh link</button>
           <p class="formmsg" id="waitMsg" role="status" aria-live="polite"></p>
+        </div>
+        <div class="reopen">
+          <p class="muted small"><b>Need to change something?</b> If the deal changed before they signed (a different tub, price or payment), unlock it here. The link already sent stops working, you make your changes, then sign and send it again.</p>
+          <div class="formactions"><button class="btn btn-line" type="button" id="reopenBtn">Edit this agreement</button><p class="formmsg" id="reopenMsg" role="status" aria-live="polite"></p></div>
         </div>
       </div>
 

@@ -109,6 +109,12 @@ export function payTerms(sale: { payment_type?: string; pay_methods?: string }) 
   };
 }
 
+// How the balance gets paid, in words, for agreements and emails.
+// deno-lint-ignore no-explicit-any
+export function balanceHow(sale: any): string {
+  return ({ cash: "in cash", cheque: "by cheque", financing: "through financing" } as Record<string, string>)[sale?.balance_method] ?? "before delivery";
+}
+
 export const firstNameOf =(name?: string | null) => (name ?? "").trim().split(/\s+/)[0] || "there";
 
 // Magic sign-in link that lands on our own /login/ page (no redirect allow-list needed).

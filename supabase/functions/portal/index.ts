@@ -1,5 +1,5 @@
 // One edge function for the customer and staff portals. Route = last path segment, e.g. /functions/v1/portal/signing
-import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL, productNoun, productMaker, productWhat, usesOCare } from "../_shared/common.ts";
+import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL, productNoun, productMaker, productWhat, usesOCare, balanceHow } from "../_shared/common.ts";
 import { buildAgreementPdf, sha256Hex, toBase64 } from "../_shared/pdf.ts";
 import { createDepositInvoice, invoiceBalance, qbAuthUrl, qbConfigured, qbDisconnect, qbExchange, qbLists, qbStatus } from "../_shared/qb.ts";
 
@@ -144,7 +144,7 @@ ${Number(sale.deposit) > 0 ? `<p>Once you've signed, you can pay your ${payTerms
 
 // O-CareComfort sign-up page, registered to North Grenville with Blaine as the sales advisor.
 const OCARE_URL = "https://l.ead.me/bgkT4n";
-const PUBLIC_FIELDS = ["number","status","sale_date","product_type","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","rep_name","rep_signed_at","terms_version"];
+const PUBLIC_FIELDS = ["number","status","sale_date","product_type","tub_make","tub_model","shell_colour","siding","water_care","stereo","starter_kit","steps","lifter","spa_cover","other","est_delivery","hot_tub_value","sauna_make","sauna_model","sauna_electrical","sauna_total","notes","delivery_fee","tax_rate","tax","total","deposit","balance","payment_type","pay_methods","balance_method","rep_name","rep_signed_at","terms_version"];
 
 async function load(token: string) {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
@@ -220,7 +220,7 @@ function payWhy(sale: any, link: string | null) {
   const p = payTerms(sale);
   const why = p.full
     ? `Your total is ${money(sale.deposit)}, paid in full as we agreed. Paying it confirms your order with ${escapeHtml(productMaker(sale))} so your ${productNoun(sale)} can be built and shipped to us, and there's nothing left to pay on delivery day.`
-    : `Your deposit is ${money(sale.deposit)}, as we agreed. Paying it confirms your order with ${escapeHtml(productMaker(sale))} so your ${productNoun(sale)} can be built and shipped to us. Your remaining balance of ${money(sale.balance)} is due before delivery.`;
+    : `Your deposit is ${money(sale.deposit)}, as we agreed. Paying it confirms your order with ${escapeHtml(productMaker(sale))} so your ${productNoun(sale)} can be built and shipped to us. ${sale.balance_method && sale.balance_method !== "before_delivery" ? `Your remaining balance of ${money(sale.balance)} will be paid ${balanceHow(sale)}, as we agreed.` : `Your remaining balance of ${money(sale.balance)} is due before delivery.`}`;
   return link
     ? `<p>${why} You can pay securely online ${p.how} through QuickBooks:</p>${button(link, p.button)}`
     : `<p>${why} I'll be in touch about payment.</p>`;
@@ -480,6 +480,30 @@ async function route_customer_delete(req: Request): Promise<Response> {
   return jsonAuth(req, { ok: true, deleted_sales: (sales ?? []).length });
 }
 
+// ---- sale-reopen ----
+// POST {sale_id}  Takes an agreement that was sent but not yet signed back to a draft so it can be changed.
+// The old signing link stops working, and the salesperson signs and sends it again after editing.
+async function route_sale_reopen(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || !["admin", "staff"].includes(me.profile.role)) return jsonAuth(req, { error: "Please sign in as staff." }, 401);
+  const b = await req.json().catch(() => ({}));
+  const db = admin();
+  const { data: sale } = await db.from("sales").select("id, number, status, salesperson_id, customer_signed_at, rep_signature_path").eq("id", String(b.sale_id ?? "")).maybeSingle();
+  if (!sale) return jsonAuth(req, { error: "Sale not found." }, 404);
+  if (me.profile.role !== "admin" && sale.salesperson_id !== me.user.id) return jsonAuth(req, { error: "This isn't your sale." }, 403);
+  if (sale.status !== "awaiting_customer" || sale.customer_signed_at) {
+    return jsonAuth(req, { error: "Only agreements that haven't been signed yet can be edited. A signed agreement needs a new one written up." }, 409);
+  }
+  const { error } = await db.from("sales").update({
+    status: "draft", sign_token: null, sign_token_expires: null, rep_signed_at: null, rep_signature_path: null,
+  }).eq("id", sale.id).eq("status", "awaiting_customer");
+  if (error) return jsonAuth(req, { error: "Couldn't reopen this agreement." }, 500);
+  if (sale.rep_signature_path) await db.storage.from("agreements").remove([sale.rep_signature_path]);
+  await logEvent(sale.id, "reopened", me.user.id);
+  return jsonAuth(req, { ok: true });
+}
+
 // ---- sale-delete ----
 // POST {sale_ids: string[]}  Admins only. Removes the sales, their history, signed agreements and photos.
 // The customer stays (as a lead) and QuickBooks is left alone: invoices and payments stay in the books.
@@ -642,7 +666,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
-  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

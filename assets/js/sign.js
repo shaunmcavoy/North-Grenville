@@ -22,7 +22,7 @@
       (a.sauna_model ? '<h3>Sauna</h3><dl class="kv">' + row('Make', a.sauna_make) + row('Model', a.sauna_model) + row('Electrical', a.sauna_electrical) + (isSauna ? row('Other', a.other) + row('Estimated delivery time', a.est_delivery) : '') + '</dl>' : '') +
       (a.notes ? '<h3>Notes</h3><p>' + NG.esc(a.notes) + '</p>' : '') +
       '<h3>Price</h3><dl class="sums">' +
-      [[NG.cap(isSauna ? 'sauna' : noun), isSauna ? a.sauna_total : a.hot_tub_value], [isSauna ? '' : 'Sauna', isSauna ? 0 : a.sauna_total], ['Delivery', a.delivery_fee], ['Subtotal', sub], ['HST (' + Math.round(a.tax_rate * 100) + '%)', a.tax], ['Total', a.total, 1], [a.payment_type === 'full' ? 'Paid in full on signing' : 'Deposit on signing', a.deposit], ['Balance due before delivery', a.balance, 1]]
+      [[NG.cap(isSauna ? 'sauna' : noun), isSauna ? a.sauna_total : a.hot_tub_value], [isSauna ? '' : 'Sauna', isSauna ? 0 : a.sauna_total], ['Delivery', a.delivery_fee], ['Subtotal', sub], ['HST (' + Math.round(a.tax_rate * 100) + '%)', a.tax], ['Total', a.total, 1], [a.payment_type === 'full' ? 'Paid in full on signing' : 'Paid online on signing', a.deposit], ['Balance ' + ({ cash: 'paid in cash', cheque: 'paid by cheque', financing: 'through financing' }[a.balance_method] || 'due before delivery'), a.balance, 1]]
         .filter(function (r) { return r[2] || Number(r[1]) > 0 || r[0] === 'Subtotal'; })
         .map(function (r) { return '<div' + (r[2] ? ' class="strong"' : '') + '><dt>' + r[0] + '</dt><dd>' + NG.money(r[1]) + '</dd></div>'; }).join('') + '</dl>' +
       '<p class="muted small">Payment ' + ({ card: 'by credit card', bank: 'by bank transfer' }[a.pay_methods] || 'by card or bank transfer') + ' through a secure QuickBooks link, sent to you once you sign.</p>' +

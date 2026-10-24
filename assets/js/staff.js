@@ -5,7 +5,7 @@
   var form = $('#saleForm');
   var CUST = ['name', 'email', 'cell', 'heard_about', 'address', 'city_pc'];
   // Product fields (category, model, make, electrical, prices) are handled by the product picker below.
-  var SALE = ['sale_date', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'notes', 'payment_type', 'pay_methods'];
+  var SALE = ['sale_date', 'est_delivery', 'shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover', 'other', 'notes', 'payment_type', 'pay_methods', 'balance_method'];
   var WATER = ['shell_colour', 'siding', 'water_care', 'stereo', 'starter_kit', 'steps', 'lifter', 'spa_cover'];
   var MONEY = ['delivery_fee', 'deposit'];
   var TAX = 0.13;
@@ -55,13 +55,16 @@
     // Paid in full: the amount due on signing is the whole total, so the deposit box follows it.
     if (full) form.deposit.value = tot ? tot.toFixed(2) : '';
     form.deposit.readOnly = full;
-    form.deposit.closest('label').firstChild.textContent = full ? 'Amount due on signing' : 'Deposit';
+    form.deposit.closest('label').firstChild.textContent = full ? 'Amount due on signing' : 'Paid online on signing';
+    $('#balanceMethodLabel').hidden = full;
     var dep = num(form.deposit.value);
-    $('#sums').innerHTML = [['Products', tub + sauna], ['Delivery', del], ['Subtotal', sub], ['HST (13%)', tax], ['Total', tot, 1], [full ? 'Paid in full' : 'Deposit', dep], ['Balance', tot - dep, 1]]
+    $('#sums').innerHTML = [['Products', tub + sauna], ['Delivery', del], ['Subtotal', sub], ['HST (13%)', tax], ['Total', tot, 1], [full ? 'Paid in full' : 'Paid online on signing', dep], ['Balance' + (full ? '' : ' (' + ({ cash: 'cash', cheque: 'cheque', financing: 'financing' }[form.balance_method.value] || 'before delivery') + ')'), tot - dep, 1]]
       .map(function (r) { return '<div' + (r[2] ? ' class="strong"' : '') + '><dt>' + r[0] + '</dt><dd>' + NG.money(r[1]) + '</dd></div>'; }).join('');
   }
   MONEY.forEach(function (k) { form[k].addEventListener('input', sums); });
   form.payment_type.addEventListener('change', sums);
+  ['hot_tub_value', 'sauna_total'].forEach(function (k) { form[k].addEventListener('input', sums); });
+  form.balance_method.addEventListener('change', sums);
 
   function show(view) {
     $$('.view').forEach(function (v) { v.hidden = v.id !== 'view-' + view; });
@@ -152,6 +155,7 @@
     $('#addonElectrical').value = s && !sauna ? (s.sauna_electrical || '') : '';
     form.sauna_total.value = s && !sauna && Number(s.sauna_total) ? s.sauna_total : '';
     if (!s) { form.sale_date.value = new Date().toISOString().slice(0, 10); form.payment_type.value = 'full'; form.pay_methods.value = 'both'; }
+    if (!form.balance_method.value) form.balance_method.value = 'before_delivery';
     sums();
   }
   function lock(locked) {
@@ -206,7 +210,7 @@
   }
   function loadEvents(id) {
     sb.from('sale_events').select('at,kind,detail').eq('sale_id', id).order('at').then(function (r) {
-      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send', balance_paid: 'Balance recorded as paid', undo_balance: 'Balance payment undone', delivered: 'Marked delivered', undo_delivered: 'Delivery undone', paper_signed: 'Signed on paper', printed_for_paper: 'Printed for paper signing' };
+      var L = { qb_invoice_created: 'Deposit invoice created in QuickBooks', qb_invoice_failed: 'QuickBooks invoice could not be created', pay_link_emailed: 'Deposit pay link emailed', deposit_paid: 'Deposit received', rep_signed: 'Signed by salesperson and sent for signature', link_emailed: 'Signing link emailed to customer', link_resent: 'New signing link created', customer_signed: 'Customer signed', welcome_sent: 'Welcome email sent with agreement, guide and manual', welcome_failed: 'Welcome email failed to send', balance_paid: 'Balance recorded as paid', undo_balance: 'Balance payment undone', delivered: 'Marked delivered', undo_delivered: 'Delivery undone', paper_signed: 'Signed on paper', printed_for_paper: 'Printed for paper signing', reopened: 'Unlocked for changes (old signing link cancelled)' };
       var ev = r.data || []; if (!ev.length) return;
       $('#events').innerHTML = ev.map(function (e) { return '<li><b>' + NG.esc(L[e.kind] || e.kind) + '</b><span>' + NG.dateTime(e.at) + '</span></li>'; }).join('');
       $('#eventsPanel').hidden = false;
@@ -269,6 +273,19 @@
     var b = $('#deleteBtn');
     if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'Tap again to delete'; setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Delete draft'; }, 4000); return; }
     sb.from('sales').delete().eq('id', current.id).then(function (r) { if (r.error) return NG.toast(r.error.message); NG.toast('Draft deleted'); location.hash = 'sales'; });
+  });
+
+  $('#reopenBtn').addEventListener('click', function () {
+    var b = this, m = $('#reopenMsg'); if (!current) return;
+    if (b.dataset.confirm !== '1') {
+      b.dataset.confirm = '1'; b.textContent = 'Tap again to unlock and cancel the link';
+      setTimeout(function () { if (b.dataset.confirm === '1') { b.dataset.confirm = ''; b.textContent = 'Edit this agreement'; } }, 5000); return;
+    }
+    b.disabled = true; m.textContent = 'Unlocking...';
+    NG.api('sale-reopen', { sale_id: current.id })
+      .then(function () { NG.toast('Unlocked. Make your changes, then sign and send again.'); b.dataset.confirm = ''; b.textContent = 'Edit this agreement'; m.textContent = ''; openSale(current.id); })
+      .catch(function (err) { m.textContent = err.message; })
+      .finally(function () { b.disabled = false; });
   });
 
   $('#saleDelete').addEventListener('click', function () {
