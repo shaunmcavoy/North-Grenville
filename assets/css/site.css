@@ -48,7 +48,8 @@ nav.links a:hover{color:var(--cream)}
 .top-acts{display:flex;align-items:center;gap:10px;flex:none}
 .top .signin{padding:10px 16px}
 @media (max-width:520px){.top .signin{padding:10px 11px}.top .signin .lbl-signin{display:none}}
-@media (max-width:960px){nav.links{display:none}}
+@media (max-width:1140px){nav.links{gap:16px;font-size:.88rem}}
+@media (max-width:1020px){nav.links{display:none}}
 @media (max-width:520px){.brand small{display:none}.top .btn .lbl-long{display:none}}
 
 /* Hero */
