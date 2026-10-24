@@ -75,3 +75,10 @@ document.addEventListener('click',function(e){if(m.open&&!m.contains(e.target))m
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* the site still works without it */ }); });
 }
+
+// Tell the Meta Pixel when someone taps to call or text Blaine (only runs when the Pixel is on the page)
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="sms:"]');
+  if (!a || typeof window.fbq !== 'function') return;
+  window.fbq('track', 'Contact', { method: a.getAttribute('href').indexOf('sms:') === 0 ? 'text' : 'call' });
+});

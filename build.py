@@ -51,7 +51,23 @@ def ver(url):
     return f"{url}?v={hashlib.sha1(f.read_bytes()).hexdigest()[:10]}"
 
 
-def page(path, title, desc, body, base, extra_head="", scripts=(), app="manifest", app_title="NG Hot Tubs"):
+def meta_pixel(view=None):
+    """Meta (Facebook) Pixel for the public pages only. Never on the staff portal, customer portal or signing pages."""
+    pid = str(SITE.get("meta_pixel_id") or "").strip()
+    if not pid:
+        return ""
+    vc = ""
+    if view:
+        vc = f"fbq('track','ViewContent',{json.dumps({'content_name': view[0], 'content_category': view[1]})});"
+    return f"""<script>
+!function(f,b,e,v,n,t,s){{if(f.fbq)return;n=f.fbq=function(){{n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)}};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','{pid}');fbq('track','PageView');{vc}
+</script>
+<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id={pid}&amp;ev=PageView&amp;noscript=1"></noscript>
+"""
+
+
+def page(path, title, desc, body, base, extra_head="", scripts=(), app="manifest", app_title="NG Hot Tubs", view=None):
     canonical = SITE["url"] + "/" + path
     head = f"""<!doctype html>
 <html lang="en-CA">
@@ -82,7 +98,7 @@ def page(path, title, desc, body, base, extra_head="", scripts=(), app="manifest
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="{ver(base + "assets/css/site.css")}">
-{extra_head}</head>
+{extra_head}{"" if 'noindex' in extra_head else meta_pixel(view)}</head>
 <body>
 """
     header = fill((SRC / "header.html").read_text(), base)
@@ -1069,19 +1085,19 @@ def build():
         L, cp = LINES[t["line"]], COPY[t["k"]]
         page(f"{t['line']}/{t['k']}/", f"Platinum Spas {t['n']} Hot Tub, Seats {t['seats']} | North Grenville Hot Tubs",
              f"The {t['n']}: {cp['head']} Seats {t['seats']}, {t['jets']} jets. See if it's right for you, then text Blaine in Kemptville for your price.",
-             tub_body(t, "../../"), "../../", tub_jsonld(t))
+             tub_body(t, "../../"), "../../", tub_jsonld(t), view=(f"{t['n']} hot tub", "Hot tub"))
     for sid, S in SWIM["sections"].items():
         page(f"{sid}/", f"{S['name']}: {S['title'][:-1]} | North Grenville Hot Tubs", S["meta"], swim_section_body(sid, "../"), "../")
     for m in SWIM_MODELS:
         kind = "Mini Pool" if m["section"] == "mini-pools" else "Swim Spa"
         page(f"{m['section']}/{m['k']}/", f"Platinum Spas {m['n']} {kind} | North Grenville Hot Tubs",
              f"The {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
-             swim_body(m, "../../"), "../../", swim_jsonld(m))
+             swim_body(m, "../../"), "../../", swim_jsonld(m), view=(f"{m['n']} {kind.lower()}", kind))
     page("saunas/", f"Saunas: {SAUNA['title'][:-1]} | North Grenville Hot Tubs", SAUNA["meta"], saunas_body("../"), "../")
     for m in SAUNA_MODELS:
         page(f"saunas/{m['k']}/", f"Hekla {m['n']} Sauna, Seats {m['people']} | North Grenville Hot Tubs",
              f"The Hekla {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
-             sauna_body(m, "../../"), "../../", sauna_jsonld(m))
+             sauna_body(m, "../../"), "../../", sauna_jsonld(m), view=(f"{m['n']} sauna", "Sauna"))
     page("404.html", "Page not found | North Grenville Hot Tubs", "That page isn't here.",
          """<section class="lhero"><div class="wrap" style="padding-block:96px">
   <p class="eyebrow">Page not found</p><h1>That page took a dip.</h1>
@@ -1115,7 +1131,7 @@ def build():
         body = md_to_html((SRC / "legal" / f"{slug}.md").read_text())
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", lead,
              f'''<section class="phero"><div class="wrap"><p class="eyebrow">North Grenville Hot Tubs &amp; Saunas</p><h1>{title}</h1>
-<p style="color:var(--sand);margin-top:12px">{lead} Last updated October 23, 2026.</p></div></section>
+<p style="color:var(--sand);margin-top:12px">{lead} Last updated October 24, 2026.</p></div></section>
 <div class="wrap"><div class="prose">{body}</div></div>''', "../")
     # Portal pages (not indexed by search engines)
     tubs_js = json.dumps([{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "seats": t["seats"],

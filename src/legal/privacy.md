@@ -22,8 +22,19 @@ We use a small number of trusted service providers. Each only gets what it needs
 - **Resend** sends our emails. It may process your email address and the email content in the United States.
 - **QuickBooks Online (Intuit)** handles our invoices and payments. It receives your name, email, address and the invoice amount when we bill you.
 - **GitHub Pages** hosts the public website, which doesn't store your personal information.
+- **Meta (Facebook and Instagram)** runs our ads. Our public pages use the Meta Pixel, described below.
 
 Some of these providers may store or process information outside Canada, where it may be subject to the laws of that country.
+
+## The Meta Pixel and our ads
+
+Our public pages (the home page, the hot tub, swim spa, mini pool and sauna pages, and the blog) use the Meta Pixel, a small piece of code from Meta, the company behind Facebook and Instagram. We use it for two things: to see which of our ads actually bring people to the website, and to show our videos and ads to people who have already shown an interest, rather than to everyone.
+
+The Pixel tells Meta which of our pages you looked at, which models you viewed, and when you tap to call or text Blaine, along with standard browser and device information. Meta may connect this to your Facebook or Instagram account if you have one, and Meta may process it in the United States and other countries.
+
+We don't put the Pixel on the staff portal, your customer portal or the agreement signing page, and we never send Meta your name, email, phone number, address or anything about your purchase.
+
+You can turn this off at any time. In Facebook or Instagram, go to your ad preferences and turn off ads based on activity from other websites. You can also block third-party cookies in your browser, or use a browser or extension that blocks tracking. The website works exactly the same either way.
 
 ## Payments
 
