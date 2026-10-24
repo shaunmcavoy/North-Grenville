@@ -8,6 +8,7 @@
       <a href="#sales" data-tab="sales" aria-current="page">Sales</a>
       <a href="#customers" data-tab="customers">Customers</a>
       <a href="#new" data-tab="new">New sale</a>
+      <a href="#money" data-tab="money" class="admin-only" hidden>Financials</a>
       <a href="#team" data-tab="team" class="admin-only" hidden>Team</a>
     </nav>
   </div>
@@ -242,6 +243,26 @@
       </div>
 
       <div id="eventsPanel" class="card" hidden><h3>History</h3><ol class="events" id="events"></ol></div>
+    </div>
+
+    <!-- Financials (admins) -->
+    <div id="view-money" class="view" hidden>
+      <div class="listhead">
+        <div>
+          <p class="muted small">Sold deals only (signed or further along), counted in the month the customer signed. Amounts are before HST. Admins only.</p>
+        </div>
+        <label class="inline">Year<select id="moneyYear"></select></label>
+      </div>
+      <div class="moneycards" id="moneyCards"></div>
+      <div class="tablewrap"><table class="saletable moneytable">
+        <thead>
+          <tr><th rowspan="2">Month</th><th colspan="4" class="grp">This month</th><th colspan="4" class="grp ytd">Year to date</th></tr>
+          <tr><th class="num">Units</th><th class="num">Sold</th><th class="num">Profit</th><th class="num">Margin</th><th class="num ytd">Units</th><th class="num ytd">Sold</th><th class="num ytd">Profit</th><th class="num ytd">Margin</th></tr>
+        </thead>
+        <tbody id="moneyRows"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody>
+        <tfoot id="moneyFoot"></tfoot>
+      </table></div>
+      <p class="muted small" id="moneyNote"></p>
     </div>
 
     <!-- Team (admins) -->

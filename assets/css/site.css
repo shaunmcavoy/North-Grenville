@@ -627,4 +627,16 @@ label.inline input{width:110px}
 #profitForm{margin-top:8px;align-items:start}
 .costtable .src{font-size:.8rem;color:var(--muted)}
 .costpreview{border:1px dashed var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+/* Financials (admins) */
+.moneycards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:8px 0 18px}
+.mcard{background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.mcard span{display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mcard b{display:block;font-family:var(--display);font-weight:500;font-size:1.6rem;margin-top:6px}
+@media (max-width:760px){.moneycards{grid-template-columns:1fr 1fr}}
+.moneytable{min-width:860px}
+.moneytable th.grp{text-align:center;border-bottom:1px solid var(--line)}
+.moneytable .ytd{background:rgba(200,163,91,.08)}
+.moneytable tr.quiet td{color:var(--muted)}
+.moneytable tfoot td{border-top:2px solid var(--ink);padding:13px 14px}
+.saletable td.neg{color:#a3412b;font-weight:600}
 

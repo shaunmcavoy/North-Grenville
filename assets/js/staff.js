@@ -71,13 +71,14 @@
     $$('.tabs a').forEach(function (a) { a.removeAttribute('aria-current'); });
     var tab = view === 'sale' ? (current && current.id ? 'sales' : 'new') : view === 'customer' ? 'customers' : view;
     var t = $('.tabs a[data-tab="' + tab + '"]'); if (t) t.setAttribute('aria-current', 'page');
-    $('#staffTitle').textContent = { sales: 'Sales', sale: current && current.id ? 'Sale #' + current.number : 'New sale', team: 'Team', customers: 'Customers', customer: 'Customer' }[view] || 'Sales';
+    $('#staffTitle').textContent = { sales: 'Sales', sale: current && current.id ? 'Sale #' + current.number : 'New sale', team: 'Team', money: 'Financials', customers: 'Customers', customer: 'Customer' }[view] || 'Sales';
     window.scrollTo(0, 0);
   }
 
   function route() {
     var h = location.hash.slice(1) || 'sales';
     if (h === 'team' && me.profile.role === 'admin') { show('team'); loadTeam(); loadQb(); loadCosts(); }
+    else if (h === 'money' && me.profile.role === 'admin') { show('money'); loadMoney(); }
     else if (h === 'new') { openSale(null); }
     else if (h.indexOf('new-c-') === 0) { openSale(null, h.slice(6)); }
     else if (h === 'customers') { show('customers'); loadCustomers(); }
@@ -662,6 +663,62 @@
       });
     });
   }
+
+
+  // ---------- Financials (admins) ----------
+  // Sold = signed or further along. A deal counts in the month the customer signed (or the sale date if older).
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var moneyData = null;
+  function soldDate(s) { return new Date(s.customer_signed_at || (s.sale_date + 'T12:00:00')); }
+  function unitsOf(s) { return (s.product_type === 'sauna' ? (s.sauna_model ? 1 : 0) : (s.tub_model ? 1 : 0) + (s.sauna_model ? 1 : 0)) || 1; }
+  function loadMoney() {
+    $('#moneyRows').innerHTML = '<tr><td colspan="9" class="empty">Loading...</td></tr>';
+    Promise.all([
+      sb.from('sales').select('id,number,status,product_type,tub_model,sauna_model,hot_tub_value,sauna_total,delivery_fee,sale_date,customer_signed_at').in('status', SIGNED).limit(5000),
+      sb.from('sale_costs').select('*').limit(5000)
+    ]).then(function (res) {
+      var costs = {}; (res[1].data || []).forEach(function (c) { costs[c.sale_id] = c; });
+      moneyData = (res[0].data || []).map(function (s) { return { s: s, d: soldDate(s), c: costs[s.id] }; });
+      var years = {}; moneyData.forEach(function (x) { years[x.d.getFullYear()] = 1; });
+      var now = new Date().getFullYear(); years[now] = 1;
+      var sel = $('#moneyYear'), keep = sel.value;
+      sel.innerHTML = Object.keys(years).sort().reverse().map(function (y) { return '<option>' + y + '</option>'; }).join('');
+      sel.value = keep && years[keep] ? keep : String(now);
+      renderMoney();
+    });
+  }
+  function renderMoney() {
+    if (!moneyData) return;
+    var year = Number($('#moneyYear').value), thisMonth = new Date().getFullYear() === year ? new Date().getMonth() : 11;
+    var m = MONTHS.map(function () { return { units: 0, sold: 0, profit: 0, costedSold: 0, deals: 0, missing: 0 }; });
+    moneyData.forEach(function (x) {
+      if (x.d.getFullYear() !== year) return;
+      var b = m[x.d.getMonth()], rev = revenueOf(x.s);
+      b.units += unitsOf(x.s); b.sold += rev; b.deals++;
+      if (x.c) { b.profit += rev - costOf(x.c); b.costedSold += rev; } else b.missing++;
+    });
+    var run = { units: 0, sold: 0, profit: 0, costedSold: 0, deals: 0, missing: 0 };
+    var cell = function (v, cls) { return '<td class="num' + (cls ? ' ' + cls : '') + '">' + v + '</td>'; };
+    var mg = function (b) { return b.costedSold ? pct(b.profit / b.costedSold) : '-'; };
+    var pf = function (b) { return b.costedSold ? NG.money(b.profit) : '-'; };
+    var rows = [];
+    for (var i = 0; i <= thisMonth; i++) {
+      var b = m[i];
+      ['units', 'sold', 'profit', 'costedSold', 'deals', 'missing'].forEach(function (k) { run[k] += b[k]; });
+      var flag = b.missing ? ' <span class="muted small" title="Deals without costs saved">(' + b.missing + ' without costs)</span>' : '';
+      rows.push('<tr' + (b.deals ? '' : ' class="quiet"') + '><td>' + MONTHS[i] + flag + '</td>' +
+        cell(b.units || '-') + cell(b.sold ? NG.money(b.sold) : '-') + cell(pf(b), b.profit < 0 ? 'neg' : '') + cell(mg(b)) +
+        cell(run.units || '-', 'ytd') + cell(run.sold ? NG.money(run.sold) : '-', 'ytd') + cell(pf(run), 'ytd' + (run.profit < 0 ? ' neg' : '')) + cell(mg(run), 'ytd') + '</tr>');
+    }
+    $('#moneyRows').innerHTML = rows.reverse().join('');
+    $('#moneyFoot').innerHTML = '<tr><td><b>' + year + ' total</b></td>' + cell('<b>' + run.units + '</b>') + cell('<b>' + NG.money(run.sold) + '</b>') + cell('<b>' + pf(run) + '</b>') + cell('<b>' + mg(run) + '</b>') + '<td colspan="4"></td></tr>';
+    $('#moneyCards').innerHTML = [['Units sold', run.units], ['Total sold', NG.money(run.sold)], ['Total profit', pf(run)], ['Margin', mg(run)]]
+      .map(function (c) { return '<div class="mcard"><span>' + c[0] + ' in ' + year + '</span><b>' + c[1] + '</b></div>'; }).join('');
+    $('#moneyNote').textContent = run.missing
+      ? run.missing + ' sold deal' + (run.missing > 1 ? 's' : '') + ' in ' + year + (run.missing > 1 ? " don't" : " doesn't") + ' have costs saved yet, so ' + (run.missing > 1 ? 'they count' : 'it counts') + ' in units and sales but not in profit or margin. Open ' + (run.missing > 1 ? 'each one' : 'it') + ' and save its costs to include it.'
+      : 'Every sold deal in ' + year + ' has its costs saved.';
+  }
+  $('#moneyYear').addEventListener('change', renderMoney);
 
   // ---------- Cost list (Team tab, admins) ----------
   var CAT = { hot_tub: 'Hot tub', swim_spa: 'Swim spa', mini_pool: 'Mini pool', sauna: 'Sauna' };
