@@ -13,6 +13,8 @@ ROOT = Path(__file__).parent
 SRC = ROOT / "src"
 D = json.loads((SRC / "data.json").read_text())
 SITE, LINES, TUBS = D["site"], D["lines"], D["tubs"]
+SPECS = json.loads((SRC / "specs.json").read_text())     # Platinum Spas model specs
+COPY = json.loads((SRC / "tubs_copy.json").read_text())  # Blaine's words for each tub page
 
 PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>'
 CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
@@ -82,11 +84,12 @@ def page(path, title, desc, body, base, extra_head="", scripts=()):
 def card(t, base):
     flag = f'<span class="flag">{esc(t["flag"])}</span>' if t.get("flag") else ""
     return f"""<article class="tub" data-s="{t['s']}">
-      <div class="ph"><img src="{base}assets/img/{t['k']}.webp" alt="{esc(t['n'])} hot tub seen from above" loading="lazy" width="560" height="560">{flag}</div>
+      <a class="ph" href="{base}{t['line']}/{t['k']}/" aria-label="See the {esc(t['n'])} in detail"><img src="{base}assets/img/{t['k']}.webp" alt="{esc(t['n'])} hot tub seen from above" loading="lazy" width="560" height="560">{flag}</a>
       <div class="bd">
-        <h3 class="tubname">The {esc(t['n'])}</h3>
+        <h3 class="tubname"><a href="{base}{t['line']}/{t['k']}/">The {esc(t['n'])}</a></h3>
         <div class="specs"><div><b>{t['seats']}</b><span>Seats</span></div><div><b>{t['jets']}</b><span>Jets</span></div><div><b>{t['power']}</b><span>Power</span></div></div>
         <p class="note">{esc(t['note'])}</p>
+        <a class="tubmore" href="{base}{t['line']}/{t['k']}/">See the details <span aria-hidden="true">&rarr;</span></a>
         <div class="acts">
           <a class="btn btn-ink" href="{sms(f"Hi Blaine, I'm interested in the {t['n']} hot tub. What's your best price?")}">Text Blaine for price</a>
           <a class="btn btn-line" href="{TEL}" aria-label="Call Blaine about the {esc(t['n'])}">Call</a>
@@ -180,6 +183,159 @@ def line_body(lid, base):
     <div class="ogrid">{other}</div>
   </div>
 </section>"""
+
+
+def ftin(i):
+    f, r = divmod(int(i), 12)
+    return f"{f} ft {r} in" if r else f"{f} ft"
+
+
+def sib_card(x, base):
+    return f"""<a class="sib" href="{base}{x['line']}/{x['k']}/"><img src="{base}assets/img/{x['k']}.webp" alt="" loading="lazy" width="160" height="160"><span><b>The {esc(x['n'])}</b><small>Seats {x['seats']} &middot; {x['jets']} jets</small><em>{esc(COPY[x['k']]['head'])}</em></span></a>"""
+
+
+def tub_body(t, base):
+    """The detail page for one hot tub: why people buy it, who it's for, how it's built."""
+    k, L, sp, cp = t["k"], LINES[t["line"]], SPECS[t["k"]], COPY[t["k"]]
+    n, ln = t["n"], L["name"]
+    w, d, h = sp["dims"]
+    size = f"{ftin(w)} x {ftin(d)}" if w != d else f"{ftin(w)} square"
+    lounge = sp["loungers"]
+    layout = f"{sp['seats']} seat{'s' if sp['seats'] != 1 else ''}" + (f" and {lounge} lounger{'s' if lounge > 1 else ''}" if lounge else ", no lounger")
+    chips = [f"Seats {t['seats']}", f"{t['jets']} jets", size, "Plugs into 120V" if t["power"] == "120V" else f"{t['power']} / 240V"]
+    chip_html = "".join(f"<li>{esc(c)}</li>" for c in chips)
+    perfect = "".join(f"<li>{esc(x)}</li>" for x in cp["perfect"])
+    rows = [
+        ("Seating", f"{layout}, for {sp['people']} people"),
+        ("Jets", f"{t['jets']}" + (f": {sp['jetmix']}" if sp.get("jetmix") else "")),
+        ("Size", f"{w} x {d} in, {h} in tall ({size}, about {round(w * 2.54)} x {round(d * 2.54)} cm)"),
+        ("Water", f"{sp['gal']:g} gallons"),
+        ("Weight", f"{sp['dry']:,} lb empty, {sp['wet']:,} lb filled"),
+        ("Pumps", sp["pumps"]),
+        ("Heater", sp["heater"]),
+        ("Power", sp["power"]),
+        ("Controls", sp["controls"]),
+        ("Shell colours", ", ".join(sp["colours"])),
+    ]
+    spec_html = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in rows)
+    # Line-wide features, minus the ones that only describe some models in the line.
+    line_feats = [f for f in L["features"] if not re.search(r"Up to|Loungers or|3 to 7|plug-and-play on|seats and loungers", f)]
+    if t["power"] == "120V":
+        line_feats.append("120V plug-and-play, convertible to 240V")
+    feats = "".join(f"<li>{esc(f)}</li>" for f in list(sp.get("extra", [])) + line_feats)
+    sib_html = "".join(sib_card(x, base) for x in TUBS if x["line"] == t["line"] and x["k"] != k)
+    ask = sms(f"Hi Blaine, I'm interested in the {n} hot tub. What's your best price?")
+    fit = sms(f"Hi Blaine, I'm trying to decide if the {n} is right for me.")
+    seat_kind = ("Your lounger", "Lie back and the jets run from your shoulders down to your feet. Most people try it first.") if lounge else \
+                ("Upright seats", "Everyone sits up at the same height, which makes it easier to talk and to fit more people in.")
+    heading = layout[0].upper() + layout[1:]
+    return f"""<section class="lhero thero">
+  <div class="wrap">
+    <a class="back" href="{base}{t['line']}/">&larr; The {ln} line</a>
+    <div class="lgrid">
+      <div>
+        <p class="eyebrow">The {ln} line &middot; Platinum Spas</p>
+        <h1>The {esc(n)}</h1>
+        <p class="tlead">{esc(cp['head'])}</p>
+        <ul class="tchips">{chip_html}</ul>
+        <div class="ctas">
+          <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+          <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+        </div>
+      </div>
+      <img class="lphoto" src="{base}assets/img/{k}.webp" alt="The {esc(n)} hot tub seen from above" width="560" height="560">
+    </div>
+  </div>
+</section>
+<section class="twhy">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">Why people choose the {esc(n)}</p>
+    <blockquote class="belief light"><p>{esc(cp['why'])}</p><footer><img src="{base}assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></footer></blockquote>
+  </div>
+</section>
+<section class="tfit">
+  <div class="wrap tfitgrid">
+    <div>
+      <p class="eyebrow teal">Is it the one?</p>
+      <h2>The {esc(n)} may be perfect for you if&hellip;</h2>
+      <ul class="checks">{perfect}</ul>
+    </div>
+    <aside class="honest">
+      <p class="eyebrow">Blaine's honest take</p>
+      <p>{esc(cp['honest'])}</p>
+      <a class="btn btn-line btn-sm" href="{fit}">{CHAT}Ask Blaine which fits</a>
+    </aside>
+  </div>
+</section>
+<section class="tseats">
+  <div class="wrap narrowish">
+    <p class="eyebrow teal">How the seats work</p>
+    <h2>{esc(heading)}.</h2>
+    <p class="seatline">{esc(cp['seating'])}</p>
+    <div class="jetkinds">
+      <div><b>Rotating jets</b><p>They spin as they push, for a firmer, deeper massage. These are the ones people want on sore backs and shoulders.</p></div>
+      <div><b>Directional jets</b><p>A steady, gentler stream. Good for tired legs, arms and feet, or when you just want to unwind.</p></div>
+      <div><b>{seat_kind[0]}</b><p>{seat_kind[1]}</p></div>
+    </div>
+    <p class="muted small">The best way to know is to sit in it. Come to the warehouse by appointment and try the seats before you decide.</p>
+  </div>
+</section>
+<section class="tspecs">
+  <div class="wrap tspecgrid">
+    <div>
+      <p class="eyebrow teal">The details</p>
+      <h2>{esc(n)} specifications</h2>
+      <dl class="spectable">{spec_html}</dl>
+      <p class="muted small">Specs as published by Platinum Spas. Blaine will confirm the details for your tub and help you check your space, base and power before you order.</p>
+    </div>
+    <div>
+      <p class="eyebrow teal">What comes with it</p>
+      <h2>Built in.</h2>
+      <ul class="feats">{feats}</ul>
+    </div>
+  </div>
+</section>
+<section class="next">
+  <div class="wrap">
+    <p class="eyebrow">Next step</p>
+    <h2>Text Blaine for your price on the {esc(n)}.</h2>
+    <ol>
+      <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on whether the {esc(n)} is the right tub for you.</p></li>
+      <li><b>You sit in it</b><p>Come to the warehouse at {SITE['street']} by appointment and try the seats.</p></li>
+      <li><b>Your tub is ordered</b><p>Built to your colour and spec through Platinum Spas, then delivered to your yard.</p></li>
+      <li><b>First soak, clean water</b><p>We set you up with O-Care and a weekly routine that takes minutes.</p></li>
+    </ol>
+    <div class="ctas">
+      <a class="btn btn-gold" href="{ask}">{CHAT}Text Blaine for price</a>
+      <a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a>
+    </div>
+    <p class="num">{SITE['phone_display']}</p>
+  </div>
+</section>
+<section class="others">
+  <div class="wrap">
+    <p class="eyebrow teal">Compare the rest of the {ln} line</p>
+    <div class="sibs">{sib_html}</div>
+    <p class="allines"><a href="{base}#lines">See all three hot tub lines &rarr;</a></p>
+  </div>
+</section>"""
+
+
+def tub_jsonld(t):
+    sp, cp = SPECS[t["k"]], COPY[t["k"]]
+    url = f"{SITE['url']}/{t['line']}/{t['k']}/"
+    data = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Product", "name": f"Platinum Spas {t['n']} hot tub", "brand": {"@type": "Brand", "name": "Platinum Spas"},
+         "image": f"{SITE['url']}/assets/img/{t['k']}.webp", "description": f"{cp['head']} {cp['why']}",
+         "category": "Hot tub", "url": url,
+         "additionalProperty": [{"@type": "PropertyValue", "name": "Seats", "value": t["seats"]},
+                                {"@type": "PropertyValue", "name": "Jets", "value": t["jets"]},
+                                {"@type": "PropertyValue", "name": "Power", "value": sp["power"]}]},
+        {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Hot tubs", "item": f"{SITE['url']}/"},
+            {"@type": "ListItem", "position": 2, "name": f"{LINES[t['line']]['name']} line", "item": f"{SITE['url']}/{t['line']}/"},
+            {"@type": "ListItem", "position": 3, "name": t["n"], "item": url}]}]}
+    return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
 
 def business_jsonld():
@@ -360,6 +516,11 @@ def build():
          home, "", business_jsonld())
     for lid, L in LINES.items():
         page(f"{lid}/", f"{L['name']} Hot Tubs: {L['title'][:-1]} | North Grenville Hot Tubs", L["meta"], line_body(lid, "../"), "../")
+    for t in TUBS:
+        L, cp = LINES[t["line"]], COPY[t["k"]]
+        page(f"{t['line']}/{t['k']}/", f"Platinum Spas {t['n']} Hot Tub, Seats {t['seats']} | North Grenville Hot Tubs",
+             f"The {t['n']}: {cp['head']} Seats {t['seats']}, {t['jets']} jets. See if it's right for you, then text Blaine in Kemptville for your price.",
+             tub_body(t, "../../"), "../../", tub_jsonld(t))
     page("404.html", "Page not found | North Grenville Hot Tubs", "That page isn't here.",
          """<section class="lhero"><div class="wrap" style="padding-block:96px">
   <p class="eyebrow">Page not found</p><h1>That page took a dip.</h1>
@@ -404,10 +565,10 @@ def build():
         body = f"<script>window.NG_TUBS={tubs_js};</script>\n" + (SRC / "app" / f"{slug}.html").read_text()
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", "North Grenville Hot Tubs customer and staff portal.", body, "../", app_head,
              app_scripts + [f"/assets/js/{js}.js"])
-    urls = [""] + [f"{l}/" for l in LINES] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
-    print(f"Built: home, {len(LINES)} line pages, blog index, {len(posts)} posts, 404, sitemap")
+    print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, blog index, {len(posts)} posts, 404, sitemap")
 
 
 if __name__ == "__main__":

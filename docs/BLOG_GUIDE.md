@@ -18,7 +18,7 @@ To answer the real questions people around Kemptville and North Grenville type i
 - Direct line, call or text: (613) 292-1786. He answers it himself.
 - Serves Kemptville and the hamlets of North Grenville: Burritts Rapids, Oxford Mills, Oxford Station, Bishops Mills, Heckston, Peltons Corners, and the smaller communities around them.
 
-Product facts (seats, jets, power, features) come only from `src/data.json`. Don't add specs that aren't there.
+Product facts (seats, jets, power, features, sizes, pumps) come only from `src/data.json` and `src/specs.json` (Platinum Spas' published specs). Don't add specs that aren't there.
 
 ## Voice
 
@@ -33,7 +33,7 @@ Product facts (seats, jets, power, features) come only from `src/data.json`. Don
 ## Hard rules (never break these)
 
 1. **No invented people or events.** No made-up customer stories, quotes, testimonials, reviews, names, or "last week a family in Oxford Mills…". Speak in general terms ("a lot of people ask me…").
-2. **No invented numbers.** No statistics, percentages, prices, costs, savings or study results unless they're in `src/data.json` or are common, verifiable physical facts (like water boiling at 100°C). If a number would help, describe it in words instead.
+2. **No invented numbers.** No statistics, percentages, prices, costs, savings or study results unless they're in `src/data.json` or `src/specs.json` or are common, verifiable physical facts (like water boiling at 100°C). If a number would help, describe it in words instead.
 3. **No prices.** Price questions always go to "text me and I'll give you a real number."
 4. **No medical claims.** Say people find soaking relaxing or good for sore muscles. Never say it treats, cures or prevents anything. For health conditions, pregnancy or medications, say to check with their doctor.
 5. **No knocking competitors by name.** Talk about "a lot of dealers" in general, as Blaine does.
@@ -49,6 +49,7 @@ Product facts (seats, jets, power, features) come only from `src/data.json`. Don
 - **Local touch:** mention Kemptville or North Grenville naturally once or twice, and hard water or Ontario winters when it's relevant. Don't stuff place names.
 - **Internal links:** link to one or two relevant site pages using root-relative links:
   - `/deluxe/`, `/premium/`, `/luxury/` for the lines
+  - a single tub's page, like `/premium/maximus/` or `/deluxe/tahiti/`, when a post talks about that model
   - `/#diet` for water care and O-Care
   - `/#story` for Blaine's story
   - an earlier post at `/blog/<slug>/` when it fits
