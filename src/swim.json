@@ -1,101 +1,364 @@
 {
-  "_source": "Specs from platinum-spas.com/ca swim spa and mini pool pages, read 2026-10-23. Copy is Blaine's.",
-  "sections": {
-    "swim-spas": {
-      "name": "Swim spas",
-      "title": "Swim, move and soak at home, all year.",
-      "believe": "Swim spas are for people who want to move every day without driving to a pool. Swimmers who are tired of lane schedules, families who want a pool the kids can use from May to March, and anyone who wants low-impact exercise and a hot soak afterwards, in their own backyard.",
-      "moments": [
-        ["A weekday morning", "Swim against the current before work. No pool schedule, no drive, no lanes to share."],
-        ["A Saturday in July", "The kids splash in the swim end while you soak in the seats. It's a pool and a hot tub in one."],
-        ["A January evening", "Steam rising off the water, snow on the cover, and a warm swim when every outdoor pool in North Grenville is closed."]
-      ],
-      "meta": "Platinum Spas swim spas in Kemptville. River jet and 16-speed turbine models for swimming, fitness and family time. Text Blaine for your price.",
-      "help": "Not sure between a river jet and a turbine, or whether you need a split-temperature model? Tell Blaine how you'll use it and he'll tell you straight which one fits."
-    },
-    "mini-pools": {
-      "name": "Mini pools",
-      "title": "A real pool that fits your yard.",
-      "believe": "The Chronos is for people who want a pool without giving up the whole backyard. It sits flush in the ground like a pool, it's heated for year-round use, and its adjustable current means you can swim, train or just float.",
-      "meta": "The Platinum Spas Chronos mini pool in Kemptville. An in-ground, heated mini pool with an adjustable swim current. Text Blaine for your price."
-    }
+ "_source": "Specs from platinum-spas.com/ca swim spa and mini pool pages, read 2026-10-23. Copy is Blaine's.",
+ "sections": {
+  "swim-spas": {
+   "name": "Swim spas",
+   "title": "Swim, move and soak at home, all year.",
+   "believe": "Swim spas are for people who want to move every day without driving to a pool. Swimmers who are tired of lane schedules, families who want a pool the kids can use all twelve months, even through a Canadian winter, and anyone who wants low-impact exercise and a hot soak afterwards, in their own backyard.",
+   "moments": [
+    [
+     "A weekday morning",
+     "Swim against the current before work. No pool schedule, no drive, no lanes to share."
+    ],
+    [
+     "A Saturday in July",
+     "The kids splash in the swim end while you soak in the seats. It's a pool and a hot tub in one."
+    ],
+    [
+     "A January evening",
+     "Steam rising off the water, snow on the cover, and a warm swim when every outdoor pool in North Grenville is closed."
+    ]
+   ],
+   "meta": "Platinum Spas swim spas in Kemptville. River jet and 16-speed turbine models for swimming, fitness and family time. Text Blaine for your price.",
+   "help": "Not sure between a river jet and a turbine, or whether you need a split-temperature model? Tell Blaine how you'll use it and he'll tell you straight which one fits."
   },
-  "systems": {
-    "river": {"name": "River jet", "short": "Strong jets push a current you swim against. They double as massage jets for the cool-down, and they suit people who want a swim and a soak."},
-    "turbine": {"name": "16-speed turbine", "short": "A belt-driven turbine pulls a wide, smooth current across the whole lane, with no bubbles or turbulence. Sixteen speeds run from gentle to hard training. It's the choice for serious swimmers."}
+  "mini-pools": {
+   "name": "Mini pools",
+   "title": "A real pool that fits your yard.",
+   "believe": "The Chronos is for people who want a pool without giving up the whole backyard. It sits flush in the ground like a pool, it's heated for year-round use, and its adjustable current means you can swim, train or just float.",
+   "meta": "The Platinum Spas Chronos mini pool in Kemptville. An in-ground, heated mini pool with an adjustable swim current. Text Blaine for your price."
+  }
+ },
+ "systems": {
+  "river": {
+   "name": "River jet",
+   "short": "Strong jets push a current you swim against. They double as massage jets for the cool-down, and they suit people who want a swim and a soak."
   },
-  "models": [
-    {"k": "eros", "n": "Eros", "section": "swim-spas", "system": "river", "people": "3", "seats": 2, "loungers": 0, "jets": 22,
-     "jetmix": "3 swim jets, plus 5 large, 6 medium and 8 small massage jets", "dims": [177, 89, 59], "gal": "1,796", "dry": 2061, "wet": 17052,
-     "heater": "5.5 kW", "pumps": "1 spa pump, 6 BHP, and 3 swim pumps, 6 BHP each", "power": "60A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["Adjustable river jet counter current", "LED lighting", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "The compact way to swim at home.",
-     "why": "The Eros is one of the most compact swim spas we carry, at just under 15 ft long, and there's still plenty of room to swim or play. Three river jets give you a current to swim against, and the two seats at the end give you a real hot tub soak afterwards.",
-     "perfect": ["You want to swim at home but your yard is on the small side", "It's mostly one or two of you swimming", "You want a swim and a soak, not a training pool", "The kids would love a pool they can use most of the year", "You want the best value way into a swim spa"],
-     "seating": "Two hot tub seats at one end, with large massage jets for your back and shoulders after a swim.",
-     "honest": "It's one body of water, so the swim end and the seats are the same temperature. If you want a cooler swim and a hotter soak at the same time, look at the Helios."},
-    {"k": "eros-pro", "n": "Eros Pro", "section": "swim-spas", "system": "turbine", "people": "3", "seats": 2, "loungers": 0, "jets": 19,
-     "dims": [177, 89, 59], "gal": "1,532", "dry": 2116, "wet": 14903,
-     "heater": "5.5 kW", "pumps": "1 spa pump, 6 BHP, and a 16-speed swim turbine", "power": "2 x 50A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["16-speed turbine with a wide, even current", "Ozone water clarifier", "LED lighting", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "A smooth, adjustable current in a compact size.",
-     "why": "The Eros Pro is the same compact size as the Eros, but the current comes from a 16-speed turbine instead of jets. That gives you a broad, even flow without the turbulence, and you can step it down for a child learning to swim or up for a real workout.",
-     "perfect": ["Someone in the house is learning to swim", "You want low-impact exercise you can dial in exactly", "You find jet currents too choppy", "Your yard fits about 14 ft 9 in by 7 ft 5 in", "You want sixteen speeds for everyone in the family"],
-     "seating": "Two hot tub seats with massage jets, water features and LED lighting for the soak afterwards.",
-     "honest": "The turbine needs two 50A circuits, so plan for that with your electrician. If you mostly want to play and soak rather than swim, the regular Eros does that for less."},
-    {"k": "helios", "n": "Helios", "section": "swim-spas", "system": "river", "people": "5", "seats": 4, "loungers": 1, "jets": 53, "split": true,
-     "jetmix": "3 swim jets, plus 1 extra-large, 8 large, 21 medium and 20 small massage jets", "dims": [232, 89, 59], "gal": "324 in the spa end and 2,448 in the swim end", "dry": 3196, "wet": 26345,
-     "heater": "Two 5.5 kW heaters, one for each end", "pumps": "2 spa pumps, 5 BHP each, and 3 swim pumps, 6 BHP each", "power": "50A and 60A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["Fully split swim and hot tub sections", "Separate temperature control for each end", "LED lighting", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "A cool swim and a hot soak, at the same time.",
-     "why": "The Helios is two tubs in one shell. The swim end and the hot tub end are fully separate, each with its own heater, so you can keep the swim water cooler for exercise and the spa end hot for a soak. The spa end seats five adults, with a lounger.",
-     "perfect": ["You want to swim cool and soak hot", "Your family wants a full hot tub, not just a couple of seats", "You'd like a lounger at the spa end", "You want resistance workouts and aquatic exercise", "You have room for a tub about 19 ft long"],
-     "seating": "Four seats and a lounger in a separate hot tub end, with 50 massage jets of every size.",
-     "honest": "Two bodies of water means two heaters and two power supplies. It's the right choice if you'll use both ends, and more than you need if you mostly swim."},
-    {"k": "helios-pro", "n": "Helios Pro", "section": "swim-spas", "system": "turbine", "people": "5", "seats": 4, "loungers": 1, "jets": 50, "split": true,
-     "dims": [232, 89, 59], "gal": "324 in the spa end and 2,185 in the swim end", "dry": 3251, "wet": 24195,
-     "heater": "Two 5.5 kW heaters, one for each end", "pumps": "2 spa pumps, 5 BHP each, and a 16-speed swim turbine", "power": "2 x 40A and 50A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["Fully split swim and hot tub sections", "Separate temperature control for each end", "16-speed turbine with a smooth, consistent current", "LED lighting in the spa end", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "Serious swimming and a full hot tub, side by side.",
-     "why": "The Helios Pro keeps everything people love about the Helios, a fully separate hot tub end with its own temperature, and swaps the river jets for a 16-speed turbine. You can swim, aqua-jog or resistance-train against a smooth current, then step over into a hot tub that seats five.",
-     "perfect": ["You swim seriously and want a smooth, even current", "You want to control the swim and spa temperatures separately", "Your family wants a real hot tub with a lounger", "You want sixteen speeds, from rehab to hard training", "You have room for a tub about 19 ft long"],
-     "seating": "Four seats and a lounger in a separate hot tub end, with massage jets for recovery after a swim.",
-     "honest": "This is our most complete swim spa, and it needs the power and the space to match. If you don't need separate temperatures, the Zelus Pro gives you the turbine in a single body of water."},
-    {"k": "titan", "n": "Titan", "section": "swim-spas", "system": "river", "people": "10", "seats": 9, "loungers": 1, "jets": 38,
-     "dims": [169, 89, 48], "gal": "1,109", "dry": 2028, "wet": 11287,
-     "heater": "5.5 kW", "pumps": "2 spa pumps, 5 BHP each, and 2 swim pumps, 6 BHP each", "power": "60A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["Ozone water clarifier", "Adjustable river jet swim current", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "Room for ten, with a current to swim against.",
-     "why": "The Titan is the swim spa for a crowd. It has seats for nine and a lounger, so it works like a very big hot tub, and the river jets give you a current for swimming, water walking and low-impact exercise. At 48 inches tall it's shallower and shorter than our other swim spas.",
-     "perfect": ["You want a big family tub more than a lap pool", "You host and want room for up to ten", "You want low-impact exercise like water walking", "You'd like a swim current for the kids to play in", "A shorter, shallower swim spa suits your yard"],
-     "seating": "Nine seats and a lounger around the swim area, with jets aimed at the back and shoulders for a proper massage.",
-     "honest": "It's built for soaking and play first. If swimming laps is the main goal, the Zelus or the Zelus Pro give you a longer, deeper swim lane."},
-    {"k": "zelus", "n": "Zelus", "section": "swim-spas", "system": "river", "people": "3", "seats": 2, "loungers": 1, "jets": 42,
-     "jetmix": "3 swim jets, plus 2 extra-large, 6 large, 9 medium and 22 small massage jets", "dims": [224, 89, 59], "gal": "2,588", "dry": 2976, "wet": 24581,
-     "heater": "5.5 kW", "pumps": "1 spa pump, 6 BHP, and 3 swim pumps, 6 BHP each", "power": "60A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["River jet counter current with a focused, directional flow", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "A long swim lane, with a lounger to recover in.",
-     "why": "The Zelus gives you a longer swim area, at about 18 ft 8 in overall, with three river jets for a focused current. It's made for resistance workouts and aquatic exercise, and the spa end has two seats and a lounger for afterwards. It's one of the best values in a full-length swim spa.",
-     "perfect": ["Swimming or aquatic exercise is the main reason you're buying", "You want a longer lane than the compact models", "You'd like a lounger to stretch out in after a workout", "It's mostly one to three people", "You want full length at the best value"],
-     "seating": "Two seats and a lounger at the spa end, with large jets for tired shoulders and legs.",
-     "honest": "If you swim seriously and want a smoother current, the Zelus Pro uses a 16-speed turbine in the same size tub."},
-    {"k": "zelus-pro", "n": "Zelus Pro", "section": "swim-spas", "system": "turbine", "people": "3", "seats": 2, "loungers": 1, "jets": 39,
-     "jetmix": "2 extra-large, 6 large, 9 medium and 22 small massage jets", "dims": [224, 89, 59], "gal": "2,324", "dry": 3042, "wet": 22443,
-     "heater": "Two 5.5 kW heaters", "pumps": "1 spa pump, 6 BHP, and a 16-speed swim turbine", "power": "2 x 50A / 240V", "controls": "Balboa touchscreen, 5 in. HD",
-     "extra": ["16-speed belt-driven turbine with a wide, deep, smooth current", "Ozone water clarifier", "LED lighting", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "Built for serious swimmers.",
-     "why": "The Zelus Pro is our swim spa for people who really train. A 16-speed turbine pushes a wide, deep, smooth column of water down a long lane, so you can swim, aqua-jog or resistance-train against a steady current. Then the seats and lounger are there for recovery.",
-     "perfect": ["You swim seriously and want a smooth, even current", "You train for fitness, triathlon or recovery", "You want sixteen speeds to match anyone in the family", "You want a lounger for recovery after a swim", "You have room for a tub about 18 ft 8 in long"],
-     "seating": "Two seats and a lounger, with jets from extra-large down to small for recovery after a hard swim.",
-     "honest": "The turbine needs two 50A circuits. If you mostly want to play and soak, a river jet model like the Zelus will do it for less."},
-    {"k": "chronos", "n": "Chronos", "section": "mini-pools", "system": "river", "img": "chronos-top", "jets": 3,
-     "dims": [236, 89, 59], "dry": 3483,
-     "heater": "5.5 kW", "pumps": "3-pump jet system, plus a circulation pump", "power": "50A / 240V", "controls": "Balboa Spa Touch 2",
-     "extra": ["Installed fully in-ground, flush with your patio or lawn", "Adjustable river jet current for light swimming, resistance training and hydrotherapy", "Full-width rear step entry", "Premium acrylic, built for year-round use", "Maintenance access hatch in the top rim", "Tether mount for swim training (harness and tether sold separately)"],
-     "head": "A real pool that fits your yard.",
-     "why": "The Chronos is a mini pool. It goes in the ground and sits flush like a regular pool, but at about 19 ft 8 in by 7 ft 5 in it fits a yard that a full pool never would. It's heated for year-round use, and its adjustable current lets you swim, train or just float. The full-width step at the back makes it easy to get in and out.",
-     "perfect": ["You want the look of an in-ground pool", "A full-size pool won't fit your yard", "You want to swim through more of the year", "Easy steps in and out matter to you", "You want a current for exercise and a calm pool for floating"],
-     "seating": "No hot tub seats. It's a pool, with a full-width step at one end and an adjustable current at the other.",
-     "honest": "It goes in the ground, so it's an excavation project, not a delivery. I'll walk your yard with you first. If you'd rather it sit on a pad, look at the swim spas."}
-  ]
+  "turbine": {
+   "name": "16-speed turbine",
+   "short": "A belt-driven turbine pulls a wide, smooth current across the whole lane, with no bubbles or turbulence. Sixteen speeds run from gentle to hard training. It's the choice for serious swimmers."
+  }
+ },
+ "models": [
+  {
+   "k": "eros",
+   "n": "Eros",
+   "section": "swim-spas",
+   "system": "river",
+   "people": "3",
+   "seats": 2,
+   "loungers": 0,
+   "jets": 22,
+   "jetmix": "3 swim jets, plus 5 large, 6 medium and 8 small massage jets",
+   "dims": [
+    177,
+    89,
+    59
+   ],
+   "gal": "1,796",
+   "dry": 2061,
+   "wet": 17052,
+   "heater": "5.5 kW",
+   "pumps": "1 spa pump, 6 BHP, and 3 swim pumps, 6 BHP each",
+   "power": "60A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "Adjustable river jet counter current",
+    "LED lighting",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "The compact way to swim at home.",
+   "why": "The Eros is one of the most compact swim spas we carry, at just under 15 ft long, and there's still plenty of room to swim or play. Three river jets give you a current to swim against, and the two seats at the end give you a real hot tub soak afterwards.",
+   "perfect": [
+    "You want to swim at home but your yard is on the small side",
+    "It's mostly one or two of you swimming",
+    "You want a swim and a soak, not a training pool",
+    "The kids would love a pool they can use 12 months a year",
+    "You want the best value way into a swim spa"
+   ],
+   "seating": "Two hot tub seats at one end, with large massage jets for your back and shoulders after a swim.",
+   "honest": "It's one body of water, so the swim end and the seats are the same temperature. If you want a cooler swim and a hotter soak at the same time, look at the Helios."
+  },
+  {
+   "k": "eros-pro",
+   "n": "Eros Pro",
+   "section": "swim-spas",
+   "system": "turbine",
+   "people": "3",
+   "seats": 2,
+   "loungers": 0,
+   "jets": 19,
+   "dims": [
+    177,
+    89,
+    59
+   ],
+   "gal": "1,532",
+   "dry": 2116,
+   "wet": 14903,
+   "heater": "5.5 kW",
+   "pumps": "1 spa pump, 6 BHP, and a 16-speed swim turbine",
+   "power": "2 x 50A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "16-speed turbine with a wide, even current",
+    "Ozone water clarifier",
+    "LED lighting",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A smooth, adjustable current in a compact size.",
+   "why": "The Eros Pro is the same compact size as the Eros, but the current comes from a 16-speed turbine instead of jets. That gives you a broad, even flow without the turbulence, and you can step it down for a child learning to swim or up for a real workout.",
+   "perfect": [
+    "Someone in the house is learning to swim",
+    "You want low-impact exercise you can dial in exactly",
+    "You find jet currents too choppy",
+    "Your yard fits about 14 ft 9 in by 7 ft 5 in",
+    "You want sixteen speeds for everyone in the family"
+   ],
+   "seating": "Two hot tub seats with massage jets, water features and LED lighting for the soak afterwards.",
+   "honest": "The turbine needs two 50A circuits, so plan for that with your electrician. If you mostly want to play and soak rather than swim, the regular Eros does that for less."
+  },
+  {
+   "k": "helios",
+   "n": "Helios",
+   "section": "swim-spas",
+   "system": "river",
+   "people": "5",
+   "seats": 4,
+   "loungers": 1,
+   "jets": 53,
+   "split": true,
+   "jetmix": "3 swim jets, plus 1 extra-large, 8 large, 21 medium and 20 small massage jets",
+   "dims": [
+    232,
+    89,
+    59
+   ],
+   "gal": "324 in the spa end and 2,448 in the swim end",
+   "dry": 3196,
+   "wet": 26345,
+   "heater": "Two 5.5 kW heaters, one for each end",
+   "pumps": "2 spa pumps, 5 BHP each, and 3 swim pumps, 6 BHP each",
+   "power": "50A and 60A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "Fully split swim and hot tub sections",
+    "Separate temperature control for each end",
+    "LED lighting",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A cool swim and a hot soak, at the same time.",
+   "why": "The Helios is two tubs in one shell. The swim end and the hot tub end are fully separate, each with its own heater, so you can keep the swim water cooler for exercise and the spa end hot for a soak. The spa end seats five adults, with a lounger.",
+   "perfect": [
+    "You want to swim cool and soak hot",
+    "Your family wants a full hot tub, not just a couple of seats",
+    "You'd like a lounger at the spa end",
+    "You want resistance workouts and aquatic exercise",
+    "You have room for a tub about 19 ft long"
+   ],
+   "seating": "Four seats and a lounger in a separate hot tub end, with 50 massage jets of every size.",
+   "honest": "Two bodies of water means two heaters and two power supplies. It's the right choice if you'll use both ends, and more than you need if you mostly swim."
+  },
+  {
+   "k": "helios-pro",
+   "n": "Helios Pro",
+   "section": "swim-spas",
+   "system": "turbine",
+   "people": "5",
+   "seats": 4,
+   "loungers": 1,
+   "jets": 50,
+   "split": true,
+   "dims": [
+    232,
+    89,
+    59
+   ],
+   "gal": "324 in the spa end and 2,185 in the swim end",
+   "dry": 3251,
+   "wet": 24195,
+   "heater": "Two 5.5 kW heaters, one for each end",
+   "pumps": "2 spa pumps, 5 BHP each, and a 16-speed swim turbine",
+   "power": "2 x 40A and 50A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "Fully split swim and hot tub sections",
+    "Separate temperature control for each end",
+    "16-speed turbine with a smooth, consistent current",
+    "LED lighting in the spa end",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Serious swimming and a full hot tub, side by side.",
+   "why": "The Helios Pro keeps everything people love about the Helios, a fully separate hot tub end with its own temperature, and swaps the river jets for a 16-speed turbine. You can swim, aqua-jog or resistance-train against a smooth current, then step over into a hot tub that seats five.",
+   "perfect": [
+    "You swim seriously and want a smooth, even current",
+    "You want to control the swim and spa temperatures separately",
+    "Your family wants a real hot tub with a lounger",
+    "You want sixteen speeds, from rehab to hard training",
+    "You have room for a tub about 19 ft long"
+   ],
+   "seating": "Four seats and a lounger in a separate hot tub end, with massage jets for recovery after a swim.",
+   "honest": "This is our most complete swim spa, and it needs the power and the space to match. If you don't need separate temperatures, the Zelus Pro gives you the turbine in a single body of water."
+  },
+  {
+   "k": "titan",
+   "n": "Titan",
+   "section": "swim-spas",
+   "system": "river",
+   "people": "10",
+   "seats": 9,
+   "loungers": 1,
+   "jets": 38,
+   "dims": [
+    169,
+    89,
+    48
+   ],
+   "gal": "1,109",
+   "dry": 2028,
+   "wet": 11287,
+   "heater": "5.5 kW",
+   "pumps": "2 spa pumps, 5 BHP each, and 2 swim pumps, 6 BHP each",
+   "power": "60A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "Ozone water clarifier",
+    "Adjustable river jet swim current",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Room for ten, with a current to swim against.",
+   "why": "The Titan is the swim spa for a crowd. It has seats for nine and a lounger, so it works like a very big hot tub, and the river jets give you a current for swimming, water walking and low-impact exercise. At 48 inches tall it's shallower and shorter than our other swim spas.",
+   "perfect": [
+    "You want a big family tub more than a lap pool",
+    "You host and want room for up to ten",
+    "You want low-impact exercise like water walking",
+    "You'd like a swim current for the kids to play in",
+    "A shorter, shallower swim spa suits your yard"
+   ],
+   "seating": "Nine seats and a lounger around the swim area, with jets aimed at the back and shoulders for a proper massage.",
+   "honest": "It's built for soaking and play first. If swimming laps is the main goal, the Zelus or the Zelus Pro give you a longer, deeper swim lane."
+  },
+  {
+   "k": "zelus",
+   "n": "Zelus",
+   "section": "swim-spas",
+   "system": "river",
+   "people": "3",
+   "seats": 2,
+   "loungers": 1,
+   "jets": 42,
+   "jetmix": "3 swim jets, plus 2 extra-large, 6 large, 9 medium and 22 small massage jets",
+   "dims": [
+    224,
+    89,
+    59
+   ],
+   "gal": "2,588",
+   "dry": 2976,
+   "wet": 24581,
+   "heater": "5.5 kW",
+   "pumps": "1 spa pump, 6 BHP, and 3 swim pumps, 6 BHP each",
+   "power": "60A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "River jet counter current with a focused, directional flow",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A long swim lane, with a lounger to recover in.",
+   "why": "The Zelus gives you a longer swim area, at about 18 ft 8 in overall, with three river jets for a focused current. It's made for resistance workouts and aquatic exercise, and the spa end has two seats and a lounger for afterwards. It's one of the best values in a full-length swim spa.",
+   "perfect": [
+    "Swimming or aquatic exercise is the main reason you're buying",
+    "You want a longer lane than the compact models",
+    "You'd like a lounger to stretch out in after a workout",
+    "It's mostly one to three people",
+    "You want full length at the best value"
+   ],
+   "seating": "Two seats and a lounger at the spa end, with large jets for tired shoulders and legs.",
+   "honest": "If you swim seriously and want a smoother current, the Zelus Pro uses a 16-speed turbine in the same size tub."
+  },
+  {
+   "k": "zelus-pro",
+   "n": "Zelus Pro",
+   "section": "swim-spas",
+   "system": "turbine",
+   "people": "3",
+   "seats": 2,
+   "loungers": 1,
+   "jets": 39,
+   "jetmix": "2 extra-large, 6 large, 9 medium and 22 small massage jets",
+   "dims": [
+    224,
+    89,
+    59
+   ],
+   "gal": "2,324",
+   "dry": 3042,
+   "wet": 22443,
+   "heater": "Two 5.5 kW heaters",
+   "pumps": "1 spa pump, 6 BHP, and a 16-speed swim turbine",
+   "power": "2 x 50A / 240V",
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "Built to use 12 months a year, even through a Canadian winter",
+    "16-speed belt-driven turbine with a wide, deep, smooth current",
+    "Ozone water clarifier",
+    "LED lighting",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Built for serious swimmers.",
+   "why": "The Zelus Pro is our swim spa for people who really train. A 16-speed turbine pushes a wide, deep, smooth column of water down a long lane, so you can swim, aqua-jog or resistance-train against a steady current. Then the seats and lounger are there for recovery.",
+   "perfect": [
+    "You swim seriously and want a smooth, even current",
+    "You train for fitness, triathlon or recovery",
+    "You want sixteen speeds to match anyone in the family",
+    "You want a lounger for recovery after a swim",
+    "You have room for a tub about 18 ft 8 in long"
+   ],
+   "seating": "Two seats and a lounger, with jets from extra-large down to small for recovery after a hard swim.",
+   "honest": "The turbine needs two 50A circuits. If you mostly want to play and soak, a river jet model like the Zelus will do it for less."
+  },
+  {
+   "k": "chronos",
+   "n": "Chronos",
+   "section": "mini-pools",
+   "system": "river",
+   "img": "chronos-top",
+   "jets": 3,
+   "dims": [
+    236,
+    89,
+    59
+   ],
+   "dry": 3483,
+   "heater": "5.5 kW",
+   "pumps": "3-pump jet system, plus a circulation pump",
+   "power": "50A / 240V",
+   "controls": "Balboa Spa Touch 2",
+   "extra": [
+    "Installed fully in-ground, flush with your patio or lawn",
+    "Adjustable river jet current for light swimming, resistance training and hydrotherapy",
+    "Full-width rear step entry",
+    "Premium acrylic, built for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A real pool that fits your yard.",
+   "why": "The Chronos is a mini pool. It goes in the ground and sits flush like a regular pool, but at about 19 ft 8 in by 7 ft 5 in it fits a yard that a full pool never would. It's heated for year-round use, and its adjustable current lets you swim, train or just float. The full-width step at the back makes it easy to get in and out.",
+   "perfect": [
+    "You want the look of an in-ground pool",
+    "A full-size pool won't fit your yard",
+    "You want to swim all year, even in January",
+    "Easy steps in and out matter to you",
+    "You want a current for exercise and a calm pool for floating"
+   ],
+   "seating": "No hot tub seats. It's a pool, with a full-width step at one end and an adjustable current at the other.",
+   "honest": "It goes in the ground, so it's an excavation project, not a delivery. I'll walk your yard with you first. If you'd rather it sit on a pad, look at the swim spas."
+  }
+ ]
 }
