@@ -24,19 +24,36 @@
   },
   "mini-pools": {
    "name": "Mini pools",
-   "title": "A real pool that fits your yard.",
-   "believe": "The Chronos is for people who want a pool without giving up the whole backyard. It sits flush in the ground like a pool, it's heated for year-round use, and its adjustable current means you can swim, train or just float.",
-   "meta": "The Platinum Spas Chronos mini pool in Kemptville. An in-ground, heated mini pool with an adjustable swim current. Text Blaine for your price."
+   "title": "A pool built into your backyard.",
+   "believe": "Mini pools are made to be fully sunk into the ground. There's no cabinet and no siding, because they're designed to be built seamlessly into your landscaping, with your patio stone, decking or lawn running right to the edge. You get the look of an in-ground pool in a size that fits a yard a full pool never would, heated for year-round use, with a current to swim against.",
+   "moments": [
+    [
+     "The day it's finished",
+     "No box sitting on a pad. Just water, set into the patio you chose, like it was always there."
+    ],
+    [
+     "A summer evening",
+     "Swim against the current, then float while the kids play. It's a pool, not a hot tub."
+    ],
+    [
+     "Every morning, all year",
+     "A heated swim before work, even when there's snow on the stone around it."
+    ]
+   ],
+   "meta": "Platinum Spas mini pools in Kemptville. Fully in-ground, no siding, built into your landscaping, with river jet or turbine swim currents. Text Blaine for your price.",
+   "help": "A mini pool is a landscaping project as much as a pool. Text Blaine and he'll walk your yard with you, so the pool, the stone and the steps all come together."
   }
  },
  "systems": {
   "river": {
    "name": "River jet",
-   "short": "Strong jets push a current you swim against. They double as massage jets for the cool-down, and they suit people who want a swim and a soak."
+   "short": "Strong jets push a current you swim against. They double as massage jets for the cool-down, and they suit people who want a swim and a soak.",
+   "short_pool": "Strong jets push a smooth, adjustable current you swim against. Good for light swimming, resistance work and hydrotherapy, at a lower price than the turbine."
   },
   "turbine": {
    "name": "16-speed turbine",
-   "short": "A belt-driven turbine pulls a wide, smooth current across the whole lane, with no bubbles or turbulence. Sixteen speeds run from gentle to hard training. It's the choice for serious swimmers."
+   "short": "A belt-driven turbine pulls a wide, smooth current across the whole lane, with no bubbles or turbulence. Sixteen speeds run from gentle to hard training. It's the choice for serious swimmers.",
+   "short_pool": "A belt-driven turbine pulls a wide, smooth current across the whole lane, with no bubbles or turbulence. Sixteen speeds run from gentle to hard training. It's the choice for serious swimmers."
   }
  },
  "models": [
@@ -324,6 +341,84 @@
    "honest": "The turbine needs two 50A circuits. If you mostly want to play and soak, a river jet model like the Zelus will do it for less."
   },
   {
+   "k": "atlas",
+   "n": "Atlas",
+   "img": "atlas-top",
+   "entry": "Corner step",
+   "system": "river",
+   "pumps": "3 swim pumps, 6 BHP each, plus a circulation pump",
+   "power": "50A / 240V",
+   "dry": 3461,
+   "wet": 26940,
+   "controls": "Balboa Spa Touch 2",
+   "extra": [
+    "Corner step entry that keeps the swim lane long",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A long swim lane with a corner step.",
+   "why": "The Atlas is the mini pool built around swimming. The steps are tucked into one corner, so the rest of the pool is a long, uninterrupted lane. Three river jets give you a smooth, adjustable current for light swimming, resistance work and hydrotherapy, and it all sits flush in your yard with no siding.",
+   "perfect": [
+    "Swimming is the main reason you want a pool",
+    "You want the longest open lane you can get",
+    "You'd like steps that stay out of the way",
+    "You want it built into your patio or lawn",
+    "You want a current you can turn up or down"
+   ],
+   "seating": "No seats. A corner step gets you in, and the rest of the pool is open water for swimming.",
+   "honest": "Like every mini pool it goes in the ground, so it's an excavation and landscaping project, not a delivery. I'll walk your yard with you first. If serious training is the goal, the Atlas Pro uses a turbine in the same layout.",
+   "section": "mini-pools",
+   "dims": [
+    236,
+    89,
+    59
+   ],
+   "heater": "5.5 kW"
+  },
+  {
+   "k": "atlas-pro",
+   "n": "Atlas Pro",
+   "img": "atlas-pro-top",
+   "entry": "Corner step",
+   "system": "turbine",
+   "pumps": "16-speed belt-driven swim turbine, plus a circulation pump",
+   "power": "40A and 50A / 240V",
+   "gal": "2,893",
+   "dry": 3510,
+   "wet": 27650,
+   "dims": [
+    236,
+    89,
+    60
+   ],
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "16-speed turbine with a wide, smooth current",
+    "Corner step entry that keeps the swim lane long",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Performance swimming, with an easy corner step.",
+   "why": "The Atlas Pro has the same long, open lane as the Atlas, with a 16-speed turbine instead of jets. You get a broad, smooth current with no turbulence, from gentle to hard training, and a corner step that gets you in without taking anything away from the lane.",
+   "perfect": [
+    "You swim seriously and want a smooth current",
+    "You want sixteen speeds, from recovery to hard training",
+    "You want the longest open lane",
+    "You'd like the steps out of the way",
+    "You want a pool that looks built in, not dropped in"
+   ],
+   "seating": "No seats. A corner step, then a long open lane with the turbine at one end.",
+   "honest": "The turbine needs two circuits, 40A and 50A, so plan that with your electrician. If you mostly want to play and float, the regular Atlas does it for less.",
+   "section": "mini-pools",
+   "heater": "5.5 kW"
+  },
+  {
    "k": "chronos",
    "n": "Chronos",
    "section": "mini-pools",
@@ -337,19 +432,20 @@
    ],
    "dry": 3483,
    "heater": "5.5 kW",
-   "pumps": "3-pump jet system, plus a circulation pump",
+   "pumps": "3 swim pumps, plus a circulation pump",
    "power": "50A / 240V",
    "controls": "Balboa Spa Touch 2",
    "extra": [
-    "Installed fully in-ground, flush with your patio or lawn",
-    "Adjustable river jet current for light swimming, resistance training and hydrotherapy",
     "Full-width rear step entry",
-    "Premium acrylic, built for year-round use",
+    "Adjustable river jet current for light swimming, resistance training and hydrotherapy",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
     "Maintenance access hatch in the top rim",
     "Tether mount for swim training (harness and tether sold separately)"
    ],
    "head": "A real pool that fits your yard.",
-   "why": "The Chronos is a mini pool. It goes in the ground and sits flush like a regular pool, but at about 19 ft 8 in by 7 ft 5 in it fits a yard that a full pool never would. It's heated for year-round use, and its adjustable current lets you swim, train or just float. The full-width step at the back makes it easy to get in and out.",
+   "why": "The Chronos goes in the ground and sits flush, like a regular pool, with no siding, so your stone or lawn runs right to the edge. At about 19 ft 8 in by 7 ft 5 in it fits a yard a full pool never would. Its adjustable current lets you swim, train or just float, and the full-width step at the back makes it easy for anyone to get in and out.",
    "perfect": [
     "You want the look of an in-ground pool",
     "A full-size pool won't fit your yard",
@@ -358,7 +454,171 @@
     "You want a current for exercise and a calm pool for floating"
    ],
    "seating": "No hot tub seats. It's a pool, with a full-width step at one end and an adjustable current at the other.",
-   "honest": "It goes in the ground, so it's an excavation project, not a delivery. I'll walk your yard with you first. If you'd rather it sit on a pad, look at the swim spas."
+   "honest": "It goes in the ground, so it's an excavation and landscaping project, not a delivery. I'll walk your yard with you first. If you'd rather it sit on a pad, look at the swim spas.",
+   "entry": "Wide step"
+  },
+  {
+   "k": "chronos-pro",
+   "n": "Chronos Pro",
+   "img": "chronos-pro-top",
+   "entry": "Wide step",
+   "system": "turbine",
+   "pumps": "16-speed belt-driven swim turbine, plus a circulation pump",
+   "power": "40A and 50A / 240V",
+   "dry": 3527,
+   "wet": 26235,
+   "controls": "Balboa Spa Touch 2",
+   "extra": [
+    "16-speed turbine with a wide, smooth current",
+    "Full-width rear step entry",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A training-grade current, with steps anyone can use.",
+   "why": "The Chronos Pro pairs the turbine with the Chronos layout: a full-width step at one end that makes it easy for anyone to get in and out. It's for people who want real performance swimming and an everyday pool the whole family is comfortable using.",
+   "perfect": [
+    "You want serious swimming and easy access",
+    "Someone in the house needs steps that are easy to use",
+    "You want sixteen speeds for everyone in the family",
+    "You'd like a pool for training, floating and play",
+    "You want it built seamlessly into your yard"
+   ],
+   "seating": "No seats. A full-width step at the back, and an open swim lane in front of the turbine.",
+   "honest": "The turbine needs two circuits, 40A and 50A. If the current is mostly for fun and light exercise, the regular Chronos will do it for less.",
+   "section": "mini-pools",
+   "dims": [
+    236,
+    89,
+    59
+   ],
+   "heater": "5.5 kW"
+  },
+  {
+   "k": "hades",
+   "n": "Hades",
+   "img": "hades-top",
+   "entry": "Open lane",
+   "system": "river",
+   "pumps": "3 swim pumps, 6 BHP each, plus a circulation pump",
+   "power": "50A / 240V",
+   "gal": "2,905",
+   "dry": 3439,
+   "wet": 27690,
+   "controls": "Balboa Spa Touch 2",
+   "extra": [
+    "No seats and no steps: a completely open swim lane",
+    "Three-pump river jet current",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Nothing but swim space.",
+   "why": "The Hades is built for one thing: swimming. There are no seats and no built-in steps, so every inch of the pool is open water. Three river jets give you a smooth, adjustable current, and it sits flush in the ground like a lap pool cut down to fit your yard.",
+   "perfect": [
+    "You want every inch for swimming",
+    "You don't need seats or a step to sit on",
+    "You want a clean, minimal look in your landscaping",
+    "You want a current you can adjust",
+    "You want a pool for laps, not lounging"
+   ],
+   "seating": "No seats and no steps. It's a completely open swim lane.",
+   "honest": "With no built-in steps, you'll want a good way in and out as part of your landscaping. If easy access matters, the Chronos has a full-width step.",
+   "section": "mini-pools",
+   "dims": [
+    236,
+    89,
+    59
+   ],
+   "heater": "5.5 kW"
+  },
+  {
+   "k": "hades-pro",
+   "n": "Hades Pro",
+   "img": "hades-pro-top",
+   "entry": "Open lane",
+   "system": "turbine",
+   "pumps": "16-speed belt-driven swim turbine, plus a circulation pump",
+   "power": "40A and 50A / 240V",
+   "gal": "2,985",
+   "dry": 3494,
+   "wet": 28406,
+   "controls": "Balboa Spa Touch 2",
+   "extra": [
+    "16-speed belt-driven turbine with a wide, deep, smooth current",
+    "No seats and no steps: a completely open swim lane",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "A dedicated swim system, in the ground.",
+   "why": "The Hades Pro is the purest swim pool we sell. No seats, no steps, a fully open lane, and a 16-speed turbine pushing a wide, deep, smooth column of water so you can swim continuously without fighting turbulence. It's not a leisure pool. It's for swimmers.",
+   "perfect": [
+    "You're a serious swimmer or triathlete",
+    "You want continuous, uninterrupted swimming",
+    "You want sixteen speeds to train with",
+    "You want a sharp, architectural look",
+    "You don't need seats or a step"
+   ],
+   "seating": "No seats and no steps. One open lane and the turbine.",
+   "honest": "It's built for training, not lounging. If the family wants a pool to play and relax in too, the Chronos Pro or the Artemis Pro will suit you better.",
+   "section": "mini-pools",
+   "dims": [
+    236,
+    89,
+    59
+   ],
+   "heater": "5.5 kW"
+  },
+  {
+   "k": "artemis-pro",
+   "n": "Artemis Pro",
+   "img": "artemis-pro-top",
+   "entry": "2 loungers",
+   "system": "turbine",
+   "pumps": "16-speed belt-driven swim turbine, plus a circulation pump",
+   "power": "40A and 50A / 240V",
+   "people": "2",
+   "loungers": 2,
+   "gal": "2,298",
+   "dry": 3561,
+   "wet": 22741,
+   "dims": [
+    236,
+    89,
+    60
+   ],
+   "controls": "Balboa touchscreen, 5 in. HD",
+   "extra": [
+    "16-speed turbine with a wide, smooth current",
+    "Two full-body loungers",
+    "Central access step",
+    "Flat swim area",
+    "Fully sunk in-ground, flush with your patio, deck or lawn",
+    "No cabinet or siding: the edge finishes into your landscaping",
+    "Heated for year-round use",
+    "Maintenance access hatch in the top rim",
+    "Tether mount for swim training (harness and tether sold separately)"
+   ],
+   "head": "Train, then stretch out on a lounger.",
+   "why": "The Artemis Pro is for people who want to swim and relax in the same pool. It has a flat swim area in front of a 16-speed turbine, plus two full-body loungers and a central step. Train hard, then lie back. It's fully in-ground with a clean, architectural finish.",
+   "perfect": [
+    "You want to swim and relax in one pool",
+    "You'd love two loungers to stretch out on",
+    "You want a smooth turbine current to train with",
+    "You want a central step that's easy to use",
+    "You want a pool that looks designed into your yard"
+   ],
+   "seating": "Two full-body loungers and a central access step, with a flat swim area in front of the turbine.",
+   "honest": "The loungers take up some of the lane, so serious lap swimmers will prefer the Atlas Pro or the Hades Pro. The turbine needs two circuits, 40A and 50A.",
+   "section": "mini-pools",
+   "heater": "5.5 kW"
   }
  ]
 }

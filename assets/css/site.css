@@ -555,3 +555,4 @@ section[id],.line[id]{scroll-margin-top:84px}
 .swimsibs .sib img{width:120px;height:60px;object-fit:contain;background:var(--cream)}
 .swimsibs .sib{grid-template-columns:120px minmax(0,1fr)}
 @media (max-width:860px){.swimhero{grid-template-columns:1fr}.jetkinds.two{grid-template-columns:1fr}}
+.specs.two{grid-template-columns:repeat(2,1fr)}

@@ -355,7 +355,7 @@ def swim_card(m, base):
       <div class="bd">
         <p class="eyebrow teal">{esc(sysname)}{' &middot; split temperature' if m.get('split') else ''}</p>
         <h3 class="tubname"><a href="{base}{m['section']}/{m['k']}/">The {esc(m['n'])}</a></h3>
-        <div class="specs">{people}<div><b>{w // 12}&prime;{w % 12}&Prime;</b><span>Long</span></div><div><b>{m['jets']}</b><span>Jets</span></div></div>
+        {f'<div class="specs">{people}<div><b>{w // 12}&prime;{w % 12}&Prime;</b><span>Long</span></div><div><b>{m["jets"]}</b><span>Jets</span></div></div>' if m['section'] == 'swim-spas' else f'<div class="specs two"><div><b>{w // 12}&prime;{w % 12}&Prime;</b><span>Long</span></div><div><b>{esc(m.get("entry", ""))}</b><span>Layout</span></div></div>'}
         <p class="note">{esc(m['head'])}</p>
         <a class="tubmore" href="{base}{m['section']}/{m['k']}/">See the details <span aria-hidden="true">&rarr;</span></a>
         <div class="acts">
@@ -377,23 +377,23 @@ def swim_section_body(sid, base):
         moments = f"""<section class="moments">
   <div class="wrap">
     <p class="eyebrow teal">Picture it in your backyard</p>
-    <h2>What owning a swim spa feels like.</h2>
+    <h2>What owning {'a swim spa' if sid == 'swim-spas' else 'a mini pool'} feels like.</h2>
     <div class="mgrid">{mm}</div>
   </div>
 </section>"""
     systems = ""
-    if sid == "swim-spas":
-        sy = "".join(f"<div><b>{esc(v['name'])}</b><p>{esc(v['short'])}</p><small>{', '.join('The ' + esc(m['n']) for m in models if m['system'] == k)}</small></div>" for k, v in SWIM["systems"].items())
+    if True:
+        sy = "".join(f"<div><b>{esc(v['name'])}</b><p>{esc(v['short'] if sid == 'swim-spas' else v['short_pool'])}</p><small>{', '.join('The ' + esc(m['n']) for m in models if m['system'] == k)}</small></div>" for k, v in SWIM["systems"].items())
         systems = f"""<section class="tseats">
   <div class="wrap narrowish">
     <p class="eyebrow teal">The first choice</p>
     <h2>River jet or turbine?</h2>
-    <p class="seatline">Every swim spa gives you a current to swim against. The difference is how it's made, and that decides how it feels.</p>
+    <p class="seatline">Every {'swim spa' if sid == 'swim-spas' else 'mini pool'} gives you a current to swim against. The difference is how it's made, and that decides how it feels.</p>
     <div class="jetkinds two">{sy}</div>
-    <p class="muted small">The Helios and Helios Pro also split into two separate tubs, so the swim end and the hot tub end can sit at different temperatures.</p>
+    <p class="muted small">{'The Helios and Helios Pro also split into two separate tubs, so the swim end and the hot tub end can sit at different temperatures.' if sid == 'swim-spas' else 'Every mini pool comes in both. Then pick the layout: a corner step (Atlas), a full-width step (Chronos), a completely open lane (Hades), or two loungers (Artemis Pro).'}</p>
   </div>
 </section>"""
-    others = [("deluxe/", "Hot tubs", "The Deluxe, Premium and Luxury lines"), ("mini-pools/" if sid == "swim-spas" else "swim-spas/", "Mini pools" if sid == "swim-spas" else "Swim spas", "The Chronos mini pool" if sid == "swim-spas" else "Seven models, river jet and turbine")]
+    others = [("deluxe/", "Hot tubs", "The Deluxe, Premium and Luxury lines"), ("mini-pools/" if sid == "swim-spas" else "swim-spas/", "Mini pools" if sid == "swim-spas" else "Swim spas", "Seven in-ground models, built into your yard" if sid == "swim-spas" else "Seven models, river jet and turbine")]
     other = "".join(f'<a href="{base}{u}"><span>{esc(a)}</span><b>{esc(b)}</b><em>See them &rarr;</em></a>' for u, a, b in others)
     help_p = f'<p class="help">{esc(S["help"])}</p>' if S.get("help") else ""
     return f"""<section class="lhero">
@@ -419,8 +419,8 @@ def swim_section_body(sid, base):
   <div class="wrap">
     <div class="pickhead"><div>
       <p class="eyebrow teal">Choose yours</p>
-      <h2>{'Which swim spa is yours?' if len(models) > 1 else 'Meet the ' + esc(models[0]['n']) + '.'}</h2>
-      <p class="intro">{'Start with how you will use it: swimming laps, family play, or both with a hot soak.' if len(models) > 1 else 'Platinum Spas&#x27; in-ground mini pool, heated for year-round use.'}</p>
+      <h2>{'Which swim spa is yours?' if sid == 'swim-spas' else 'Which mini pool is yours?'}</h2>
+      <p class="intro">{'Start with how you will use it: swimming laps, family play, or both with a hot soak.' if sid == 'swim-spas' else 'All seven are the same 19 ft 8 in footprint. Choose the current, then the layout.'}</p>
     </div></div>
     <div class="grid swimgrid">
     {cards}
@@ -433,7 +433,7 @@ def swim_section_body(sid, base):
     <h2>What happens after you text Blaine.</h2>
     <ol>
       <li><b>He answers you himself</b><p>Your price, your questions, and an honest read on which model fits how you'll use it.</p></li>
-      <li><b>He checks your yard</b><p>Space, base, access and power. These are big, heavy tubs, so it's worth getting right first.</p></li>
+      <li><b>He checks your yard</b><p>{'Space, base, access and power. These are big, heavy tubs, so it&#x27;s worth getting right first.' if sid == 'swim-spas' else 'Space, access, power, and how it will sit in your landscaping.'}</p></li>
       <li><b>Yours is ordered</b><p>Built to spec through Platinum Spas, then delivered and set in place.</p></li>
       <li><b>First swim, clean water</b><p>We set you up with O-Care and a simple weekly routine.</p></li>
     </ol>
@@ -460,7 +460,7 @@ def swim_body(m, base):
     w, d, h = m["dims"]
     size = f"{ftin(w)} x {ftin(d)}"
     pool = m["section"] == "mini-pools"
-    chips = ([f"For {m['people']} people"] if m.get("people") else ["In-ground mini pool"]) + [size, sysv["name"], m["power"]]
+    chips = ([f"For {m['people']} people"] if m.get("people") and not pool else ["Fully in-ground"]) + [size, sysv["name"]] + ([m["entry"]] if pool else [m["power"]])
     chip_html = "".join(f"<li>{esc(c)}</li>" for c in chips)
     perfect = "".join(f"<li>{esc(x)}</li>" for x in m["perfect"])
     seats = ""
@@ -471,8 +471,9 @@ def swim_body(m, base):
     if seats:
         rows.append(("Hot tub seating", f"{seats}, for {m['people']} people"))
     rows += [
-        ("Jets", f"{m['jets']}" + (f": {m['jetmix']}" if m.get("jetmix") else "")),
-        ("Size", f"{w} x {d} in, {h} in tall ({size}, about {round(w * 2.54)} x {round(d * 2.54)} cm)"),
+        ("Layout", m["entry"]) if m.get("entry") else None,
+        ("Jets", f"{m['jets']}" + (f": {m['jetmix']}" if m.get("jetmix") else "")) if m.get("jets") else None,
+        ("Size", f"{w} x {d} in, {h} in {'shell depth' if pool else 'tall'} ({size}, about {round(w * 2.54)} x {round(d * 2.54)} cm)"),
     ]
     if m.get("gal"):
         rows.append(("Water", f"{m['gal']} gallons"))
@@ -480,10 +481,11 @@ def swim_body(m, base):
     rows += [("Pumps", m["pumps"]), ("Heater", m["heater"]), ("Power", m["power"]), ("Controls", m["controls"])]
     if m.get("split"):
         rows.insert(1, ("Zones", "Fully split swim and hot tub ends, each with its own temperature"))
+    rows = [r for r in rows if r]
     spec_html = "".join(f"<div><dt>{esc(a)}</dt><dd>{esc(b)}</dd></div>" for a, b in rows)
     feats = "".join(f"<li>{esc(f)}</li>" for f in m["extra"])
     sibs = "".join(f"""<a class="sib" href="{base}{x['section']}/{x['k']}/"><img src="{base}assets/img/{swim_img(x)}.webp" alt="" loading="lazy" width="160" height="80"><span><b>The {esc(x['n'])}</b><small>{esc(SWIM['systems'][x['system']]['name'])} &middot; {ftin(x['dims'][0])}</small><em>{esc(x['head'])}</em></span></a>"""
-                   for x in SWIM_MODELS if x["k"] != m["k"] and x["section"] == "swim-spas")
+                   for x in SWIM_MODELS if x["k"] != m["k"] and x["section"] == m["section"])
     ask = sms(f"Hi Blaine, I'm interested in the {n}. What's your best price?")
     fit = sms(f"Hi Blaine, I'm trying to decide if the {n} is right for me.")
     return f"""<section class="lhero thero">
@@ -528,7 +530,7 @@ def swim_body(m, base):
   <div class="wrap narrowish">
     <p class="eyebrow teal">How it works</p>
     <h2>{esc(sysv['name'])} current.</h2>
-    <p class="seatline">{esc(sysv['short'])}</p>
+    <p class="seatline">{esc(sysv['short_pool'] if pool else sysv['short'])}</p>
     <p class="seatline">{esc(m['seating'])}</p>
     <p class="muted small">The best way to know is to see it in person. Text Blaine and he'll talk you through what fits your yard and how you'll use it.</p>
   </div>
@@ -567,9 +569,9 @@ def swim_body(m, base):
 </section>
 <section class="others">
   <div class="wrap">
-    <p class="eyebrow teal">{'Compare the swim spas' if not pool else 'Rather have a swim spa? Compare them'}</p>
+    <p class="eyebrow teal">{'Compare the swim spas' if not pool else 'Compare the mini pools'}</p>
     <div class="sibs swimsibs">{sibs}</div>
-    <p class="allines"><a href="{base}#lines">Or see the hot tubs &rarr;</a></p>
+    <p class="allines"><a href="{base}{'mini-pools' if not pool else 'swim-spas'}/">{'Or see the mini pools' if not pool else 'Rather have it above ground? See the swim spas'} &rarr;</a></p>
   </div>
 </section>"""
 
