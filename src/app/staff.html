@@ -226,7 +226,7 @@
         <form id="profitForm" class="form grid3" novalidate>
           <label><span class="lbl" id="pcLabel">Hot tub cost (CAD)</span><input name="product_cost" type="number" min="0" step="0.01" inputmode="decimal"><span class="hint" id="pcHint"></span></label>
           <label id="scWrap">Sauna cost with heater (CAD)<input name="sauna_cost" type="number" min="0" step="0.01" inputmode="decimal"><span class="hint" id="scHint"></span></label>
-          <label>Shipping to our warehouse<input name="warehouse_shipping" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Freight from Platinum or Hekla"></label>
+          <label>Shipping to our warehouse (CAD)<input name="warehouse_shipping" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Surrey or Hekla to Kemptville"></label>
           <label>Our delivery cost<input name="delivery_cost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Crane, crew, fuel"></label>
           <label>Other costs<input name="other_costs" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Steps, cover, chemicals"></label>
           <label>Notes<input name="notes" autocomplete="off"></label>
@@ -262,7 +262,7 @@
         <div class="card"><h3>Team</h3><ul class="teamlist" id="teamList"><li>Loading...</li></ul></div>
         <div class="card span2" id="costCard">
           <h3>Cost list</h3>
-          <p class="muted small">What each model costs us in Canadian dollars. Platinum costs are landed in our warehouse; Hekla costs include the heater and stones for every sauna that comes without one, but not shipping to us. It fills in the cost on each deal so the profit and margin show up. Only admins can see it.</p>
+          <p class="muted small">What each model costs us in Canadian dollars. Platinum costs are landed at Platinum's warehouse in Surrey, BC; Hekla costs include the heater and stones for every sauna that comes without one, but not shipping to us. Shipping to Kemptville goes on each deal. It fills in the cost on each deal so the profit and margin show up. Only admins can see it.</p>
           <div class="formactions">
             <label class="btn btn-ink filebtn">Upload a spreadsheet<input type="file" id="costFile" accept=".xlsx,.xls,.csv" hidden></label>
             <label class="inline">US dollar rate<input id="costRate" type="number" step="0.00001" min="0" value="1.42554"></label>
