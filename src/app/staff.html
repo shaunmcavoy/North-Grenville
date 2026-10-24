@@ -76,9 +76,15 @@
         </div>
         <a class="btn btn-gold" href="#new">New sale</a>
       </div>
+      <div class="bulkbar" id="bulkBar" hidden>
+        <span id="bulkCount">0 selected</span>
+        <button class="btn btn-line btn-sm" type="button" id="bulkDelete">Delete selected</button>
+        <button class="linkbtn" type="button" id="bulkClear">Clear</button>
+        <p class="formmsg" id="bulkMsg" role="status" aria-live="polite"></p>
+      </div>
       <div class="tablewrap"><table class="saletable">
-        <thead><tr><th>#</th><th>Customer</th><th>What</th><th class="num">Total</th><th>Status</th><th class="admin-only" hidden>Salesperson</th><th>Updated</th></tr></thead>
-        <tbody id="saleRows"><tr><td colspan="7" class="empty">Loading sales...</td></tr></tbody>
+        <thead><tr><th class="admin-only selcol" hidden><input type="checkbox" id="selAll" aria-label="Select all sales shown"></th><th>#</th><th>Customer</th><th>What</th><th class="num">Total</th><th>Status</th><th class="admin-only" hidden>Salesperson</th><th>Updated</th></tr></thead>
+        <tbody id="saleRows"><tr><td colspan="8" class="empty">Loading sales...</td></tr></tbody>
       </table></div>
     </div>
 
@@ -203,6 +209,12 @@
         <div class="formactions"><button class="btn btn-gold" type="button" id="printPdf">Print agreement for the customer</button><button class="btn btn-line" type="button" id="downloadPdf">Download PDF</button><p class="formmsg" id="pdfMsg" role="status" aria-live="polite"></p></div>
         <div id="depositBox"></div>
         <div id="progressBox"></div>
+      </div>
+
+      <div id="saleDanger" class="card danger" hidden>
+        <h3>Delete this sale</h3>
+        <p class="muted">For test sales and deals that fell through. Removes the sale, its history, and any signed agreement and photos from the website. The customer stays on your list as a lead. QuickBooks is not changed: if an invoice was made, void or delete it there too.</p>
+        <div class="formactions"><button class="btn btn-line" type="button" id="saleDelete">Delete sale</button><p class="formmsg" id="saleDelMsg" role="status" aria-live="polite"></p></div>
       </div>
 
       <div id="eventsPanel" class="card" hidden><h3>History</h3><ol class="events" id="events"></ol></div>

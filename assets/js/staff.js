@@ -72,11 +72,39 @@
       $('#saleRows').innerHTML = rows.length ? rows.map(function (s) {
         var what = [s.tub_model, s.sauna_model && s.sauna_model + ' sauna'].filter(Boolean).join(' + ') || '-';
         var rep = s.profiles ? (s.profiles.full_name || s.profiles.email) : '';
-        return '<tr data-id="' + s.id + '" tabindex="0"><td>' + s.number + '</td><td>' + NG.esc(s.customers && s.customers.name) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + NG.money(s.total) + '</td><td>' + NG.pill(s.status) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(s.updated_at) + '</td></tr>';
-      }).join('') : '<tr><td colspan="7" class="empty">No sales here yet. Start one with <a href="#new">New sale</a>.</td></tr>';
+        return '<tr data-id="' + s.id + '" data-n="' + s.number + '" tabindex="0">' + (isAdmin ? '<td class="selcol"><input type="checkbox" class="sel" aria-label="Select sale #' + s.number + '"></td>' : '') + '<td>' + s.number + '</td><td>' + NG.esc(s.customers && s.customers.name) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + NG.money(s.total) + '</td><td>' + NG.pill(s.status) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(s.updated_at) + '</td></tr>';
+      }).join('') : '<tr><td colspan="8" class="empty">No sales here yet. Start one with <a href="#new">New sale</a>.</td></tr>';
+      $('#selAll').checked = false; updateBulk();
     });
   }
-  $('#saleRows').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-id]'); if (tr) location.hash = 'sale-' + tr.dataset.id; });
+  $('#saleRows').addEventListener('click', function (e) {
+    if (e.target.closest('.selcol')) { if (!e.target.matches('input')) { var cb = e.target.closest('.selcol').querySelector('input'); cb.checked = !cb.checked; } updateBulk(); return; }
+    var tr = e.target.closest('tr[data-id]'); if (tr) location.hash = 'sale-' + tr.dataset.id;
+  });
+
+  // ---------- Bulk delete (admins) ----------
+  function selected() { return $$('#saleRows .sel:checked').map(function (cb) { return cb.closest('tr'); }); }
+  function updateBulk() {
+    var n = selected().length, b = $('#bulkDelete');
+    $('#bulkBar').hidden = me.profile.role !== 'admin' || !n;
+    $('#bulkCount').textContent = n + (n === 1 ? ' sale selected' : ' sales selected');
+    b.dataset.confirm = ''; b.textContent = 'Delete selected'; $('#bulkMsg').textContent = '';
+  }
+  $('#selAll').addEventListener('change', function () { var on = this.checked; $$('#saleRows .sel').forEach(function (cb) { cb.checked = on; }); updateBulk(); });
+  $('#bulkClear').addEventListener('click', function () { $('#selAll').checked = false; $$('#saleRows .sel').forEach(function (cb) { cb.checked = false; }); updateBulk(); });
+  $('#bulkDelete').addEventListener('click', function () {
+    var b = this, rows = selected(); if (!rows.length) return;
+    var nums = rows.map(function (tr) { return '#' + tr.dataset.n; }).join(', ');
+    if (b.dataset.confirm !== '1') {
+      b.dataset.confirm = '1'; b.textContent = 'Tap again to delete ' + nums + ' for good';
+      setTimeout(function () { if (b.dataset.confirm === '1') { b.dataset.confirm = ''; b.textContent = 'Delete selected'; } }, 6000); return;
+    }
+    b.disabled = true; $('#bulkMsg').textContent = 'Deleting...';
+    NG.api('sale-delete', { sale_ids: rows.map(function (tr) { return tr.dataset.id; }) })
+      .then(function (r) { NG.toast(r.deleted === 1 ? 'Sale deleted' : r.deleted + ' sales deleted'); loadSales(); })
+      .catch(function (err) { $('#bulkMsg').textContent = err.message; })
+      .finally(function () { b.disabled = false; });
+  });
   $('#saleRows').addEventListener('keydown', function (e) { var tr = e.target.closest('tr[data-id]'); if (tr && e.key === 'Enter') location.hash = 'sale-' + tr.dataset.id; });
   $$('.filters .chip').forEach(function (c) {
     c.addEventListener('click', function () {
@@ -108,7 +136,7 @@
   var newForCustomer = null; // starting a sale for an existing customer (a lead)
   function openSale(id, custId) {
     current = null; newForCustomer = null; form.querySelector('.formmsg').textContent = '';
-    ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel'].forEach(function (p) { $(p).hidden = true; });
+    ['#signPanel', '#paperPanel', '#waitPanel', '#donePanel', '#eventsPanel', '#saleDanger'].forEach(function (p) { $(p).hidden = true; });
     if (!id) {
       fill(null, null); lock(false); $('#saleHeading').textContent = 'New sale'; $('#saleStatus').innerHTML = ''; show('sale');
       if (custId) sb.from('customers').select('*').eq('id', custId).maybeSingle().then(function (r) {
@@ -143,6 +171,9 @@
           : (current.customer_typed_name || 'The customer') + ' signed on ' + NG.dateTime(current.customer_signed_at) + '. ') +
           'They were emailed their copy, the pre-delivery guide, the owner\'s manual and a link to their portal.';
       }
+      // Admins can delete any sale (tests, deals that fell through). Salespeople keep the Delete draft button.
+      $('#saleDanger').hidden = me.profile.role !== 'admin';
+      $('#saleDelMsg').textContent = ''; $('#saleDelete').dataset.confirm = ''; $('#saleDelete').textContent = 'Delete sale';
       loadEvents(current.id);
       show('sale');
     });
@@ -200,6 +231,19 @@
     var b = $('#deleteBtn');
     if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'Tap again to delete'; setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Delete draft'; }, 4000); return; }
     sb.from('sales').delete().eq('id', current.id).then(function (r) { if (r.error) return NG.toast(r.error.message); NG.toast('Draft deleted'); location.hash = 'sales'; });
+  });
+
+  $('#saleDelete').addEventListener('click', function () {
+    var b = this, m = $('#saleDelMsg'); if (!current) return;
+    if (b.dataset.confirm !== '1') {
+      b.dataset.confirm = '1'; b.textContent = 'Tap again to delete sale #' + current.number + ' for good';
+      setTimeout(function () { if (b.dataset.confirm === '1') { b.dataset.confirm = ''; b.textContent = 'Delete sale'; } }, 5000); return;
+    }
+    b.disabled = true; m.textContent = 'Deleting...';
+    NG.api('sale-delete', { sale_ids: [current.id] })
+      .then(function () { NG.toast('Sale #' + current.number + ' deleted'); location.hash = 'sales'; })
+      .catch(function (err) { m.textContent = err.message; })
+      .finally(function () { b.disabled = false; });
   });
 
   $('#repSigClear').addEventListener('click', function () { pad && pad.clear(); });

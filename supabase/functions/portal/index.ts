@@ -467,6 +467,30 @@ async function route_customer_delete(req: Request): Promise<Response> {
   return jsonAuth(req, { ok: true, deleted_sales: (sales ?? []).length });
 }
 
+// ---- sale-delete ----
+// POST {sale_ids: string[]}  Admins only. Removes the sales, their history, signed agreements and photos.
+// The customer stays (as a lead) and QuickBooks is left alone: invoices and payments stay in the books.
+async function route_sale_delete(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || me.profile.role !== "admin") return jsonAuth(req, { error: "Only an admin can delete a sale." }, 403);
+  const b = await req.json().catch(() => ({}));
+  const ids = (Array.isArray(b.sale_ids) ? b.sale_ids : [b.sale_id]).map((x: unknown) => String(x ?? "")).filter(Boolean).slice(0, 200);
+  if (!ids.length) return jsonAuth(req, { error: "Choose at least one sale." }, 400);
+  const db = admin();
+  const { data: sales } = await db.from("sales").select("id, number").in("id", ids);
+  if (!sales?.length) return jsonAuth(req, { error: "Those sales weren't found." }, 404);
+  for (const s of sales) {
+    const { data: files } = await db.storage.from("agreements").list(s.id, { limit: 100 });
+    if (files?.length) await db.storage.from("agreements").remove(files.map((f) => `${s.id}/${f.name}`));
+  }
+  // Signed sales are locked against edits, so this runs with the server's own key. History rows go with them.
+  const del = await db.from("sales").delete().in("id", sales.map((s) => s.id));
+  if (del.error) return jsonAuth(req, { error: "Couldn't delete those sales." }, 500);
+  console.log("sales deleted", sales.map((s) => s.number).join(","), "by", me.user.id);
+  return jsonAuth(req, { ok: true, deleted: sales.length });
+}
+
 // ---- agreement-pdf ----
 // POST {sale_id}  Returns a short-lived download link for the signed agreement, if the caller is allowed to see that sale.
 
@@ -605,7 +629,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
-  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

@@ -478,6 +478,10 @@ section[id],.line[id]{scroll-margin-top:84px}
 .deallist a{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit}
 .deallist a:hover{border-color:var(--ink)}
 .card.danger{border-color:#e4c3b5}
+.bulkbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin:0 0 12px;padding:10px 14px;border:1px solid #e4c3b5;border-radius:12px;background:#fbf1ec;font-weight:600}
+.bulkbar .formmsg{margin:0}
+.saletable .selcol{width:36px;padding-right:0;cursor:default}
+.saletable .selcol input{width:18px;height:18px;cursor:pointer}
 .progrow{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:10px 0 14px}
 .progrow p{margin:0 auto 8px 0;flex-basis:100%}
 .progrow label{display:grid;gap:4px;font-size:.86rem;font-weight:600}
