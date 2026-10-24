@@ -257,6 +257,8 @@ async function afterSigned(sale: any, c: any, pdfBytes: Uint8Array, method: "onl
       html: emailShell({
         preheader: "Your signed agreement, pre-delivery guide and owner's manual are attached.",
         body: `<p>Hi ${escapeHtml(firstNameOf(c.name))},</p>
+<p style="font-family:Georgia,serif;font-size:22px;margin:0 0 10px">Congratulations!</p>
+<p>Deciding to bring home a ${escapeHtml(what)} is one of those few decisions in life that rewards you and your family every single day, for years and years. I'm happy to be the one who got to help you with it, and you picked one great ${sale.tub_model ? "hot tub" : "sauna"}.</p>
 <p>Welcome to the family, and thank you for trusting us with your ${escapeHtml(what)}. ${method === "paper" ? `You have your signed paper copy, and a digital copy of agreement #${sale.number} is attached so it's always easy to find.` : `Your signed agreement (#${sale.number}) is attached for your records.`}</p>
 <p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">What to read first</p>
 <p><b>Your pre-delivery guide (attached).</b> Please read this before we book your delivery. A solid, level base, the right power from a licensed electrician and a clear path to the backyard are what make delivery day smooth, and they protect your warranty. Ten minutes now saves a rescheduled delivery later.</p>
