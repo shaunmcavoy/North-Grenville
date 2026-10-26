@@ -366,6 +366,12 @@ def tub_jsonld(t):
             {"@type": "ListItem", "position": 1, "name": "Hot tubs", "item": f"{SITE['url']}/"},
             {"@type": "ListItem", "position": 2, "name": f"{LINES[t['line']]['name']} line", "item": f"{SITE['url']}/{t['line']}/"},
             {"@type": "ListItem", "position": 3, "name": t["n"], "item": url}]}]}
+    # Quote-based model pages have no public offers or product reviews.
+    # Describe the page without requesting an ineligible Product rich result.
+    product = data["@graph"][0]
+    data["@graph"][0] = {"@type": "WebPage", **{
+        key: product[key] for key in ("name", "description", "image", "url")
+    }}
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
 # ---------- Swim spas and mini pools ----------
@@ -618,6 +624,12 @@ def swim_jsonld(m):
             {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{SITE['url']}/"},
             {"@type": "ListItem", "position": 2, "name": S["name"], "item": f"{SITE['url']}/{m['section']}/"},
             {"@type": "ListItem", "position": 3, "name": m["n"], "item": url}]}]}
+    # Quote-based model pages have no public offers or product reviews.
+    # Describe the page without requesting an ineligible Product rich result.
+    product = data["@graph"][0]
+    data["@graph"][0] = {"@type": "WebPage", **{
+        key: product[key] for key in ("name", "description", "image", "url")
+    }}
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
 # ---------- Saunas (Hekla) ----------
@@ -900,6 +912,12 @@ def sauna_jsonld(m):
             {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{SITE['url']}/"},
             {"@type": "ListItem", "position": 2, "name": "Saunas", "item": f"{SITE['url']}/saunas/"},
             {"@type": "ListItem", "position": 3, "name": m["n"], "item": url}]}]}
+    # Quote-based model pages have no public offers or product reviews.
+    # Describe the page without requesting an ineligible Product rich result.
+    product = data["@graph"][0]
+    data["@graph"][0] = {"@type": "WebPage", **{
+        key: product[key] for key in ("name", "description", "image", "url")
+    }}
     return f'<script type="application/ld+json">{json.dumps(data)}</script>\n'
 
 
