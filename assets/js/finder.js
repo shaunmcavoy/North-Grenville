@@ -29,7 +29,8 @@
       why: "This helps Blaine check whether a new tub can run on the line you already have, which could save you a new electrical job. The number is printed on the hot tub's breaker switch in your electrical panel. If you're not sure, that's completely fine; just pick I don't know.",
       opts: [['40', '40 amp (most older tubs, usually 8 gauge wire)'], ['50', '50 amp (most newer tubs, usually 6 gauge wire)'], ['60', '60 amp'], ['other', "Something else (I'll type it)"], ['unknown', "I don't know"]] },
     { id: 'when', q: 'When would you love to be soaking?', why: "Your tub is ordered for you, not pulled off a lot, so this helps Blaine plan delivery around you. There's no pressure either way.",
-      opts: [['asap', 'As soon as possible'], ['months', 'In the next few months'], ['season', 'This coming spring or summer'], ['looking', 'Just starting to look']] }
+      other: 'other', otherLabel: 'When are you thinking?', otherHint: 'e.g. before Christmas, in time for spring',
+      opts: [['asap', 'As soon as possible'], ['weeks', 'In the next few weeks'], ['months', 'In the next few months'], ['other', "Something else (I'll type it)"]] }
   ];
   var A = {}, step = 0;
   var label = function (qid) { var q = Q.filter(function (x) { return x.id === qid; })[0]; var v = A[qid]; if (!q || v == null) return null;
@@ -49,7 +50,7 @@
         var on = q.multi ? (cur || []).indexOf(o[0]) >= 0 : cur === o[0];
         return '<button type="button" class="fopt" data-v="' + o[0] + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
       }).join('') + '</div>' +
-      (q.other && cur === q.other ? '<label class="fother">Tell us what you know (breaker size, wire, anything)<input id="fotherIn" maxlength="120" value="' + esc(A[q.id + '_text'] || '') + '" placeholder="e.g. 40 amp, not sure of the wire"></label>' : '') +
+      (q.other && cur === q.other ? '<label class="fother">' + esc(q.otherLabel || 'Tell us what you know (breaker size, wire, anything)') + '<input id="fotherIn" maxlength="120" value="' + esc(A[q.id + '_text'] || '') + '" placeholder="' + esc(q.otherHint || 'e.g. 40 amp, not sure of the wire') + '"></label>' : '') +
       '<div class="fnav">' + (step ? '<button type="button" class="btn btn-line" data-back>Back</button>' : '<span></span>') +
       (q.multi ? '<button type="button" class="btn btn-ink" data-next' + ((cur || []).length ? '' : ' disabled') + '>Next</button>' : '') +
       (q.other && cur === q.other ? '<button type="button" class="btn btn-ink" data-next>Next</button>' : '') + '</div>';
