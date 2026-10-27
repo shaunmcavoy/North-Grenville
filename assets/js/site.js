@@ -82,3 +82,9 @@ document.addEventListener('click', function (e) {
   if (!a || typeof window.fbq !== 'function') return;
   window.fbq('track', 'Contact', { method: a.getAttribute('href').indexOf('sms:') === 0 ? 'text' : 'call' });
 });
+
+// Tell the Meta Pixel when someone opens directions to the warehouse
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[data-directions]');
+  if (a && typeof window.fbq === 'function') window.fbq('track', 'FindLocation', { method: a.getAttribute('data-directions') });
+});

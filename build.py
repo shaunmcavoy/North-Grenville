@@ -1116,6 +1116,27 @@ def build():
         page(f"saunas/{m['k']}/", f"Hekla {m['n']} Sauna, Seats {m['people']} | North Grenville Hot Tubs",
              f"The Hekla {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
              sauna_body(m, "../../"), "../../", sauna_jsonld(m), view=(f"{m['n']} sauna", "Sauna"))
+    # Directions: pick Apple Maps or Google Maps
+    addr = f"{SITE['street']}, {SITE['city']}, {SITE['province']} {SITE['postal']}"
+    q = addr.replace(" ", "+")
+    pin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>'
+    page("directions/", "Get directions | North Grenville Hot Tubs", f"Directions to North Grenville Hot Tubs & Saunas, {addr}. Open Apple Maps or Google Maps.",
+         f"""<section class="lhero dirhero"><div class="wrap">
+  <a class="back" href="../">&larr; Back to home</a>
+  <p class="eyebrow">Get directions</p>
+  <h1>Come see us in Kemptville.</h1>
+  <p class="diraddr">{pin}<span><b>North Grenville Hot Tubs &amp; Saunas</b><br>{SITE['street']}<br>{SITE['city']}, {SITE['province']} {SITE['postal']}</span></p>
+  <p class="dirlead">Choose your maps app and it will take you right to the warehouse.</p>
+  <div class="dirbtns">
+    <a class="btn btn-gold dirbtn" data-directions="apple" href="https://maps.apple.com/?daddr={q}&amp;dirflg=d">{pin}Apple Maps</a>
+    <a class="btn btn-gold dirbtn" data-directions="google" href="https://www.google.com/maps/dir/?api=1&amp;destination={q}">{pin}Google Maps</a>
+  </div>
+  <p><button class="btn btn-ghost" type="button" data-copy="{addr}">Copy the address</button></p>
+  <div class="dirnote">
+    <p><b>Please call or text before you come.</b> We're a small, family-run warehouse, not a big showroom, and that's how we keep our prices low. A quick heads-up means Blaine is there to meet you, the tubs are ready to sit in, and you get his full attention instead of waiting around.</p>
+    <div class="ctas"><a class="btn btn-ghost" href="{TEL}">{PHONE}Call Blaine</a><a class="btn btn-ghost" href="{sms("Hi Blaine, I'd like to come by the warehouse. When works for you?")}">{CHAT}Text Blaine</a></div>
+  </div>
+</div></section>""", "../")
     page("404.html", "Page not found | North Grenville Hot Tubs", "That page isn't here.",
          """<section class="lhero"><div class="wrap" style="padding-block:96px">
   <p class="eyebrow">Page not found</p><h1>That page took a dip.</h1>
@@ -1174,7 +1195,7 @@ def build():
              app_scripts + [f"/assets/js/{js}.js"], app=app, app_title=app_title)
     # Offline page, shown by sw.js when the phone has no connection
     page("offline/", "You're offline | North Grenville Hot Tubs", "No connection right now.", (SRC / "offline.html").read_text(), "../", app_head)
-    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["directions/", "blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
     print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, {len(SWIM_MODELS)} swim spa and mini pool pages, {len(SAUNA_MODELS)} sauna pages, blog index, {len(posts)} posts, 404, sitemap")

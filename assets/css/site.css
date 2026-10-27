@@ -652,4 +652,19 @@ label.inline input{width:110px}
 #pastCard .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:4px;font-weight:500}
 #pastCard .hint button{font:inherit;color:var(--water-deep,#2f6f6a);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;margin-right:8px}
 #pastForm .grid3{align-items:start}
+/* Directions page */
+.dirhero .wrap{padding-block:64px 88px;max-width:720px}
+.dirhero h1{font-size:clamp(2.4rem,6vw,3.8rem);margin-top:10px}
+.diraddr{display:flex;gap:14px;align-items:flex-start;margin-top:26px;font-size:1.15rem;color:var(--cream);line-height:1.5}
+.diraddr svg{width:28px;height:28px;flex:none;color:var(--gold);margin-top:3px}
+.dirlead{color:var(--sand);margin-top:22px}
+.dirbtns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 16px}
+.dirbtn{padding:20px 22px;font-size:1.08rem}
+.dirbtn svg{width:20px;height:20px}
+@media (max-width:520px){.dirbtns{grid-template-columns:1fr}}
+.dirnote{margin-top:34px;padding:22px 24px;border:1px solid var(--line-dark);border-radius:16px;background:rgba(244,236,223,.05);color:var(--sand)}
+.dirnote b{color:var(--cream)}
+.dirnote .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.areadir{margin-top:22px}
+.call .ctas .btn svg{width:17px;height:17px}
 
