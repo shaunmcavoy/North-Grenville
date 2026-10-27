@@ -1,5 +1,6 @@
-// "Find your tub": a few friendly questions, honest matches right away, then an easy way to talk to Blaine.
-// Matches are worked out here in the browser from the site's own product data (window.NG_FIND).
+// "Find your tub": a few friendly questions, then the visitor asks Blaine to call and book a visit.
+// A suggested shortlist is worked out from the site's product data (window.NG_FIND) and sent to the team only.
+// Visitors never see it: Blaine gives the recommendation himself, on the phone and at the warehouse.
 (function () {
   var root = document.getElementById('finder'); if (!root) return;
   var D = window.NG_FIND || { tubs: [], swim: [], pools: [], saunas: [] };
@@ -105,51 +106,47 @@
     return { title: 'Where I would start', intro: 'Based on your answers, these are the hot tubs I would show you first. Tap one to see why people choose it and my honest take.', items: tubMatches(), more: ['/#lines', 'See all three hot tub lines'] };
   }
 
-  // ---------- Results and contact ----------
+  // ---------- Contact: book a time with Blaine ----------
   function results() {
     var r = matches();
     root.innerHTML = '<div class="fprog done" aria-hidden="true"><span style="width:100%"></span></div>' +
-      '<p class="fstep">Your matches</p><h2 class="fq">' + esc(r.title) + '</h2><p class="fwhy">' + esc(r.intro) + '</p>' +
-      '<div class="fresults">' + r.items.map(function (m) {
-        return '<a class="fres" href="' + m.url + '"><img src="/assets/img/' + m.img + '.webp" alt="" loading="lazy" width="200" height="200"><span><b>' + esc(m.name) + '</b>' +
-          (m.sub ? '<em>' + esc(m.sub) + '</em>' : '') + (m.why.length ? '<ul>' + m.why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' : '') + '</span></a>';
-      }).join('') + '</div>' +
-      '<p class="fmore"><a href="' + r.more[0] + '">' + esc(r.more[1]) + ' &rarr;</a> &middot; <button type="button" class="linkbtn" data-restart>Start over</button></p>' +
-      '<form class="fcontact" id="fcontact" novalidate>' +
-        '<h2 class="fq">Want Blaine\'s honest take on these?</h2>' +
-        '<p class="fwhy">He\'ll look over your answers himself and get back to you with a real price and an honest opinion on what fits, including when a smaller or simpler tub will do. No pressure, no obligation.</p>' +
+      '<form class="fcontact first" id="fcontact" novalidate>' +
+        '<p class="fstep">Last step</p>' +
+        '<h2 class="fq">Thanks. Now let\'s find a time to talk.</h2>' +
+        '<p class="fwhy">Blaine will look over your answers himself, then give you a call to talk them through and book a time for you to come by the warehouse and sit in the tubs that fit. Sitting in a tub is the only real way to know if it\'s right, and he\'d rather you see it for yourself than take a website\'s word for it. No pressure, no obligation.</p>' +
         '<div class="fgrid">' +
           '<label>Your name<input name="name" autocomplete="name" required></label>' +
+          '<label>Cell<input name="cell" type="tel" autocomplete="tel" required></label>' +
           '<label>Email<input name="email" type="email" autocomplete="email" required></label>' +
-          '<label>Cell <span class="opt">(for a call or text)</span><input name="cell" type="tel" autocomplete="tel"></label>' +
           '<label>Where do you live?<input name="city" autocomplete="address-level2" placeholder="Kemptville, Oxford Mills..."></label>' +
-          '<label>Best way to reach you<select name="contact_by"><option>A phone call</option><option>A text</option><option>An email</option></select></label>' +
-          '<label>Best time to reach you<select name="best_time"><option>Weekday mornings</option><option>Weekday afternoons</option><option selected>Weekday evenings</option><option>Weekends</option><option>Any time</option></select></label>' +
+          '<label>Best time for Blaine to call<select name="best_time"><option>Weekday mornings</option><option>Weekday afternoons</option><option selected>Weekday evenings</option><option>Weekends</option><option>Any time</option></select></label>' +
+          '<label>If he misses you<select name="contact_by"><option>Leave a message or try again</option><option>Send me a text</option><option>Send me an email</option></select></label>' +
         '</div>' +
-        '<label class="fcheck"><input type="checkbox" name="consent" required> Yes, Blaine can contact me about my plans by email, phone or text.</label>' +
+        '<label class="fcheck"><input type="checkbox" name="consent" required> Yes, Blaine can call me about my plans, and follow up by text or email.</label>' +
         '<label class="fcheck"><input type="checkbox" name="blog"> Also send me Blaine\'s weekly blog: honest, simple hot tub advice. I can unsubscribe any time.</label>' +
         '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-        '<div class="fnav"><button class="btn btn-gold" type="submit">Send my answers to Blaine</button></div>' +
+        '<div class="fnav"><button type="button" class="btn btn-line" data-back>Back</button><button class="btn btn-gold" type="submit">Have Blaine call me</button></div>' +
         '<p class="formmsg" role="status" aria-live="polite"></p>' +
       '</form>';
     $('#fcontact').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, m = f.querySelector('.formmsg');
       if (!f.name.value.trim()) { m.textContent = 'Please add your name.'; f.name.focus(); return; }
+      if (f.cell.value.replace(/\D/g, '').length < 10) { m.textContent = 'Please add your cell number so Blaine can call you.'; f.cell.focus(); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.value.trim())) { m.textContent = 'Please check your email address.'; f.email.focus(); return; }
-      if (/call|text/i.test(f.contact_by.value) && !f.cell.value.trim()) { m.textContent = 'Add your cell number so Blaine can ' + (/text/i.test(f.contact_by.value) ? 'text' : 'call') + ' you.'; f.cell.focus(); return; }
-      if (!f.consent.checked) { m.textContent = 'Please tick the first box so Blaine can get back to you.'; return; }
+      if (!f.consent.checked) { m.textContent = 'Please tick the first box so Blaine can call you.'; return; }
       var answers = visible().map(function (q) { return { q: q.q, a: label(q.id) }; }).filter(function (x) { return x.a; });
       var btn = f.querySelector('button[type=submit]'); btn.disabled = true; m.textContent = 'Sending...';
       fetch(LEAD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-        name: f.name.value, email: f.email.value, cell: f.cell.value, city: f.city.value, contact_by: f.contact_by.value, best_time: f.best_time.value,
+        name: f.name.value, email: f.email.value, cell: f.cell.value, city: f.city.value, contact_by: 'Phone call. If missed: ' + f.contact_by.value, best_time: f.best_time.value,
         consent: f.consent.checked, blog: f.blog.checked, website: f.website.value, answers: answers,
         recommended: r.items.map(function (x) { return { name: x.name, url: x.url, why: x.why.join('. ') }; })
       }) }).then(function (res) { return res.json().then(function (d) { return { ok: res.ok, d: d }; }); }).then(function (res) {
         if (!res.ok) throw new Error(res.d.error || 'Something went wrong.');
         if (typeof window.fbq === 'function') window.fbq('track', 'Lead', { content_name: 'Find your tub' });
-        var when = /email/i.test(f.contact_by.value) ? 'Blaine will email you' : 'Blaine will ' + (/text/i.test(f.contact_by.value) ? 'text' : 'call') + ' you, ' + f.best_time.value.toLowerCase() + (/any/i.test(f.best_time.value) ? '' : ' if he can');
-        f.outerHTML = '<div class="fdone"><h2 class="fq">Thanks, ' + esc(f.name.value.trim().split(/\s+/)[0]) + '. Your answers are with Blaine.</h2><p class="fwhy">' + esc(when) + '. We\'ve emailed you a copy of your matches' + (f.blog.checked ? ', plus a link to confirm the weekly blog' : '') + '. In the meantime, have a look around, and if anything comes up, call or text him at (613) 292-1786.</p></div>';
+        var when = /any/i.test(f.best_time.value) ? 'soon' : f.best_time.value.toLowerCase();
+        root.innerHTML = '<div class="fdone"><p class="fstep">All set</p><h2 class="fq">Thanks, ' + esc(f.name.value.trim().split(/\s+/)[0]) + '. Blaine will call you ' + esc(when) + '.</h2>' +
+          '<p class="fwhy">He\'ll talk through your answers with you and set up a time to come see the tubs in person. We\'ve emailed you a note so you know who\'s calling' + (f.blog.checked ? ', plus a link to confirm the weekly blog' : '') + '. Can\'t wait? Call or text him any time at (613) 292-1786.</p></div>';
       }).catch(function (err) { m.textContent = err.message + ' You can also call or text Blaine at (613) 292-1786.'; btn.disabled = false; });
     });
   }

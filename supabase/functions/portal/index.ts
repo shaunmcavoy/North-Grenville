@@ -568,6 +568,7 @@ async function route_lead(req: Request): Promise<Response> {
   const name = str(b.name, 80), email = str(b.email, 200)?.toLowerCase() ?? null, cell = str(b.cell, 40), city = str(b.city, 80);
   if (!name) return jsonAuth(req, { error: "Please add your name." }, 400);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return jsonAuth(req, { error: "Please enter a valid email address." }, 400);
+  if (!cell || cell.replace(/\D/g, "").length < 10) return jsonAuth(req, { error: "Please add your cell number so Blaine can call you." }, 400);
   if (b.consent !== true) return jsonAuth(req, { error: "Please tick the box so Blaine can get back to you." }, 400);
   const answers = (Array.isArray(b.answers) ? b.answers : []).slice(0, 20)
     .map((a: { q?: unknown; a?: unknown }) => ({ q: str(a?.q, 120) ?? "", a: str(a?.a, 300) ?? "" })).filter((a: { q: string; a: string }) => a.q && a.a);
@@ -591,7 +592,7 @@ async function route_lead(req: Request): Promise<Response> {
     `- Best way to reach them: ${contactBy ?? "not given"}`,
     `- Best time to call: ${bestTime ?? "not given"}`,
     `- Weekly blog: ${b.blog === true ? "yes, asked to sign up" : "no"}`,
-    recs.length ? `- We suggested: ${recs.map((r: { name: string }) => r.name).join(", ")}` : "",
+    recs.length ? `- Suggested to show them (not shown to the customer): ${recs.map((r: { name: string }) => r.name).join(", ")}` : "",
   ].filter(Boolean).join("\n");
 
   let customerId: string;
@@ -616,9 +617,9 @@ async function route_lead(req: Request): Promise<Response> {
     const { data: admins } = await db.from("profiles").select("email").eq("role", "admin").eq("active", true);
     const to = [...new Set([REPLY_TO, ...(admins ?? []).map((a: { email: string }) => a.email).filter(Boolean)])];
     await sendEmail({
-      from: FROM, to, reply_to: email, subject: `New lead: ${name}${bestTime ? `, best time ${bestTime.toLowerCase()}` : ""}`,
+      from: FROM, to, reply_to: email, subject: `New lead to call: ${name}${bestTime ? `, ${bestTime.toLowerCase()}` : ""}`,
       html: emailShell({ preheader: `${name} filled out Find your tub on the website.`, body:
-        `<p><b>${escapeHtml(name)}</b> just filled out <b>Find your tub</b> on the website.</p>
+        `<p><b>${escapeHtml(name)}</b> just filled out <b>Find your tub</b> on the website and wants a call${bestTime ? ` (<b>${escapeHtml(bestTime.toLowerCase())}</b>)` : ""} to book a time to come in. The suggested tubs below are for you only; they weren't shown to the customer.</p>
 <table style="font-size:15px;border-collapse:collapse;margin:8px 0 16px">
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Email</td><td>${escapeHtml(email)}</td></tr>
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Cell</td><td>${escapeHtml(cell ?? "not given")}</td></tr>
@@ -626,7 +627,7 @@ async function route_lead(req: Request): Promise<Response> {
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Reach them by</td><td><b>${escapeHtml(contactBy ?? "not given")}</b></td></tr>
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Best time to call</td><td><b>${escapeHtml(bestTime ?? "not given")}</b></td></tr>
 ${rows}
-<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">We suggested</td><td>${escapeHtml(recs.map((r: { name: string }) => r.name).join(", ") || "none")}</td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f;vertical-align:top">Suggested to show them</td><td>${recs.map((r: { name: string; url: string; why: string }) => `<a href="${SITE_URL}${r.url}">${escapeHtml(r.name)}</a>${r.why ? `<br><span style="color:#6e5d4f;font-size:13px">${escapeHtml(r.why)}</span>` : ""}`).join("<br>") || "none"}</td></tr>
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Weekly blog</td><td>${b.blog === true ? "Yes (they'll confirm by email)" : "No"}</td></tr>
 </table>
 ${button(portalLink, "Open them in the staff portal")}
@@ -634,19 +635,18 @@ ${button(portalLink, "Open them in the staff portal")}
     });
   } catch (e) { console.error("lead staff email", e); }
 
-  // Thank the visitor, and tell them why we work this way.
-  const recHtml = recs.length ? `<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Where I'd start looking</p>` +
-    recs.map((r: { name: string; url: string; why: string }) => `<p><a href="${SITE_URL}${r.url}" style="color:#2f6f6a;font-weight:600">${escapeHtml(r.name)}</a>${r.why ? `<br><span style="color:#6e5d4f">${escapeHtml(r.why)}</span>` : ""}</p>`).join("") : "";
-  const when = contactBy && /email/i.test(contactBy) ? "I'll email you shortly" : bestTime ? `I'll ${contactBy && /text/i.test(contactBy) ? "text" : "call"} you ${bestTime.toLowerCase()}` : "I'll be in touch shortly";
+  // Thank the visitor and tell them why we work this way. The suggested tubs stay with the team:
+  // Blaine gives the recommendation himself, on the phone and at the warehouse.
+  const when = bestTime && !/any/i.test(bestTime) ? bestTime.toLowerCase() : "soon";
   try {
     await sendEmail({
-      from: FROM, to: email, reply_to: REPLY_TO, subject: "Thanks, I've got your answers",
-      html: emailShell({ preheader: "Your answers are with me. Here's where I'd start.", body:
+      from: FROM, to: email, reply_to: REPLY_TO, subject: "Thanks, I'll give you a call",
+      html: emailShell({ preheader: "Your answers are with me. Here's what happens next.", body:
         `<p>Hi ${escapeHtml(firstNameOf(name))},</p>
-<p>Thanks for taking a few minutes to tell me about your plans. ${escapeHtml(when)}, and we'll talk it through together.</p>
-<p>I ask these questions because the right hot tub is the one that fits how you'll actually use it: who's soaking, where it goes and when you'd love to be in it. Not the one that happens to be sitting in a warehouse. Getting that right up front is what turns a hot tub into something your family uses every week for years, instead of an expensive cover in the yard.</p>
-${recHtml}
-<p>There's no pressure and no obligation. If anything changes, or you think of a question before we talk, just reply to this email or call or text me at (613) 292-1786.</p>
+<p>Thanks for taking a few minutes to tell me about your plans. I'll give you a call ${escapeHtml(when)} from (613) 292-1786, so you'll know it's me.</p>
+<p>I ask these questions because the right hot tub is the one that fits how you'll actually use it: who's soaking, where it goes and when you'd love to be in it. Not the one that happens to be sitting in a warehouse. Getting that right is what turns a hot tub into something your family uses every week for years.</p>
+<p>When we talk, we'll go over your answers together and set up a time for you to come by the warehouse and sit in the tubs that fit. Sitting in one is the only real way to know it's right for you, so I'd rather you see it for yourself.</p>
+<p>There's no pressure and no obligation. If you think of a question before then, just reply to this email or call or text me any time.</p>
 <p>Blaine</p>` }),
     });
   } catch (e) { console.error("lead thank-you email", e); }

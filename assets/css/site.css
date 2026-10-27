@@ -698,6 +698,7 @@ label.inline input{width:110px}
 .fmore a{color:var(--water-deep,#2f6f6a);font-weight:600}
 .fmore .linkbtn{position:static;padding:0;font-size:.92rem;text-decoration:underline}
 .fcontact{margin-top:34px;padding-top:28px;border-top:1px solid var(--line)}
+.fcontact.first{margin-top:0;padding-top:0;border-top:0}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:18px}
 .fgrid label{display:grid;gap:6px;font-size:.86rem;font-weight:600}
 .fgrid input,.fgrid select{font:inherit;font-weight:400;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:100%;min-width:0}

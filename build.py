@@ -1126,12 +1126,12 @@ def build():
         "saunas": [{"k": m["k"], "n": m["n"], "img": m["img"], "where": RANGES[m["range"]]["where"], "why": m["head"], "sub": f"{RANGES[m['range']]['name']} · {m['people']} people"} for m in SAUNA_MODELS],
     }
     page("find-your-tub/", "Find your hot tub: a few quick questions | North Grenville Hot Tubs",
-         "Not sure which hot tub, swim spa or sauna fits? Answer a few quick questions and see honest matches from Blaine in Kemptville.",
+         "Not sure which hot tub, swim spa or sauna fits? Answer a few quick questions and Blaine in Kemptville will call you with honest advice.",
          f"""<section class="lhero findhero"><div class="wrap">
   <a class="back" href="../">&larr; Back to home</a>
   <p class="eyebrow">Find your tub</p>
   <h1>Let's find the one that fits your life.</h1>
-  <p class="findlead">There's a lot to take in on this site. Answer a few quick questions and I'll show you where I'd start, the same way I would if you were standing in the warehouse. Every question is there to help you, not to sell you.</p>
+  <p class="findlead">There's a lot to take in on this site. Answer a few quick questions about how you'll use it, and I'll look them over myself and give you a call. We'll talk it through and book a time for you to come sit in the tubs that fit. Every question is there to help you, not to sell you.</p>
   <p class="findsig"><img src="../assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></p>
 </div></section>
 <section class="findwrap"><div class="wrap">
