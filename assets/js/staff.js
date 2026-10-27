@@ -457,7 +457,15 @@
   }
   function stagePill(k) { var st = STAGES[k]; return '<span class="pill pill-' + st[1] + '">' + st[0] + '</span>'; }
   var custCache = [], custStage = 'all';
+  // Team members who can own customers (admins and salespeople), for assigning leads.
+  var teamCache = null;
+  function getTeam() {
+    if (teamCache) return Promise.resolve(teamCache);
+    return sb.from('profiles').select('id,full_name,email,role,active').in('role', ['admin', 'staff']).order('full_name').then(function (r) { teamCache = r.data || []; return teamCache; });
+  }
+  function teamName(id) { var p = (teamCache || []).filter(function (x) { return x.id === id; })[0]; return p ? (p.full_name || p.email) : ''; }
   function loadCustomers() {
+    if (me.profile.role === 'admin' && !teamCache) { getTeam().then(function () { if (custCache) renderCustomers(); }); }
     sb.from('customers').select('id,name,email,cell,city_pc,created_at,created_by,sales(id,number,status,total,balance,balance_paid_at,product_type,tub_model,sauna_model,created_at,salesperson_id,profiles!sales_salesperson_id_fkey(full_name,email))')
       .order('created_at', { ascending: false }).limit(1000).then(function (r) {
         if (r.error) { $('#custRows').innerHTML = '<tr><td colspan="7" class="empty">' + NG.esc(r.error.message) + '</td></tr>'; return; }
@@ -468,17 +476,20 @@
   function renderCustomers() {
     var counts = { all: custCache.length }; Object.keys(STAGES).forEach(function (k) { counts[k] = 0; });
     custCache.forEach(function (c) { counts[c._stage]++; });
+    counts.unassigned = custCache.filter(function (c) { return !c.created_by && !(c.sales || []).length; }).length;
     $$('#custFilters .chip').forEach(function (b) { b.querySelector('span').textContent = counts[b.dataset.stage] ? '(' + counts[b.dataset.stage] + ')' : ''; });
     var q = ($('#custSearch').value || '').toLowerCase().trim(), isAdmin = me.profile.role === 'admin';
     var rows = custCache.filter(function (c) {
-      if (custStage !== 'all' && c._stage !== custStage) return false;
+      if (custStage === 'unassigned') { if (c.created_by || (c.sales || []).length) return false; }
+      else if (custStage !== 'all' && c._stage !== custStage) return false;
       return !q || [c.name, c.email, c.cell, c.city_pc].join(' ').toLowerCase().indexOf(q) >= 0;
     });
     $('#custRows').innerHTML = rows.length ? rows.map(function (c) {
       var d = c._deal, what = d ? '#' + d.number + ' ' + (NG.what(d) || '') : '-';
       var bal = d && SIGNED.indexOf(d.status) >= 0 ? (d.balance_paid_at ? 0 : Number(d.balance)) : null;
-      var rep = d && d.profiles ? (d.profiles.full_name || d.profiles.email) : '';
-      return '<tr data-cid="' + c.id + '" tabindex="0"><td><b>' + NG.esc(c.name) + '</b></td><td>' + NG.esc([c.cell, c.email].filter(Boolean).join(' · ') || '-') + '</td><td>' + stagePill(c._stage) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + (bal == null ? '-' : NG.money(bal)) + '</td>' + (isAdmin ? '<td>' + NG.esc(rep) + '</td>' : '') + '<td>' + NG.date(c.created_at) + '</td></tr>';
+      var rep = c.created_by ? teamName(c.created_by) : (d && d.profiles ? (d.profiles.full_name || d.profiles.email) : '');
+      var repCell = rep ? NG.esc(rep) : (!(c.sales || []).length ? '<span class="pill pill-amber">Needs assigning</span>' : '-');
+      return '<tr data-cid="' + c.id + '" tabindex="0"><td><b>' + NG.esc(c.name) + '</b></td><td>' + NG.esc([c.cell, c.email].filter(Boolean).join(' · ') || '-') + '</td><td>' + stagePill(c._stage) + '</td><td>' + NG.esc(what) + '</td><td class="num">' + (bal == null ? '-' : NG.money(bal)) + '</td>' + (isAdmin ? '<td>' + repCell + '</td>' : '') + '<td>' + NG.date(c.created_at) + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="empty">' + (custCache.length ? 'No customers match.' : 'No customers yet. <a href="#lead">Add a lead</a> or start a <a href="#new">new sale</a>.') + '</td></tr>';
   }
   $('#custRows').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-cid]'); if (tr) location.hash = 'cust-' + tr.dataset.cid; });
@@ -495,7 +506,7 @@
   var CFIELDS = ['name', 'email', 'cell', 'heard_about', 'address', 'city_pc', 'notes'];
   function openCustomer(id) {
     currentCust = null; cform.querySelector('.formmsg').textContent = ''; $('#custDelMsg').textContent = '';
-    $('#custDeals').hidden = true; $('#custDanger').hidden = true; $('#custNewSale').hidden = true; $('#custStage').innerHTML = '';
+    $('#custDeals').hidden = true; $('#custDanger').hidden = true; $('#custNewSale').hidden = true; $('#custStage').innerHTML = ''; $('#custAssign').hidden = true; $('#assignMsg').textContent = '';
     var del = $('#custDelete'); del.dataset.confirm = ''; del.textContent = 'Delete customer';
     if (!id) { CFIELDS.forEach(function (k) { cform[k].value = ''; }); $('#custHeading').textContent = 'New lead'; show('customer'); cform.name.focus(); return; }
     sb.from('customers').select('*, sales(id,number,status,total,balance,deposit,balance_paid_at,product_type,tub_model,sauna_model,created_at,updated_at)').eq('id', id).maybeSingle().then(function (r) {
@@ -514,9 +525,24 @@
       }
       // Admins can delete anyone; salespeople can delete their own leads that have no deals.
       $('#custDanger').hidden = !(me.profile.role === 'admin' || (!deals.length && c.created_by === me.user.id));
+      if (me.profile.role === 'admin') getTeam().then(function (team) {
+        $('#assignSel').innerHTML = '<option value="">Nobody yet (admins only)</option>' + team.filter(function (p) { return p.active || p.id === c.created_by; })
+          .map(function (p) { return '<option value="' + p.id + '"' + (p.id === c.created_by ? ' selected' : '') + '>' + NG.esc(p.full_name || p.email) + (p.role === 'admin' ? ' (admin)' : '') + '</option>'; }).join('');
+        $('#custAssign').hidden = false;
+      });
       show('customer');
     });
   }
+  $('#assignBtn').addEventListener('click', function () {
+    var b = this, m = $('#assignMsg'), c = currentCust; if (!c) return;
+    var uid = $('#assignSel').value || null;
+    b.disabled = true; m.textContent = 'Saving...';
+    NG.api('lead-assign', { customer_id: c.id, user_id: uid }).then(function () {
+      c.created_by = uid; custCache = null;
+      m.textContent = uid ? (uid === me.user.id ? 'Assigned to you.' : 'Assigned. ' + teamName(uid) + ' has been emailed.') : 'Unassigned. Only admins can see them now.';
+      NG.toast('Saved');
+    }).catch(function (err) { m.textContent = err.message; }).finally(function () { b.disabled = false; });
+  });
   cform.addEventListener('submit', function (e) {
     e.preventDefault();
     var m = cform.querySelector('.formmsg'), d = {};

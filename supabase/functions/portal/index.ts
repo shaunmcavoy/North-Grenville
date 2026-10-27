@@ -631,7 +631,7 @@ ${rows}
 <tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Weekly blog</td><td>${b.blog === true ? "Yes (they'll confirm by email)" : "No"}</td></tr>
 </table>
 ${button(portalLink, "Open them in the staff portal")}
-<p style="color:#6e5d4f;font-size:14px">They're saved as a lead on the Customers tab. Reply to this email to write to them directly.</p>` }),
+<p style="color:#6e5d4f;font-size:14px">They're saved as an unassigned lead on the Customers tab, where only admins can see them. Open them and choose who's taking the lead; that salesperson gets an email and can then see them. Reply to this email to write to the customer directly.</p>` }),
     });
   } catch (e) { console.error("lead staff email", e); }
 
@@ -657,6 +657,47 @@ ${button(portalLink, "Open them in the staff portal")}
       await fetch(`${FUNCTIONS_URL}/subscribe`, { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, first_name: firstNameOf(name), consent: true, source: "find-your-tub" }) });
     } catch (e) { console.error("lead blog signup", e); }
+  }
+  return jsonAuth(req, { ok: true });
+}
+
+// ---- lead-assign ----
+// POST {customer_id, user_id|null}  Admins. Hands a customer or lead to a salesperson (or back to "unassigned").
+// Salespeople only ever see customers assigned to them, so this is what gives them access. Emails the new owner.
+async function route_lead_assign(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  const me = await caller(req);
+  if (!me || me.profile.role !== "admin") return jsonAuth(req, { error: "Only an admin can assign leads." }, 403);
+  const b = await req.json().catch(() => ({}));
+  const db = admin();
+  const { data: c } = await db.from("customers").select("id, name, email, cell, city_pc, notes, created_by").eq("id", String(b.customer_id ?? "")).maybeSingle();
+  if (!c) return jsonAuth(req, { error: "Customer not found." }, 404);
+  let owner: { id: string; email: string; full_name: string | null; role: string } | null = null;
+  if (b.user_id) {
+    const { data: p } = await db.from("profiles").select("id, email, full_name, role, active").eq("id", String(b.user_id)).maybeSingle();
+    if (!p || !p.active || !["admin", "staff"].includes(p.role)) return jsonAuth(req, { error: "Choose an active team member." }, 400);
+    owner = p;
+  }
+  const { error } = await db.from("customers").update({ created_by: owner ? owner.id : null, updated_at: new Date().toISOString() }).eq("id", c.id);
+  if (error) return jsonAuth(req, { error: "Couldn't assign this lead." }, 500);
+  if (owner && owner.id !== me.user.id && owner.email) {
+    const who = me.profile.full_name || me.profile.email;
+    try {
+      await sendEmail({
+        from: FROM, to: owner.email, reply_to: REPLY_TO, subject: `New lead for you: ${c.name}`,
+        html: emailShell({ preheader: `${who} assigned ${c.name} to you.`, body:
+          `<p>Hi ${escapeHtml(firstNameOf(owner.full_name || owner.email))},</p>
+<p>${escapeHtml(who)} has assigned <b>${escapeHtml(c.name)}</b> to you. They're now on your Customers tab in the staff portal.</p>
+<table style="font-size:15px;border-collapse:collapse;margin:8px 0 16px">
+<tr><td style="padding:4px 12px 4px 0;color:#6e5d4f">Cell</td><td>${escapeHtml(c.cell ?? "not given")}</td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#6e5d4f">Email</td><td>${escapeHtml(c.email ?? "not given")}</td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#6e5d4f">Area</td><td>${escapeHtml(c.city_pc ?? "not given")}</td></tr>
+</table>
+${c.notes ? `<p style="white-space:pre-line;background:#f4ecdf;border-radius:10px;padding:14px 16px;font-size:14px">${escapeHtml(String(c.notes).slice(0, 3000))}</p>` : ""}
+${button(`${SITE_URL}/staff/#cust-${c.id}`, "Open them in the staff portal")}
+<p style="color:#6e5d4f;font-size:14px">Call them at the time they asked for, listen first, and help them find the tub that fits how they'll use it. That's how we earn customers for life.</p>` }),
+      });
+    } catch (e) { console.error("assign email", e); }
   }
   return jsonAuth(req, { ok: true });
 }
@@ -823,7 +864,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
-  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen, "past-sale": route_past_sale, "lead": route_lead,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen, "past-sale": route_past_sale, "lead": route_lead, "lead-assign": route_lead_assign,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

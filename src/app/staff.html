@@ -22,6 +22,7 @@
       <div class="listhead">
         <div class="filters" role="group" aria-label="Filter customers" id="custFilters">
           <button class="chip" type="button" data-stage="all" aria-pressed="true">All <span></span></button>
+          <button class="chip admin-only" type="button" data-stage="unassigned" aria-pressed="false" hidden>Needs assigning <span></span></button>
           <button class="chip" type="button" data-stage="lead" aria-pressed="false">Leads <span></span></button>
           <button class="chip" type="button" data-stage="payment_due" aria-pressed="false">Payment due <span></span></button>
           <button class="chip" type="button" data-stage="balance" aria-pressed="false">Paid, balance owing <span></span></button>
@@ -57,6 +58,11 @@
           <p class="formmsg" role="status" aria-live="polite"></p>
         </div>
       </form>
+      <div id="custAssign" class="card assigncard" hidden>
+        <h3>Who's taking this lead <span class="opt">(admins only)</span></h3>
+        <p class="muted small" id="assignNote">Salespeople only see the customers assigned to them. Choose someone and they'll get an email with this customer's details and a link to open them here.</p>
+        <div class="formactions"><select id="assignSel" aria-label="Assign to"></select><button class="btn btn-ink" type="button" id="assignBtn">Save</button><p class="formmsg" id="assignMsg" role="status" aria-live="polite"></p></div>
+      </div>
       <div id="custDeals" class="card" hidden><h3>Deals</h3><div id="custDealList"></div></div>
       <div id="custDanger" class="card danger" hidden>
         <h3>Delete this customer</h3>

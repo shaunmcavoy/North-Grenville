@@ -712,4 +712,5 @@ label.inline input{width:110px}
 .herofind{color:var(--sand);font-size:.95rem;max-width:44ch}
 .findcta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:22px}
 .findcta span{color:var(--muted);font-size:.92rem}
+.assigncard select{font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);min-width:240px}
 
