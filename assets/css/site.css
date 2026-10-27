@@ -667,4 +667,48 @@ label.inline input{width:110px}
 .dirnote .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .areadir{margin-top:22px}
 .call .ctas .btn svg{width:17px;height:17px}
+/* Find your tub */
+.findhero .wrap{padding-block:56px 40px;max-width:760px}
+.findhero h1{font-size:clamp(2.3rem,5.6vw,3.6rem);margin-top:10px}
+.findlead{color:var(--sand);font-size:1.1rem;margin-top:18px;max-width:58ch}
+.findsig{display:flex;gap:12px;align-items:center;margin-top:20px;color:var(--sand);font-size:.9rem}
+.findsig b{color:var(--cream)}
+.findwrap{background:var(--paper);padding-block:40px 88px}
+.findwrap .wrap{max-width:820px}
+.finder{padding:30px}
+.fprog{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:18px}
+.fprog span{display:block;height:100%;background:var(--gold);transition:width .3s}
+.fstep{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--water-deep,#2f6f6a)}
+.fq{font-family:var(--display);font-weight:500;font-size:clamp(1.6rem,3.6vw,2.2rem);line-height:1.2;margin-top:8px;outline:0}
+.fwhy{color:var(--muted);margin-top:10px;max-width:62ch}
+.fopts{display:grid;gap:10px;margin-top:22px}
+.fopt{font:inherit;font-weight:600;text-align:left;padding:16px 18px;border:1.5px solid var(--line);border-radius:14px;background:var(--cream);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+.fopt:hover{border-color:var(--gold)}
+.fopt[aria-pressed="true"]{border-color:var(--ink);background:#efe3cf}
+.fopt[aria-pressed="true"]::after{content:" \2713";color:var(--water-deep,#2f6f6a)}
+.fnav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+.fresults{display:grid;gap:12px;margin-top:20px}
+.fres{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--cream);text-decoration:none;color:var(--ink);transition:border-color .15s}
+.fres:hover{border-color:var(--gold)}
+.fres img{width:110px;height:110px;object-fit:cover;border-radius:12px;background:#e9e2d6}
+.fres b{font-family:var(--display);font-weight:500;font-size:1.3rem;display:block}
+.fres em{font-style:normal;color:var(--muted);font-size:.85rem;display:block;margin-top:2px}
+.fres ul{margin:8px 0 0;padding-left:18px;font-size:.92rem;color:var(--ink)}
+.fmore{margin-top:14px;font-size:.92rem}
+.fmore a{color:var(--water-deep,#2f6f6a);font-weight:600}
+.fmore .linkbtn{position:static;padding:0;font-size:.92rem;text-decoration:underline}
+.fcontact{margin-top:34px;padding-top:28px;border-top:1px solid var(--line)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:18px}
+.fgrid label{display:grid;gap:6px;font-size:.86rem;font-weight:600}
+.fgrid input,.fgrid select{font:inherit;font-weight:400;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:100%;min-width:0}
+.fgrid .opt{font-weight:400;color:var(--muted)}
+.fcheck{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.92rem}
+.fcheck input{margin-top:4px;width:18px;height:18px;flex:none}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.fdone{margin-top:30px;padding:22px;border-radius:16px;background:#e8f0ee}
+@media (max-width:620px){.finder{padding:20px}.fgrid{grid-template-columns:1fr}.fres{grid-template-columns:84px 1fr}.fres img{width:84px;height:84px}}
+.herofind{margin-top:16px}
+.herofind a{color:var(--gold-soft);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.findcta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:22px}
+.findcta span{color:var(--muted);font-size:.92rem}
 

@@ -1116,6 +1116,29 @@ def build():
         page(f"saunas/{m['k']}/", f"Hekla {m['n']} Sauna, Seats {m['people']} | North Grenville Hot Tubs",
              f"The Hekla {m['n']}: {m['head']} See if it's right for you, then text Blaine in Kemptville for your price.",
              sauna_body(m, "../../"), "../../", sauna_jsonld(m), view=(f"{m['n']} sauna", "Sauna"))
+    # Find your tub: a few questions, honest matches, then an easy way to reach Blaine
+    find = {
+        "tubs": [{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "people": SPECS[t["k"]]["people"],
+                  "seats": SPECS[t["k"]]["seats"], "loungers": SPECS[t["k"]]["loungers"], "jets": t["jets"], "plug": t["power"] == "120V",
+                  "w": max(SPECS[t["k"]]["dims"][0], SPECS[t["k"]]["dims"][1])} for t in TUBS],
+        "swim": [{"k": m["k"], "n": m["n"], "img": swim_img(m), "len": m["dims"][0], "why": m["head"], "sub": f"Seats {m['seats']}" + (f", plus {m['loungers']} lounger" if m.get("loungers") else "")} for m in SWIM_MODELS if m["section"] == "swim-spas"],
+        "pools": [{"k": m["k"], "n": m["n"], "img": swim_img(m), "why": m["head"], "sub": ""} for m in SWIM_MODELS if m["section"] == "mini-pools"],
+        "saunas": [{"k": m["k"], "n": m["n"], "img": m["img"], "where": RANGES[m["range"]]["where"], "why": m["head"], "sub": f"{RANGES[m['range']]['name']} · {m['people']} people"} for m in SAUNA_MODELS],
+    }
+    page("find-your-tub/", "Find your hot tub: a few quick questions | North Grenville Hot Tubs",
+         "Not sure which hot tub, swim spa or sauna fits? Answer a few quick questions and see honest matches from Blaine in Kemptville.",
+         f"""<section class="lhero findhero"><div class="wrap">
+  <a class="back" href="../">&larr; Back to home</a>
+  <p class="eyebrow">Find your tub</p>
+  <h1>Let's find the one that fits your life.</h1>
+  <p class="findlead">There's a lot to take in on this site. Answer a few quick questions and I'll show you where I'd start, the same way I would if you were standing in the warehouse. Every question is there to help you, not to sell you.</p>
+  <p class="findsig"><img src="../assets/img/logo.webp" alt="" width="40" height="40"><span><b>{SITE['owner']}</b><br>Owner, North Grenville Hot Tubs</span></p>
+</div></section>
+<section class="findwrap"><div class="wrap">
+  <div class="finder card" id="finder"><noscript><p>This needs JavaScript turned on. You can also call or text Blaine at {SITE['phone_display']} and he'll ask you the same questions.</p></noscript></div>
+</div></section>
+<script>window.NG_FIND={json.dumps(find)};</script>""", "../", scripts=["/assets/js/finder.js"])
+
     # Directions: pick Apple Maps or Google Maps
     addr = f"{SITE['street']}, {SITE['city']}, {SITE['province']} {SITE['postal']}"
     q = addr.replace(" ", "+")
@@ -1170,7 +1193,7 @@ def build():
         body = md_to_html((SRC / "legal" / f"{slug}.md").read_text())
         page(f"{slug}/", f"{title} | North Grenville Hot Tubs", lead,
              f'''<section class="phero"><div class="wrap"><p class="eyebrow">North Grenville Hot Tubs &amp; Saunas</p><h1>{title}</h1>
-<p style="color:var(--sand);margin-top:12px">{lead} Last updated October 24, 2026.</p></div></section>
+<p style="color:var(--sand);margin-top:12px">{lead} Last updated October 27, 2026.</p></div></section>
 <div class="wrap"><div class="prose">{body}</div></div>''', "../")
     # Portal pages (not indexed by search engines)
     tubs_js = json.dumps([{"k": t["k"], "n": t["n"], "line": t["line"], "lineName": LINES[t["line"]]["name"], "seats": t["seats"],
@@ -1195,7 +1218,7 @@ def build():
              app_scripts + [f"/assets/js/{js}.js"], app=app, app_title=app_title)
     # Offline page, shown by sw.js when the phone has no connection
     page("offline/", "You're offline | North Grenville Hot Tubs", "No connection right now.", (SRC / "offline.html").read_text(), "../", app_head)
-    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["directions/", "blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
+    urls = [""] + [f"{l}/" for l in LINES] + [f"{t['line']}/{t['k']}/" for t in TUBS] + [f"{sid}/" for sid in SWIM["sections"]] + [f"{m['section']}/{m['k']}/" for m in SWIM_MODELS] + ["saunas/"] + [f"saunas/{m['k']}/" for m in SAUNA_MODELS] + ["find-your-tub/", "directions/", "blog/", "privacy/", "terms/"] + [f"blog/{p['slug']}/" for p in posts]
     (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{SITE['url']}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
     print(f"Built: home, {len(LINES)} line pages, {len(TUBS)} tub pages, {len(SWIM_MODELS)} swim spa and mini pool pages, {len(SAUNA_MODELS)} sauna pages, blog index, {len(posts)} posts, 404, sitemap")

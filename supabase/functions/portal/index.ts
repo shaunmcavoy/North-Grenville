@@ -1,5 +1,5 @@
 // One edge function for the customer and staff portals. Route = last path segment, e.g. /functions/v1/portal/signing
-import { admin, button, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL, productNoun, productMaker, productWhat, usesOCare, balanceHow } from "../_shared/common.ts";
+import { admin, button, FUNCTIONS_URL, payTerms, caller, cors, corsAuth, dataUrlToBytes, emailShell, ensureUser, escapeHtml, firstNameOf, FROM, json, jsonAuth, logEvent, loginLink, money, REPLY_TO, sendEmail, SITE_URL, productNoun, productMaker, productWhat, usesOCare, balanceHow } from "../_shared/common.ts";
 import { buildAgreementPdf, sha256Hex, toBase64 } from "../_shared/pdf.ts";
 import { createDepositInvoice, invoiceBalance, qbAuthUrl, qbConfigured, qbDisconnect, qbExchange, qbLists, qbStatus } from "../_shared/qb.ts";
 
@@ -555,6 +555,112 @@ async function route_past_sale(req: Request): Promise<Response> {
   return jsonAuth(req, { ok: true, id: row.id, number: row.number });
 }
 
+// ---- lead ----
+// POST (public)  The "Find your tub" questions on the website. Saves the visitor as a lead with their answers,
+// emails the admins with the best time to call, sends the visitor a thank-you with their matches,
+// and starts the blog sign-up (double opt-in) if they asked for it. website is a honeypot and must be empty.
+async function route_lead(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsAuth(req) });
+  if (req.method !== "POST") return jsonAuth(req, { error: "Use POST" }, 405);
+  const b = await req.json().catch(() => ({}));
+  if (b.website) return jsonAuth(req, { ok: true });
+  const str = (v: unknown, max = 200) => { const t = String(v ?? "").trim(); return t ? t.slice(0, max) : null; };
+  const name = str(b.name, 80), email = str(b.email, 200)?.toLowerCase() ?? null, cell = str(b.cell, 40), city = str(b.city, 80);
+  if (!name) return jsonAuth(req, { error: "Please add your name." }, 400);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return jsonAuth(req, { error: "Please enter a valid email address." }, 400);
+  if (b.consent !== true) return jsonAuth(req, { error: "Please tick the box so Blaine can get back to you." }, 400);
+  const answers = (Array.isArray(b.answers) ? b.answers : []).slice(0, 20)
+    .map((a: { q?: unknown; a?: unknown }) => ({ q: str(a?.q, 120) ?? "", a: str(a?.a, 300) ?? "" })).filter((a: { q: string; a: string }) => a.q && a.a);
+  const recs = (Array.isArray(b.recommended) ? b.recommended : []).slice(0, 4)
+    .map((r: { name?: unknown; url?: unknown; why?: unknown }) => ({ name: str(r?.name, 60) ?? "", url: String(r?.url ?? "").startsWith("/") ? String(r.url).slice(0, 120) : "/", why: str(r?.why, 200) ?? "" }))
+    .filter((r: { name: string }) => r.name);
+  const contactBy = str(b.contact_by, 40), bestTime = str(b.best_time, 60);
+  const db = admin();
+
+  // Light rate limit: the same email can only send this a few times an hour.
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const { data: recent } = await db.from("customers").select("id, notes, updated_at").ilike("email", email).maybeSingle();
+  if (recent && recent.updated_at > since && String(recent.notes ?? "").split("Find your tub (").length > 3) {
+    return jsonAuth(req, { error: "Thanks, we already have your answers. Blaine will be in touch soon." }, 429);
+  }
+
+  const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "short", day: "numeric" });
+  const lines = [
+    `Find your tub (${stamp}), from the website:`,
+    ...answers.map((a: { q: string; a: string }) => `- ${a.q}: ${a.a}`),
+    `- Best way to reach them: ${contactBy ?? "not given"}`,
+    `- Best time to call: ${bestTime ?? "not given"}`,
+    `- Weekly blog: ${b.blog === true ? "yes, asked to sign up" : "no"}`,
+    recs.length ? `- We suggested: ${recs.map((r: { name: string }) => r.name).join(", ")}` : "",
+  ].filter(Boolean).join("\n");
+
+  let customerId: string;
+  if (recent) {
+    customerId = recent.id;
+    await db.from("customers").update({
+      name, cell: cell ?? undefined, city_pc: city ?? undefined,
+      notes: [lines, recent.notes].filter(Boolean).join("\n\n").slice(0, 8000), updated_at: new Date().toISOString(),
+    }).eq("id", recent.id);
+  } else {
+    const { data: c, error } = await db.from("customers").insert({
+      name, email, cell, city_pc: city, heard_about: "Website: Find your tub", notes: lines,
+    }).select("id").single();
+    if (error || !c) { console.error("lead insert", error); return jsonAuth(req, { error: "Something went wrong. Please try again, or call or text Blaine." }, 500); }
+    customerId = c.id;
+  }
+
+  // Tell the admins, with everything they need for the call.
+  const portalLink = `${SITE_URL}/staff/#cust-${customerId}`;
+  const rows = answers.map((a: { q: string; a: string }) => `<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f;vertical-align:top">${escapeHtml(a.q)}</td><td style="padding:6px 0">${escapeHtml(a.a)}</td></tr>`).join("");
+  try {
+    const { data: admins } = await db.from("profiles").select("email").eq("role", "admin").eq("active", true);
+    const to = [...new Set([REPLY_TO, ...(admins ?? []).map((a: { email: string }) => a.email).filter(Boolean)])];
+    await sendEmail({
+      from: FROM, to, reply_to: email, subject: `New lead: ${name}${bestTime ? `, best time ${bestTime.toLowerCase()}` : ""}`,
+      html: emailShell({ preheader: `${name} filled out Find your tub on the website.`, body:
+        `<p><b>${escapeHtml(name)}</b> just filled out <b>Find your tub</b> on the website.</p>
+<table style="font-size:15px;border-collapse:collapse;margin:8px 0 16px">
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Email</td><td>${escapeHtml(email)}</td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Cell</td><td>${escapeHtml(cell ?? "not given")}</td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Area</td><td>${escapeHtml(city ?? "not given")}</td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Reach them by</td><td><b>${escapeHtml(contactBy ?? "not given")}</b></td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Best time to call</td><td><b>${escapeHtml(bestTime ?? "not given")}</b></td></tr>
+${rows}
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">We suggested</td><td>${escapeHtml(recs.map((r: { name: string }) => r.name).join(", ") || "none")}</td></tr>
+<tr><td style="padding:6px 12px 6px 0;color:#6e5d4f">Weekly blog</td><td>${b.blog === true ? "Yes (they'll confirm by email)" : "No"}</td></tr>
+</table>
+${button(portalLink, "Open them in the staff portal")}
+<p style="color:#6e5d4f;font-size:14px">They're saved as a lead on the Customers tab. Reply to this email to write to them directly.</p>` }),
+    });
+  } catch (e) { console.error("lead staff email", e); }
+
+  // Thank the visitor, and tell them why we work this way.
+  const recHtml = recs.length ? `<p style="font-family:Georgia,serif;font-size:20px;margin:26px 0 6px">Where I'd start looking</p>` +
+    recs.map((r: { name: string; url: string; why: string }) => `<p><a href="${SITE_URL}${r.url}" style="color:#2f6f6a;font-weight:600">${escapeHtml(r.name)}</a>${r.why ? `<br><span style="color:#6e5d4f">${escapeHtml(r.why)}</span>` : ""}</p>`).join("") : "";
+  const when = contactBy && /email/i.test(contactBy) ? "I'll email you shortly" : bestTime ? `I'll ${contactBy && /text/i.test(contactBy) ? "text" : "call"} you ${bestTime.toLowerCase()}` : "I'll be in touch shortly";
+  try {
+    await sendEmail({
+      from: FROM, to: email, reply_to: REPLY_TO, subject: "Thanks, I've got your answers",
+      html: emailShell({ preheader: "Your answers are with me. Here's where I'd start.", body:
+        `<p>Hi ${escapeHtml(firstNameOf(name))},</p>
+<p>Thanks for taking a few minutes to tell me about your plans. ${escapeHtml(when)}, and we'll talk it through together.</p>
+<p>I ask these questions because the right hot tub is the one that fits how you'll actually use it: who's soaking, where it goes and when you'd love to be in it. Not the one that happens to be sitting in a warehouse. Getting that right up front is what turns a hot tub into something your family uses every week for years, instead of an expensive cover in the yard.</p>
+${recHtml}
+<p>There's no pressure and no obligation. If anything changes, or you think of a question before we talk, just reply to this email or call or text me at (613) 292-1786.</p>
+<p>Blaine</p>` }),
+    });
+  } catch (e) { console.error("lead thank-you email", e); }
+
+  // Blog sign-up uses the normal double opt-in, so they confirm it themselves.
+  if (b.blog === true) {
+    try {
+      await fetch(`${FUNCTIONS_URL}/subscribe`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, first_name: firstNameOf(name), consent: true, source: "find-your-tub" }) });
+    } catch (e) { console.error("lead blog signup", e); }
+  }
+  return jsonAuth(req, { ok: true });
+}
+
 // ---- sale-delete ----
 // POST {sale_ids: string[]}  Admins only. Removes the sales, their history, signed agreements and photos.
 // The customer stays (as a lead) and QuickBooks is left alone: invoices and payments stay in the books.
@@ -717,7 +823,7 @@ const ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "login-link": route_login_link, "invite-staff": route_invite_staff, "send-for-signature": route_send_for_signature,
   "signing": route_signing, "agreement-pdf": route_agreement_pdf,
   "agreement-print": route_agreement_print, "paper-signed": route_paper_signed,
-  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen, "past-sale": route_past_sale,
+  "sale-progress": route_sale_progress, "customer-delete": route_customer_delete, "sale-delete": route_sale_delete, "sale-reopen": route_sale_reopen, "past-sale": route_past_sale, "lead": route_lead,
   "qb-status": route_qb_status, "qb-connect": route_qb_connect, "qb-callback": route_qb_callback,
   "qb-settings": route_qb_settings, "qb-invoice": route_qb_invoice, "qb-sync": route_qb_sync,
 };

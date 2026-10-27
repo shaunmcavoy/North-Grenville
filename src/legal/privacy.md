@@ -6,6 +6,7 @@ We follow Canada's Personal Information Protection and Electronic Documents Act 
 
 ## What we collect and why
 
+- **When you fill out Find your tub:** your answers (what you're looking for, who'll use it, where it goes, how you'd power it and when), your name, email, phone and area, the best way and time to reach you, and that you agreed to be contacted. We use it only to get back to you with honest advice and a price, and we save it as a lead in our customer records so Blaine has your answers in front of him when you talk.
 - **When you sign up for Blaine's blog emails:** your email, your first name if you give it, and a record of your consent (the wording you agreed to, the date and time, and the device and internet address used). We use it only to send you new blog posts and occasional news.
 - **When you buy from us:** your name, address, city and postal code, phone, email, how you heard about us, what you bought, the price, deposit and balance, and your signature. We use it to prepare and keep your sales agreement, order and deliver your hot tub or sauna, register your warranty, and look after you as a customer.
 - **When you sign an agreement online:** the date and time you signed, the name you typed, your drawn signature, and the internet address and browser you signed from. We keep this as proof of the agreement, the same way we'd keep a paper copy.
@@ -30,7 +31,7 @@ Some of these providers may store or process information outside Canada, where i
 
 Our public pages (the home page, the hot tub, swim spa, mini pool and sauna pages, and the blog) use the Meta Pixel, a small piece of code from Meta, the company behind Facebook and Instagram. We use it for two things: to see which of our ads actually bring people to the website, and to show our videos and ads to people who have already shown an interest, rather than to everyone.
 
-The Pixel tells Meta which of our pages you looked at, which models you viewed, and when you tap to call or text Blaine, along with standard browser and device information. Meta may connect this to your Facebook or Instagram account if you have one, and Meta may process it in the United States and other countries.
+The Pixel tells Meta which of our pages you looked at, which models you viewed, when you tap to call or text Blaine, and that someone sent the Find your tub form (never the answers or your details), along with standard browser and device information. Meta may connect this to your Facebook or Instagram account if you have one, and Meta may process it in the United States and other countries.
 
 We don't put the Pixel on the staff portal, your customer portal or the agreement signing page, and we never send Meta your name, email, phone number, address or anything about your purchase.
 
