@@ -713,4 +713,6 @@ label.inline input{width:110px}
 .findcta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:22px}
 .findcta span{color:var(--muted);font-size:.92rem}
 .assigncard select{font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);min-width:240px}
+.fother{display:grid;gap:6px;margin-top:14px;font-size:.86rem;font-weight:600}
+.fother input{font:inherit;font-weight:400;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
 

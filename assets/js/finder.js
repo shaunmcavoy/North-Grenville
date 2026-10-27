@@ -24,15 +24,19 @@
     { id: 'place', q: 'Where are you picturing it?', why: 'Where it goes decides the size that fits, the base it needs and how we deliver it, so there are no surprises on delivery day.',
       opts: [['deck', 'On a deck'], ['patio', 'On a patio or concrete pad'], ['lawn', "On the lawn or gravel (we'll help with the base)"], ['indoor', 'Indoors, or in a covered space'], ['unsure', 'Not sure yet']] },
     { id: 'power', q: 'How would you like to power it?', why: "Some tubs plug into a regular outdoor outlet. Others need an electrician to run a dedicated line, which gives you more power and faster heating. Knowing now saves you a surprise later.", skip: ['sauna', 'swim_spa', 'mini_pool'],
-      opts: [['plug', 'Plug into a regular outdoor outlet'], ['wired', "I'm happy to have an electrician run a line"], ['unsure', 'Not sure']] },
+      opts: [['plug', 'Plug into a regular outdoor outlet'], ['existing', 'I already have a line run, from an old hot tub'], ['wired', "I'm happy to have an electrician run a line"], ['unsure', 'Not sure']] },
+    { id: 'line', q: 'What size is the breaker on that line?', showIf: function () { return A.power === 'existing'; }, other: 'other',
+      why: "This helps Blaine check whether a new tub can run on the line you already have, which could save you a new electrical job. The number is printed on the hot tub's breaker switch in your electrical panel. If you're not sure, that's completely fine; just pick I don't know.",
+      opts: [['40', '40 amp (most older tubs, usually 8 gauge wire)'], ['50', '50 amp (most newer tubs, usually 6 gauge wire)'], ['60', '60 amp'], ['other', "Something else (I'll type it)"], ['unknown', "I don't know"]] },
     { id: 'when', q: 'When would you love to be soaking?', why: "Your tub is ordered for you, not pulled off a lot, so this helps Blaine plan delivery around you. There's no pressure either way.",
       opts: [['asap', 'As soon as possible'], ['months', 'In the next few months'], ['season', 'This coming spring or summer'], ['looking', 'Just starting to look']] }
   ];
   var A = {}, step = 0;
   var label = function (qid) { var q = Q.filter(function (x) { return x.id === qid; })[0]; var v = A[qid]; if (!q || v == null) return null;
     var pick = function (k) { var o = q.opts.filter(function (o) { return o[0] === k; })[0]; return o ? o[1] : k; };
+    if (q.other && v === q.other) return 'Something else: ' + (A[qid + '_text'] || 'not given');
     return Array.isArray(v) ? v.map(pick).join(', ') : pick(v); };
-  var visible = function () { return Q.filter(function (q) { return !(q.skip && q.skip.indexOf(A.kind) >= 0); }); };
+  var visible = function () { return Q.filter(function (q) { return !(q.skip && q.skip.indexOf(A.kind) >= 0) && (!q.showIf || q.showIf()); }); };
 
   function render() {
     var qs = visible();
@@ -45,8 +49,11 @@
         var on = q.multi ? (cur || []).indexOf(o[0]) >= 0 : cur === o[0];
         return '<button type="button" class="fopt" data-v="' + o[0] + '" aria-pressed="' + on + '">' + esc(o[1]) + '</button>';
       }).join('') + '</div>' +
+      (q.other && cur === q.other ? '<label class="fother">Tell us what you know (breaker size, wire, anything)<input id="fotherIn" maxlength="120" value="' + esc(A[q.id + '_text'] || '') + '" placeholder="e.g. 40 amp, not sure of the wire"></label>' : '') +
       '<div class="fnav">' + (step ? '<button type="button" class="btn btn-line" data-back>Back</button>' : '<span></span>') +
-      (q.multi ? '<button type="button" class="btn btn-ink" data-next' + ((cur || []).length ? '' : ' disabled') + '>Next</button>' : '') + '</div>';
+      (q.multi ? '<button type="button" class="btn btn-ink" data-next' + ((cur || []).length ? '' : ' disabled') + '>Next</button>' : '') +
+      (q.other && cur === q.other ? '<button type="button" class="btn btn-ink" data-next>Next</button>' : '') + '</div>';
+    var oi = root.querySelector('#fotherIn'); if (oi) { oi.focus(); oi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); A[q.id + '_text'] = oi.value.trim(); step++; render(); scrollTop(); } }); return; }
     var h = root.querySelector('.fq'); if (h && step) h.setAttribute('tabindex', '-1'), h.focus({ preventScroll: true });
   }
   root.addEventListener('click', function (e) {
@@ -54,10 +61,11 @@
     var o = e.target.closest('.fopt');
     if (o && q) {
       if (q.multi) { var v = A[q.id] || []; var i = v.indexOf(o.dataset.v); if (i >= 0) v.splice(i, 1); else v.push(o.dataset.v); A[q.id] = v; render(); }
+      else if (q.other && o.dataset.v === q.other) { A[q.id] = q.other; render(); }
       else { A[q.id] = o.dataset.v; step++; render(); scrollTop(); }
       return;
     }
-    if (e.target.closest('[data-next]')) { step++; render(); scrollTop(); return; }
+    if (e.target.closest('[data-next]')) { var oi = root.querySelector('#fotherIn'); if (oi && q) A[q.id + '_text'] = oi.value.trim(); step++; render(); scrollTop(); return; }
     if (e.target.closest('[data-back]')) { step = Math.max(0, step - 1); render(); scrollTop(); return; }
     if (e.target.closest('[data-restart]')) { A = {}; step = 0; render(); scrollTop(); }
   });
@@ -79,6 +87,7 @@
       else if (tier === 'luxury' && t.line === 'premium') score += 1;
       else if (tier === 'deluxe' && t.line === 'premium') score += 1;
       if (A.power === 'plug' && t.plug) { score += 4; why.push('Plugs into a regular outdoor outlet'); }
+      if (A.power === 'existing' && !t.plug) score += 1;
       if (A.power === 'plug' && !t.plug) score -= 3;
       if (uses.indexOf('muscles') >= 0 && t.jets >= 60) { score += 2; why.push(t.jets + ' jets for deeper massage'); }
       if (uses.indexOf('friends') >= 0 && seats >= 6) score += 2;
