@@ -39,13 +39,28 @@ Product facts (seats, jets, power, features, sizes, pumps) come only from `src/d
 5. **No knocking competitors by name.** Talk about "a lot of dealers" in general, as Blaine does.
 6. **Water safety stays accurate.** If you give chemistry or safety guidance (pH range, sanitizer, temperature limits, kids), keep it conservative and mainstream, and tell people to follow their tub's manual and the product label.
 
+## Why, How, What (every post, whatever the topic)
+
+Every post follows the Why, How, What order from Simon Sinek's *Start With Why*, the same structure Blaine and Shaun use when presenting a hot tub. People don't act on facts alone; they act when something matters to them. So every post, even a technical one about filters or water chemistry, starts with why it matters to the reader's life, then how North Grenville approaches it, then what to actually do or know. The goal is a post people feel, not just read.
+
+1. **Why (open with it, about a third of the post).** Start with the belief and the human reason this topic matters: time with family, a tub that's a joy instead of a chore, water that's healthy to soak in, a place to unplug, money and effort not wasted. Make the reader picture their own life: their kids, their partner, their backyard on a cold night, the feeling after a long day. Write it so they nod along before you've mentioned a single feature. Within this section, still answer the question in a sentence or two, so someone who found the post on Google knows they're in the right place.
+2. **How (the middle).** How Blaine and North Grenville do it, and why that way: honest advice, fewer chemicals, the right tub rather than the one in stock, simple routines people actually keep, a local owner who picks up the phone. This is where the reader starts to trust that the why is real.
+3. **What (the practical part).** The concrete answer: steps, a short checklist, which tub or line fits, what to look for, what to avoid. Specific and useful, so the post earns its place.
+4. **Close by coming back to the why.** End on the feeling the post opened with, in one short paragraph in Blaine's voice. Not a sales line, and don't repeat the phone number (the page adds the call/text box).
+
+How to make people feel it, without breaking the hard rules:
+- Use "you" and paint scenes the reader can step into: "Picture a Sunday night in January, snow on the deck, the kids actually talking to you." Second-person scenes are fine; invented customers, quotes and stories are not.
+- Blaine's own beliefs and experience are fair game: what he has seen over more than fifteen years, why he opened his store, what he believes a hot tub is for. Keep it general ("a lot of owners tell me...") rather than naming or inventing a specific person or event.
+- Feelings over features. A feature only appears once you've said why the reader would care about it.
+- Warm and sincere, never sappy or salesy. One honest emotional line beats three exclamation marks.
+
 ## Shape of every post
 
 - **Length:** 700 to 1,000 words.
 - **Title:** under 60 characters, the way a local would search it. Example: "How often should you change hot tub water?"
-- **Description:** one sentence under 155 characters. It shows in Google results.
-- **Opening:** two or three sentences that answer the question straight away. No warm-up.
-- **Body:** 3 to 5 `##` sections, each answering one part of the question. Use a short list only when it helps.
+- **Description:** one sentence under 155 characters. It shows in Google results. Lead with the why where you can.
+- **Order:** Why, then How, then What, then a short closing that returns to the why (see above).
+- **Body:** 3 to 5 `##` sections in that order. Headings are plain, human phrases, never the literal words "Why", "How" or "What". Use a short list only when it helps, usually in the What part.
 - **Local touch:** mention Kemptville or North Grenville naturally once or twice, and hard water or Ontario winters when it's relevant. Don't stuff place names.
 - **Internal links:** link to one or two relevant site pages using root-relative links:
   - `/deluxe/`, `/premium/`, `/luxury/` for the lines
@@ -54,7 +69,7 @@ Product facts (seats, jets, power, features, sizes, pumps) come only from `src/d
   - When a post tells owners to start or keep using O-Care, link Blaine's O-Care registration: https://l.ead.me/bgkT4n (O-CareComfort sign-up with North Grenville as the dealer; customers choose Blaine McAvoy as their advisor). Say why: delivered free to the door, a saving on every box, never run out, pause or cancel any time.
   - `/#story` for Blaine's story
   - an earlier post at `/blog/<slug>/` when it fits
-- **Ending:** one short closing paragraph in Blaine's voice. The page adds the call/text box itself, so don't repeat the phone number at the end.
+- **Ending:** one short closing paragraph in Blaine's voice that brings the reader back to the why. The page adds the call/text box itself, so don't repeat the phone number at the end.
 
 ## File format
 
@@ -132,5 +147,5 @@ Supported Markdown: `##` and `###` headings, paragraphs, `-` and `1.` lists, `>`
 
 1. Write the post file as above.
 2. Run `python3 build.py`. It must finish without errors.
-3. Check the new page exists at `blog/<slug>/index.html`, that the post has no em dashes (`grep -c "—"` returns 0), and that the word count is in range.
+3. Check the new page exists at `blog/<slug>/index.html`, that the post has no em dashes (`grep -c "—"` returns 0), that the word count is in range, and that it reads Why, then How, then What, with the opening making the reader feel why it matters before any features or steps.
 4. Commit with a message like `Blog: <title>` and push to `main`. GitHub Pages publishes it within a few minutes.
