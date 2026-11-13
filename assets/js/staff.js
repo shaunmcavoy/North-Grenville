@@ -543,8 +543,8 @@
       NG.toast('Saved');
     }).catch(function (err) { m.textContent = err.message; }).finally(function () { b.disabled = false; });
   });
-  cform.addEventListener('submit', function (e) {
-    e.preventDefault();
+  // Saves the customer form. then(id) runs after a successful save; by default it reopens the customer.
+  function saveCustomer(then) {
     var m = cform.querySelector('.formmsg'), d = {};
     CFIELDS.forEach(function (k) { d[k] = cform[k].value.trim() || null; });
     if (!d.name) { m.textContent = 'Add a name first.'; return; }
@@ -556,8 +556,16 @@
       : sb.from('customers').insert(Object.assign(d, { created_by: me.user.id })).select('id').single();
     q.then(function (r) {
       if (r.error) { m.textContent = r.error.message; return; }
-      NG.toast('Saved'); if (location.hash !== '#cust-' + r.data.id) location.hash = 'cust-' + r.data.id; else openCustomer(r.data.id);
+      NG.toast('Saved');
+      if (then) return then(r.data.id);
+      if (location.hash !== '#cust-' + r.data.id) location.hash = 'cust-' + r.data.id; else openCustomer(r.data.id);
     });
+  }
+  cform.addEventListener('submit', function (e) { e.preventDefault(); saveCustomer(); });
+  // Starting a sale saves any changes first, so details typed on the lead (like an email) carry into the sale.
+  $('#custNewSale').addEventListener('click', function (e) {
+    e.preventDefault();
+    saveCustomer(function (id) { location.hash = 'new-c-' + id; });
   });
   $('#custDelete').addEventListener('click', function () {
     var b = this, m = $('#custDelMsg'), c = currentCust; if (!c) return;
